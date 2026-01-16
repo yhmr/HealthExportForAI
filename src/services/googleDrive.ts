@@ -1,8 +1,9 @@
-// Google Drive サービス
+// Google Drive サービス（認証統合版）
 
 import * as FileSystem from 'expo-file-system';
 import type { DriveConfig } from '../config/driveConfig';
 import type { ExportData } from '../types/health';
+import { getAccessToken } from './googleAuth';
 
 const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 
@@ -19,6 +20,19 @@ export async function saveJsonToFile(
 }
 
 /**
+ * アクセストークンを取得（認証済みまたは手動設定から）
+ */
+async function getToken(config: DriveConfig): Promise<string | null> {
+    // まず認証済みトークンを試行
+    const authToken = await getAccessToken();
+    if (authToken) {
+        return authToken;
+    }
+    // フォールバック: 手動設定のトークン
+    return config.accessToken || null;
+}
+
+/**
  * ファイルをGoogle Driveにアップロード
  */
 export async function uploadToDrive(
@@ -27,6 +41,15 @@ export async function uploadToDrive(
     config: DriveConfig
 ): Promise<{ success: boolean; fileId?: string; error?: string }> {
     try {
+        const accessToken = await getToken(config);
+        if (!accessToken) {
+            return { success: false, error: 'アクセストークンがありません' };
+        }
+
+        if (!config.folderId) {
+            return { success: false, error: 'フォルダIDが設定されていません' };
+        }
+
         // ファイル内容を読み込み
         const fileContent = await FileSystem.readAsStringAsync(fileUri);
 
@@ -56,7 +79,7 @@ export async function uploadToDrive(
         const response = await fetch(`${GOOGLE_DRIVE_UPLOAD_URL}?uploadType=multipart`, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${config.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
                 'Content-Type': `multipart/related; boundary=${boundary}`,
             },
             body,
