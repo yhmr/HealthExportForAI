@@ -1,11 +1,7 @@
 // Google Drive API設定
 
 export interface DriveConfig {
-    accessToken: string;
-    refreshToken?: string;
     folderId: string;
-    clientId?: string;
-    clientSecret?: string;
 }
 
 // 設定ファイルのパス（アプリ内では手動で設定を読み込む）
@@ -18,7 +14,6 @@ export const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_WEB_CLIENT_ID || '';
  * デフォルトの空設定
  */
 export const DEFAULT_DRIVE_CONFIG: DriveConfig = {
-    accessToken: '',
     folderId: '',
 };
 
@@ -26,5 +21,5 @@ export const DEFAULT_DRIVE_CONFIG: DriveConfig = {
  * 設定が有効かチェック
  */
 export function isValidDriveConfig(config: DriveConfig): boolean {
-    return Boolean(config.accessToken && config.folderId);
+    return Boolean(config.folderId);
 }

@@ -93,14 +93,14 @@ export function useGoogleDrive() {
     }, []);
 
     /**
-     * 設定が有効かチェック（認証済みまたは手動トークン）
+     * 設定が有効かチェック（認証済み）
      */
     const isConfigValid = useCallback(() => {
         if (!driveConfig) return false;
 
         // フォルダIDは自動作成可能なので必須ではない
-        // 認証済みまたは手動トークンがあればOK
-        return isAuthenticated || Boolean(driveConfig.accessToken);
+        // 認証済みであればOK
+        return isAuthenticated;
     }, [driveConfig, isAuthenticated]);
 
     /**

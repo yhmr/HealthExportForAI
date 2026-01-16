@@ -24,19 +24,6 @@ export async function saveJsonToFile(
 }
 
 /**
- * アクセストークンを取得（認証済みまたは手動設定から）
- */
-async function getToken(config: DriveConfig): Promise<string | null> {
-    // まず認証済みトークンを試行
-    const authToken = await getAccessToken();
-    if (authToken) {
-        return authToken;
-    }
-    // フォールバック: 手動設定のトークン
-    return config.accessToken || null;
-}
-
-/**
  * 指定した名前のフォルダを検索または作成
  */
 export async function findOrCreateFolder(
@@ -46,7 +33,6 @@ export async function findOrCreateFolder(
     try {
         // 1. フォルダを検索
         const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
-        console.log('Searching folder query:', query);
         const searchResponse = await fetch(
             `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`,
             {
@@ -56,7 +42,6 @@ export async function findOrCreateFolder(
 
         if (searchResponse.ok) {
             const data = await searchResponse.json();
-            console.log('Search result:', data);
             if (data.files && data.files.length > 0) {
                 return data.files[0].id;
             }
@@ -65,7 +50,6 @@ export async function findOrCreateFolder(
         }
 
         // 2. フォルダがなければ作成
-        console.log('Creating folder:', folderName);
         const createResponse = await fetch(GOOGLE_DRIVE_API_URL, {
             method: 'POST',
             headers: {
@@ -80,7 +64,6 @@ export async function findOrCreateFolder(
 
         if (createResponse.ok) {
             const data = await createResponse.json();
-            console.log('Folder created:', data.id);
             return data.id;
         } else {
             const errorData = await createResponse.json();
@@ -102,9 +85,9 @@ export async function uploadToDrive(
     config: DriveConfig
 ): Promise<{ success: boolean; fileId?: string; error?: string; folderId?: string }> {
     try {
-        const accessToken = await getToken(config);
+        const accessToken = await getAccessToken();
         if (!accessToken) {
-            return { success: false, error: 'アクセストークンがありません' };
+            return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
         }
 
         let folderId = config.folderId;

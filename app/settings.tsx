@@ -33,7 +33,6 @@ export default function SettingsScreen() {
         signOut,
     } = useGoogleDrive();
 
-    const [accessToken, setAccessToken] = useState('');
     const [folderId, setFolderId] = useState('');
     const [periodDays, setPeriodDays] = useState('7');
 
@@ -42,7 +41,6 @@ export default function SettingsScreen() {
         const load = async () => {
             const config = await loadConfig();
             if (config) {
-                setAccessToken(config.accessToken);
                 setFolderId(config.folderId);
             }
             const days = await loadExportPeriodDays();
@@ -61,7 +59,6 @@ export default function SettingsScreen() {
     // 保存ハンドラ
     const handleSave = async () => {
         const config: DriveConfig = {
-            accessToken,
             folderId,
         };
         await saveConfig(config);
@@ -79,7 +76,7 @@ export default function SettingsScreen() {
     // サインインハンドラ
     const handleSignIn = async () => {
         // 一旦設定を保存してからサインイン
-        const config: DriveConfig = { accessToken, folderId };
+        const config: DriveConfig = { folderId };
         await saveConfig(config);
 
         await signIn();
@@ -138,25 +135,6 @@ export default function SettingsScreen() {
                     <Text style={styles.hint}>
                         💡 空の場合は {DEFAULT_FOLDER_NAME} が自動作成されます
                     </Text>
-                </View>
-
-                {/* 手動トークン（フォールバック） */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>手動設定（オプション）</Text>
-                    <Text style={styles.subHint}>
-                        Googleサインインが使えない場合のみ
-                    </Text>
-
-                    <Text style={styles.label}>アクセストークン</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={accessToken}
-                        onChangeText={setAccessToken}
-                        placeholder="ya29.xxx..."
-                        placeholderTextColor="#666"
-                        multiline
-                        numberOfLines={2}
-                    />
                 </View>
 
                 {/* エクスポート設定 */}

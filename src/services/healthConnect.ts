@@ -50,7 +50,7 @@ export async function initializeHealthConnect(): Promise<boolean> {
  */
 export async function checkHealthConnectAvailability(): Promise<{
     available: boolean;
-    status: SdkAvailabilityStatus;
+    status: number;
 }> {
     try {
         const status = await getSdkStatus();
