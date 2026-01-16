@@ -18,6 +18,7 @@ import {
     saveExportPeriodDays,
 } from '../src/services/storage';
 import type { DriveConfig } from '../src/config/driveConfig';
+import { DEFAULT_FOLDER_NAME } from '../src/services/googleDrive';
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -32,7 +33,6 @@ export default function SettingsScreen() {
         signOut,
     } = useGoogleDrive();
 
-    const [clientId, setClientId] = useState('');
     const [accessToken, setAccessToken] = useState('');
     const [folderId, setFolderId] = useState('');
     const [periodDays, setPeriodDays] = useState('7');
@@ -42,7 +42,6 @@ export default function SettingsScreen() {
         const load = async () => {
             const config = await loadConfig();
             if (config) {
-                setClientId(config.clientId || '');
                 setAccessToken(config.accessToken);
                 setFolderId(config.folderId);
             }
@@ -62,7 +61,6 @@ export default function SettingsScreen() {
     // 保存ハンドラ
     const handleSave = async () => {
         const config: DriveConfig = {
-            clientId,
             accessToken,
             folderId,
         };
@@ -80,13 +78,8 @@ export default function SettingsScreen() {
 
     // サインインハンドラ
     const handleSignIn = async () => {
-        if (!clientId) {
-            Alert.alert('エラー', 'Web Client IDを先に入力して保存してください');
-            return;
-        }
-
         // 一旦設定を保存してからサインイン
-        const config: DriveConfig = { clientId, accessToken, folderId };
+        const config: DriveConfig = { accessToken, folderId };
         await saveConfig(config);
 
         await signIn();
@@ -128,34 +121,22 @@ export default function SettingsScreen() {
                             <Text style={styles.signInText}>🔐 Googleでサインイン</Text>
                         </TouchableOpacity>
                     )}
-
-                    <Text style={styles.label}>Web Client ID</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={clientId}
-                        onChangeText={setClientId}
-                        placeholder="xxx.apps.googleusercontent.com"
-                        placeholderTextColor="#666"
-                    />
-                    <Text style={styles.hint}>
-                        💡 Google Cloud Console → 認証情報 → OAuth 2.0 クライアント ID → ウェブ アプリケーション
-                    </Text>
                 </View>
 
                 {/* Google Drive設定 */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Google Drive</Text>
 
-                    <Text style={styles.label}>フォルダID</Text>
+                    <Text style={styles.label}>フォルダID（任意）</Text>
                     <TextInput
                         style={styles.input}
                         value={folderId}
                         onChangeText={setFolderId}
-                        placeholder="1ABC123..."
+                        placeholder="自動作成されます"
                         placeholderTextColor="#666"
                     />
                     <Text style={styles.hint}>
-                        💡 Google DriveのフォルダURLの末尾部分
+                        💡 空の場合は {DEFAULT_FOLDER_NAME} が自動作成されます
                     </Text>
                 </View>
 

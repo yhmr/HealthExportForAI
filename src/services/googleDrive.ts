@@ -1,11 +1,15 @@
 // Google Drive サービス（認証統合版）
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import type { DriveConfig } from '../config/driveConfig';
 import type { ExportData } from '../types/health';
 import { getAccessToken } from './googleAuth';
 
 const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
+
+// 自動作成するフォルダ名
+export const DEFAULT_FOLDER_NAME = 'Connect Health Connect Data';
 
 /**
  * JSONデータをファイルに保存
@@ -33,21 +37,86 @@ async function getToken(config: DriveConfig): Promise<string | null> {
 }
 
 /**
+ * 指定した名前のフォルダを検索または作成
+ */
+export async function findOrCreateFolder(
+    folderName: string,
+    accessToken: string
+): Promise<string | null> {
+    try {
+        // 1. フォルダを検索
+        const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
+        console.log('Searching folder query:', query);
+        const searchResponse = await fetch(
+            `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`,
+            {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            }
+        );
+
+        if (searchResponse.ok) {
+            const data = await searchResponse.json();
+            console.log('Search result:', data);
+            if (data.files && data.files.length > 0) {
+                return data.files[0].id;
+            }
+        } else {
+            console.error('Search folder failed:', searchResponse.status, await searchResponse.text());
+        }
+
+        // 2. フォルダがなければ作成
+        console.log('Creating folder:', folderName);
+        const createResponse = await fetch(GOOGLE_DRIVE_API_URL, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder',
+            }),
+        });
+
+        if (createResponse.ok) {
+            const data = await createResponse.json();
+            console.log('Folder created:', data.id);
+            return data.id;
+        } else {
+            const errorData = await createResponse.json();
+            console.error('Create folder failed:', createResponse.status, errorData);
+            return null;
+        }
+    } catch (error) {
+        console.error('フォルダ作成エラー:', error);
+        return null;
+    }
+}
+
+/**
  * ファイルをGoogle Driveにアップロード
  */
 export async function uploadToDrive(
     fileUri: string,
     fileName: string,
     config: DriveConfig
-): Promise<{ success: boolean; fileId?: string; error?: string }> {
+): Promise<{ success: boolean; fileId?: string; error?: string; folderId?: string }> {
     try {
         const accessToken = await getToken(config);
         if (!accessToken) {
             return { success: false, error: 'アクセストークンがありません' };
         }
 
-        if (!config.folderId) {
-            return { success: false, error: 'フォルダIDが設定されていません' };
+        let folderId = config.folderId;
+
+        // フォルダIDがない場合、自動作成を試みる
+        if (!folderId) {
+            const id = await findOrCreateFolder(DEFAULT_FOLDER_NAME, accessToken);
+            if (id) {
+                folderId = id;
+            } else {
+                return { success: false, error: '保存先フォルダを作成できませんでした' };
+            }
         }
 
         // ファイル内容を読み込み
@@ -57,7 +126,7 @@ export async function uploadToDrive(
         const metadata = {
             name: fileName,
             mimeType: 'application/json',
-            parents: [config.folderId],
+            parents: [folderId],
         };
 
         // マルチパートリクエストのboundary
@@ -97,6 +166,7 @@ export async function uploadToDrive(
         return {
             success: true,
             fileId: result.id,
+            folderId, // 自動作成された場合のためにIDを返す
         };
     } catch (error) {
         return {

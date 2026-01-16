@@ -16,13 +16,10 @@ import {
     getAccessToken,
 } from '../services/googleAuth';
 import { loadDriveConfig, saveDriveConfig, loadExportPeriodDays } from '../services/storage';
-import { isValidDriveConfig, type DriveConfig } from '../config/driveConfig';
+import { isValidDriveConfig, type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
 import { getDateDaysAgo, getEndOfToday, getCurrentISOString } from '../utils/formatters';
 import type { ExportData } from '../types/health';
 import type { User } from '@react-native-google-signin/google-signin';
-
-// Google Cloud ConsoleのWeb Client ID（ユーザーが設定で入力）
-const DEFAULT_WEB_CLIENT_ID = '';
 
 export function useGoogleDrive() {
     const [isUploading, setIsUploading] = useState(false);
@@ -44,10 +41,8 @@ export function useGoogleDrive() {
         const config = await loadDriveConfig();
         setDriveConfigState(config);
 
-        // Google Sign-Inを設定
-        if (config.clientId) {
-            configureGoogleSignIn(config.clientId);
-        }
+        // Google Sign-Inを設定（埋め込みIDを使用）
+        configureGoogleSignIn(WEB_CLIENT_ID);
 
         // 認証状態をチェック
         const signedIn = await isSignedIn();
@@ -66,11 +61,6 @@ export function useGoogleDrive() {
     const saveConfig = useCallback(async (config: DriveConfig) => {
         await saveDriveConfig(config);
         setDriveConfigState(config);
-
-        // 新しいclientIdでGoogle Sign-Inを再設定
-        if (config.clientId) {
-            configureGoogleSignIn(config.clientId);
-        }
     }, []);
 
     /**
@@ -79,13 +69,7 @@ export function useGoogleDrive() {
     const handleSignIn = useCallback(async () => {
         setAuthError(null);
 
-        // clientIdが設定されているか確認
-        if (!driveConfig?.clientId) {
-            setAuthError('Web Client IDを設定してください');
-            return false;
-        }
-
-        configureGoogleSignIn(driveConfig.clientId);
+        configureGoogleSignIn(WEB_CLIENT_ID);
         const result = await signIn();
 
         if (result.success && result.user) {
@@ -93,10 +77,11 @@ export function useGoogleDrive() {
             setCurrentUser(result.user);
             return true;
         } else {
+            console.error('Sign in failed:', result.error);
             setAuthError(result.error || 'サインインに失敗しました');
             return false;
         }
-    }, [driveConfig]);
+    }, []);
 
     /**
      * サインアウト
@@ -113,9 +98,7 @@ export function useGoogleDrive() {
     const isConfigValid = useCallback(() => {
         if (!driveConfig) return false;
 
-        // フォルダIDは必須
-        if (!driveConfig.folderId) return false;
-
+        // フォルダIDは自動作成可能なので必須ではない
         // 認証済みまたは手動トークンがあればOK
         return isAuthenticated || Boolean(driveConfig.accessToken);
     }, [driveConfig, isAuthenticated]);
@@ -162,6 +145,12 @@ export function useGoogleDrive() {
             if (!result.success) {
                 setUploadError(result.error || 'アップロード失敗');
                 return false;
+            }
+
+            // フォルダが自動作成された場合、IDを保存する
+            if (result.folderId && result.folderId !== driveConfig.folderId) {
+                const newConfig = { ...driveConfig, folderId: result.folderId };
+                await saveConfig(newConfig);
             }
 
             setLastUploadTime(getCurrentISOString());
