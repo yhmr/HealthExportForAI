@@ -30,12 +30,7 @@ export interface BasalMetabolicRateData {
     date: string;
     value: number;
     unit: 'kcal/day';
-}
-
-export interface SleepStage {
-    stage: 'AWAKE' | 'LIGHT' | 'DEEP' | 'REM' | 'UNKNOWN';
-    startTime: string;
-    endTime: string;
+    time: string;
 }
 
 export interface SleepData {
@@ -43,7 +38,7 @@ export interface SleepData {
     startTime: string;
     endTime: string;
     durationMinutes: number;
-    stages?: SleepStage[];
+    deepSleepPercentage?: number;
 }
 
 export interface ExerciseData {
@@ -52,17 +47,17 @@ export interface ExerciseData {
     startTime: string;
     endTime: string;
     durationMinutes: number;
-    calories?: number;
 }
 
 export interface NutritionData {
     date: string;
-    mealType?: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'UNKNOWN';
-    time: string;
+    // 取得対象: エネルギー、タンパク質、総脂肪、総炭水化物、食物繊維、飽和脂肪
     calories?: number;
     protein?: number;
-    carbs?: number;
-    fat?: number;
+    totalFat?: number;
+    totalCarbohydrate?: number;
+    dietaryFiber?: number;
+    saturatedFat?: number;
 }
 
 export interface HealthData {
