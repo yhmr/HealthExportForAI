@@ -6,6 +6,8 @@ import {
     readRecords,
     getSdkStatus,
     SdkAvailabilityStatus,
+    aggregateGroupByDuration,
+    ExerciseType,
 } from 'react-native-health-connect';
 import type {
     HealthData,
@@ -87,11 +89,31 @@ export async function requestHealthPermissions(): Promise<boolean> {
 type DailyAggregation<T> = { [date: string]: T };
 
 /**
- * 歩数データを取得（日次で合計）
+ * ExerciseType IDを名前に変換するマッピング
+ */
+const exerciseTypeIdToName: { [key: number]: string } = Object.entries(ExerciseType).reduce(
+    (acc, [name, id]) => {
+        acc[id] = name
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case に変換
+        return acc;
+    },
+    {} as { [key: number]: string }
+);
+
+/**
+ * ExerciseType IDから名前を取得
+ */
+function getExerciseTypeName(typeId: number): string {
+    return exerciseTypeIdToName[typeId] || `Unknown (${typeId})`;
+}
+
+/**
+ * 歩数データを取得（日次で集計、Health Connectの重複除去を使用）
  * ロジック:
- * 1. 指定期間の歩数レコードを取得
- * 2. レコードを日付ごとにグループ化
- * 3. 日ごとに歩数を合計して返却
+ * 1. aggregateGroupByPeriodを使用して日ごとの集計データを取得
+ * 2. Health Connectが内部で重複除去を行うため、複数ソースからのデータが正しく集計される
  */
 export async function fetchStepsData(
     startTime: Date,
@@ -99,33 +121,28 @@ export async function fetchStepsData(
 ): Promise<StepsData[]> {
     try {
         console.log(`[HealthConnect] 歩数データを取得開始: ${startTime.toISOString()} - ${endTime.toISOString()}`);
-        const result = await readRecords('Steps', {
+
+        // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
+        const result = await aggregateGroupByDuration({
+            recordType: 'Steps',
             timeRangeFilter: {
                 operator: 'between',
                 startTime: startTime.toISOString(),
                 endTime: endTime.toISOString(),
             },
+            timeRangeSlicer: {
+                duration: 'DAYS',
+                length: 1,
+            },
         });
 
-        // 日毎の集計マップを作成
-        const aggregation: DailyAggregation<StepsData> = {};
+        // 結果を StepsData 形式に変換
+        const stepsData: StepsData[] = result.map((item) => ({
+            date: formatDate(item.startTime),
+            count: item.result.COUNT_TOTAL ?? 0,
+        }));
 
-        for (const record of result.records) {
-            const date = formatDate(record.startTime); // 日付を取得 (yyyy-MM-dd)
-
-            if (!aggregation[date]) {
-                aggregation[date] = {
-                    date,
-                    count: 0,
-                };
-            }
-
-            // 歩数を加算
-            aggregation[date].count += record.count;
-        }
-
-        // マップを配列に変換して返却
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+        return stepsData.sort((a, b) => a.date.localeCompare(b.date));
     } catch (error) {
         console.error('歩数データ取得エラー:', error);
         return [];
@@ -219,10 +236,10 @@ export async function fetchBodyFatData(
 }
 
 /**
- * 総消費カロリーデータを取得（日次で合計）
+ * 総消費カロリーデータを取得（日次で集計、Health Connectの重複除去を使用）
  * ロジック:
- * 1. 指定期間の消費カロリーレコードを取得
- * 2. 日付ごとにカロリーを合計
+ * 1. aggregateGroupByDurationを使用して日ごとの集計データを取得
+ * 2. Health Connectが内部で重複除去を行うため、複数ソースからのデータが正しく集計される
  */
 export async function fetchTotalCaloriesData(
     startTime: Date,
@@ -230,30 +247,29 @@ export async function fetchTotalCaloriesData(
 ): Promise<CaloriesData[]> {
     try {
         console.log(`[HealthConnect] 消費カロリーデータを取得開始`);
-        const result = await readRecords('TotalCaloriesBurned', {
+
+        // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
+        const result = await aggregateGroupByDuration({
+            recordType: 'TotalCaloriesBurned',
             timeRangeFilter: {
                 operator: 'between',
                 startTime: startTime.toISOString(),
                 endTime: endTime.toISOString(),
             },
+            timeRangeSlicer: {
+                duration: 'DAYS',
+                length: 1,
+            },
         });
 
-        const aggregation: DailyAggregation<CaloriesData> = {};
+        // 結果を CaloriesData 形式に変換
+        const caloriesData: CaloriesData[] = result.map((item) => ({
+            date: formatDate(item.startTime),
+            value: item.result.ENERGY_TOTAL?.inKilocalories ?? 0,
+            unit: 'kcal' as const,
+        }));
 
-        for (const record of result.records) {
-            const date = formatDate(record.startTime);
-
-            if (!aggregation[date]) {
-                aggregation[date] = {
-                    date,
-                    value: 0,
-                    unit: 'kcal' as const,
-                };
-            }
-            aggregation[date].value += record.energy.inKilocalories;
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+        return caloriesData.sort((a, b) => a.date.localeCompare(b.date));
     } catch (error) {
         console.error('カロリーデータ取得エラー:', error);
         return [];
@@ -407,7 +423,7 @@ export async function fetchExerciseData(
 
         for (const record of result.records) {
             const date = formatDate(record.startTime);
-            const type = record.exerciseType;
+            const type = getExerciseTypeName(record.exerciseType); // IDを名前に変換
             const key = `${date}_${type}`;
 
             const start = new Date(record.startTime);

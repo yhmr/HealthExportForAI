@@ -1,11 +1,15 @@
 // データフォーマッター
 
 /**
- * 日付をISO文字列からYYYY-MM-DD形式に変換
+ * 日付をISO文字列からYYYY-MM-DD形式に変換（ローカルタイムゾーン使用）
  */
 export function formatDate(isoString: string): string {
     const date = new Date(isoString);
-    return date.toISOString().split('T')[0];
+    // ローカルタイムゾーンでの日付を取得
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 /**

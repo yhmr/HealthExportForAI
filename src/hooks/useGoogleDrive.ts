@@ -1,24 +1,18 @@
-// Google Drive カスタムフック（認証統合版）
+// Google Drive/Sheets カスタムフック（認証統合版）
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useHealthStore } from '../stores/healthStore';
-import {
-    saveJsonToFile,
-    uploadToDrive,
-    generateExportFileName,
-} from '../services/googleDrive';
+import { exportToSpreadsheet } from '../services/googleSheets';
 import {
     configureGoogleSignIn,
     isSignedIn,
     getCurrentUser,
     signIn,
     signOut,
-    getAccessToken,
 } from '../services/googleAuth';
-import { loadDriveConfig, saveDriveConfig, loadExportPeriodDays } from '../services/storage';
-import { isValidDriveConfig, type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
-import { getDateDaysAgo, getEndOfToday, getCurrentISOString } from '../utils/formatters';
-import type { ExportData } from '../types/health';
+import { loadDriveConfig, saveDriveConfig } from '../services/storage';
+import { type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
+import { getCurrentISOString } from '../utils/formatters';
 import type { User } from '@react-native-google-signin/google-signin';
 
 export function useGoogleDrive() {
@@ -93,27 +87,19 @@ export function useGoogleDrive() {
     }, []);
 
     /**
-     * 設定が有効かチェック（認証済み）
+     * 認証済みかチェック
      */
     const isConfigValid = useCallback(() => {
-        if (!driveConfig) return false;
-
-        // フォルダIDは自動作成可能なので必須ではない
         // 認証済みであればOK
         return isAuthenticated;
-    }, [driveConfig, isAuthenticated]);
+    }, [isAuthenticated]);
 
     /**
-     * データをエクスポートしてDriveにアップロード
+     * データをスプレッドシートにエクスポート
      */
     const exportAndUpload = useCallback(async () => {
-        if (!driveConfig) {
-            setUploadError('Drive設定がありません');
-            return false;
-        }
-
         if (!isConfigValid()) {
-            setUploadError('サインインするか、アクセストークンを設定してください');
+            setUploadError('サインインしてください');
             return false;
         }
 
@@ -121,34 +107,16 @@ export function useGoogleDrive() {
         setUploadError(null);
 
         try {
-            const periodDays = await loadExportPeriodDays();
-            const startTime = getDateDaysAgo(periodDays);
-            const endTime = getEndOfToday();
-
-            // エクスポートデータを作成
-            const exportData: ExportData = {
-                exportedAt: getCurrentISOString(),
-                period: {
-                    start: startTime.toISOString(),
-                    end: endTime.toISOString(),
-                },
-                data: healthData,
-            };
-
-            // ファイルに保存
-            const fileName = generateExportFileName();
-            const fileUri = await saveJsonToFile(exportData, fileName);
-
-            // Driveにアップロード
-            const result = await uploadToDrive(fileUri, fileName, driveConfig);
+            // 設定からフォルダIDを取得してエクスポート
+            const result = await exportToSpreadsheet(healthData, driveConfig?.folderId);
 
             if (!result.success) {
-                setUploadError(result.error || 'アップロード失敗');
+                setUploadError(result.error || 'エクスポート失敗');
                 return false;
             }
 
-            // フォルダが自動作成された場合、IDを保存する
-            if (result.folderId && result.folderId !== driveConfig.folderId) {
+            // フォルダが新規作成された場合、設定に保存
+            if (result.folderId && result.folderId !== driveConfig?.folderId) {
                 const newConfig = { ...driveConfig, folderId: result.folderId };
                 await saveConfig(newConfig);
             }
@@ -161,7 +129,7 @@ export function useGoogleDrive() {
         } finally {
             setIsUploading(false);
         }
-    }, [driveConfig, healthData, isConfigValid]);
+    }, [healthData, isConfigValid, driveConfig, saveConfig]);
 
     return {
         // 状態

@@ -6,8 +6,11 @@ import {
     type User,
 } from '@react-native-google-signin/google-signin';
 
-// Google Drive APIのスコープ
-const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
+// Google Drive APIとGoogle Sheets APIのスコープ
+const SCOPES = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/spreadsheets',
+];
 
 /**
  * Google Sign-Inを設定
