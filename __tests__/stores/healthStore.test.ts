@@ -18,20 +18,20 @@ describe('healthStore', () => {
         expect(state.error).toBeNull();
     });
 
-    it('setStepsでステップデータを設定できる', () => {
-        const steps = [
-            { date: '2026-01-16', count: 8000, startTime: '2026-01-16T00:00:00Z', endTime: '2026-01-16T23:59:59Z' },
-        ];
-        useHealthStore.getState().setSteps(steps);
-        expect(useHealthStore.getState().healthData.steps).toEqual(steps);
-    });
-
-    it('setWeightで体重データを設定できる', () => {
-        const weight = [
-            { date: '2026-01-16', value: 72.5, unit: 'kg' as const, time: '2026-01-16T07:00:00Z' },
-        ];
-        useHealthStore.getState().setWeight(weight);
-        expect(useHealthStore.getState().healthData.weight).toEqual(weight);
+    it('setAllDataですべてのデータを設定できる', () => {
+        const healthData = {
+            steps: [{ date: '2026-01-16', count: 8000 }],
+            weight: [{ date: '2026-01-16', value: 72.5, unit: 'kg' as const, time: '2026-01-16T07:00:00Z' }],
+            bodyFat: [],
+            totalCaloriesBurned: [],
+            basalMetabolicRate: [],
+            sleep: [],
+            exercise: [],
+            nutrition: [],
+        };
+        useHealthStore.getState().setAllData(healthData);
+        expect(useHealthStore.getState().healthData.steps).toEqual(healthData.steps);
+        expect(useHealthStore.getState().healthData.weight).toEqual(healthData.weight);
     });
 
     it('setLoadingでローディング状態を設定できる', () => {
@@ -58,7 +58,17 @@ describe('healthStore', () => {
 
     it('resetで初期状態に戻る', () => {
         // データを設定
-        useHealthStore.getState().setSteps([{ date: '2026-01-16', count: 8000, startTime: '', endTime: '' }]);
+        const healthData = {
+            steps: [{ date: '2026-01-16', count: 8000 }],
+            weight: [],
+            bodyFat: [],
+            totalCaloriesBurned: [],
+            basalMetabolicRate: [],
+            sleep: [],
+            exercise: [],
+            nutrition: [],
+        };
+        useHealthStore.getState().setAllData(healthData);
         useHealthStore.getState().setLoading(true);
         useHealthStore.getState().setError('error');
         useHealthStore.getState().setLastSyncTime('2026-01-16T17:00:00Z');

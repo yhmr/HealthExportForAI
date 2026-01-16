@@ -3,8 +3,6 @@
 export interface StepsData {
     date: string;
     count: number;
-    startTime: string;
-    endTime: string;
 }
 
 export interface WeightData {
@@ -35,8 +33,6 @@ export interface BasalMetabolicRateData {
 
 export interface SleepData {
     date: string;
-    startTime: string;
-    endTime: string;
     durationMinutes: number;
     deepSleepPercentage?: number;
 }
@@ -44,8 +40,6 @@ export interface SleepData {
 export interface ExerciseData {
     date: string;
     type: string;
-    startTime: string;
-    endTime: string;
     durationMinutes: number;
 }
 

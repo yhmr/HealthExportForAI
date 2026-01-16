@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { HealthData, StepsData, WeightData, BodyFatData, CaloriesData, BasalMetabolicRateData, SleepData, ExerciseData, NutritionData } from '../types/health';
+import type { HealthData } from '../types/health';
 
 interface HealthStore {
     // データ
@@ -9,14 +9,6 @@ interface HealthStore {
     error: string | null;
 
     // アクション
-    setSteps: (steps: StepsData[]) => void;
-    setWeight: (weight: WeightData[]) => void;
-    setBodyFat: (bodyFat: BodyFatData[]) => void;
-    setTotalCaloriesBurned: (calories: CaloriesData[]) => void;
-    setBasalMetabolicRate: (bmr: BasalMetabolicRateData[]) => void;
-    setSleep: (sleep: SleepData[]) => void;
-    setExercise: (exercise: ExerciseData[]) => void;
-    setNutrition: (nutrition: NutritionData[]) => void;
     setAllData: (data: HealthData) => void;
     setLastSyncTime: (time: string) => void;
     setLoading: (loading: boolean) => void;
@@ -40,46 +32,6 @@ export const useHealthStore = create<HealthStore>((set) => ({
     lastSyncTime: null,
     isLoading: false,
     error: null,
-
-    setSteps: (steps) =>
-        set((state) => ({
-            healthData: { ...state.healthData, steps },
-        })),
-
-    setWeight: (weight) =>
-        set((state) => ({
-            healthData: { ...state.healthData, weight },
-        })),
-
-    setBodyFat: (bodyFat) =>
-        set((state) => ({
-            healthData: { ...state.healthData, bodyFat },
-        })),
-
-    setTotalCaloriesBurned: (totalCaloriesBurned) =>
-        set((state) => ({
-            healthData: { ...state.healthData, totalCaloriesBurned },
-        })),
-
-    setBasalMetabolicRate: (basalMetabolicRate) =>
-        set((state) => ({
-            healthData: { ...state.healthData, basalMetabolicRate },
-        })),
-
-    setSleep: (sleep) =>
-        set((state) => ({
-            healthData: { ...state.healthData, sleep },
-        })),
-
-    setExercise: (exercise) =>
-        set((state) => ({
-            healthData: { ...state.healthData, exercise },
-        })),
-
-    setNutrition: (nutrition) =>
-        set((state) => ({
-            healthData: { ...state.healthData, nutrition },
-        })),
 
     setAllData: (data) => set({ healthData: data }),
 

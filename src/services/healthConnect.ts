@@ -114,26 +114,14 @@ export async function fetchStepsData(
             const date = formatDate(record.startTime); // 日付を取得 (yyyy-MM-dd)
 
             if (!aggregation[date]) {
-                // 初めての日は初期化
                 aggregation[date] = {
                     date,
                     count: 0,
-                    startTime: record.startTime, // その日の最初の記録時刻
-                    endTime: record.endTime,     // その日の最新の記録時刻（随時更新）
                 };
             }
 
             // 歩数を加算
             aggregation[date].count += record.count;
-
-            // 終了時刻を更新（より遅い時間があれば）
-            if (new Date(record.endTime) > new Date(aggregation[date].endTime)) {
-                aggregation[date].endTime = record.endTime;
-            }
-            // 開始時刻を更新（より早い時間があれば）
-            if (new Date(record.startTime) < new Date(aggregation[date].startTime)) {
-                aggregation[date].startTime = record.startTime;
-            }
         }
 
         // マップを配列に変換して返却
@@ -366,8 +354,6 @@ export async function fetchSleepData(
             if (!aggregation[date]) {
                 aggregation[date] = {
                     date,
-                    startTime: record.startTime,
-                    endTime: record.endTime,
                     durationMinutes: 0,
                     totalDeepSleepMinutes: 0,
                 };
@@ -375,16 +361,6 @@ export async function fetchSleepData(
 
             aggregation[date].durationMinutes += durationMinutes;
             aggregation[date].totalDeepSleepMinutes += deepSleepMinutes;
-
-            // 時間の更新
-            if (start < new Date(aggregation[date].startTime)) {
-                aggregation[date].startTime = record.startTime;
-            }
-            if (end > new Date(aggregation[date].endTime)) {
-                aggregation[date].endTime = record.endTime;
-            }
-
-            // ステージ情報があれば追加など（今回は合計時間重視のため詳細ロジックは省略）
         }
 
         return Object.values(aggregation)
@@ -442,21 +418,11 @@ export async function fetchExerciseData(
                 aggregation[key] = {
                     date,
                     type,
-                    startTime: record.startTime,
-                    endTime: record.endTime,
                     durationMinutes: 0,
                 };
             }
 
             aggregation[key].durationMinutes += durationMinutes;
-
-            // 時間の更新
-            if (start < new Date(aggregation[key].startTime)) {
-                aggregation[key].startTime = record.startTime;
-            }
-            if (end > new Date(aggregation[key].endTime)) {
-                aggregation[key].endTime = record.endTime;
-            }
         }
 
         return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
