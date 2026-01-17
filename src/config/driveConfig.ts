@@ -2,6 +2,7 @@
 
 export interface DriveConfig {
     folderId: string;
+    folderName?: string;
 }
 
 // 設定ファイルのパス（アプリ内では手動で設定を読み込む）
@@ -15,6 +16,7 @@ export const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_WEB_CLIENT_ID || '';
  */
 export const DEFAULT_DRIVE_CONFIG: DriveConfig = {
     folderId: '',
+    folderName: '',
 };
 
 /**

@@ -1,8 +1,9 @@
 // ホーム画面
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { Header } from '../src/components/Header';
 import { DataCard } from '../src/components/DataCard';
 import { SyncButton } from '../src/components/SyncButton';
@@ -33,14 +34,19 @@ export default function HomeScreen() {
         exportAndUpload,
     } = useGoogleDrive();
 
-    // 初期化
-    useEffect(() => {
-        const setup = async () => {
-            await initialize();
-            await loadConfig();
-        };
-        setup();
-    }, [initialize, loadConfig]);
+    // 初期化 & 画面フォーカス時に設定再読み込み
+    useFocusEffect(
+        useCallback(() => {
+            const setup = async () => {
+                // Initializeは初回のみで良いが、Configは毎回最新にする
+                if (!isInitialized) {
+                    await initialize();
+                }
+                await loadConfig();
+            };
+            setup();
+        }, [initialize, loadConfig, isInitialized])
+    );
 
     // エラー表示
     useEffect(() => {

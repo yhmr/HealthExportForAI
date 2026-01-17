@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useHealthStore } from '../stores/healthStore';
-import { exportToSpreadsheet } from '../services/googleSheets';
+import { exportToSpreadsheet, DEFAULT_FOLDER_NAME } from '../services/googleSheets';
 import {
     configureGoogleSignIn,
     isSignedIn,
@@ -108,16 +108,35 @@ export function useGoogleDrive() {
 
         try {
             // 設定からフォルダIDを取得してエクスポート
-            const result = await exportToSpreadsheet(healthData, driveConfig?.folderId);
+            // フォルダIDがない場合、またはフォルダ名が指定されている場合はそちらを優先するロジックは
+            // exportToSpreadsheet側で制御するため、ここではConfigをそのまま渡せればベストだが
+            // 現状のexportToSpreadsheetは (healthData, folderId) なので、
+            // フォルダを作り直す/探すロジックは呼び出し前に整理するか、サービス側を変える必要がある。
+            // 今回はサービス側(googleSheets.ts, googleDrive.ts)を修正する計画だったが
+            // 実装計画では「サービス層の変更」が含まれていない（googleDrive.tsのみ変更済み）。
+            // 既存のgoogleSheets.tsはまだfolderIdしか受け取らない。
+            // そのため、ここでfolderIdが空ならfolderNameからIDを取得するロジックを入れるか、
+            // 設定画面で「選択」した時点でIDが確定している前提とする。
+            // FolderPickerを使った場合、必ずIDが返ってくるので、ここではfolderIdが正しく設定されていることを期待する。
+            // 万が一IDがなく名前だけある場合の救済措置として名前作成を入れるのもありだが、
+            // 今回はシンプルに既存ロジック(IDがあれば使う、なければデフォルト名で作る)を維持し、
+            // PickerでID・名前の両方をセットすることで整合性を保つ。
+
+            const result = await exportToSpreadsheet(healthData, driveConfig?.folderId, driveConfig?.folderName);
 
             if (!result.success) {
                 setUploadError(result.error || 'エクスポート失敗');
                 return false;
             }
 
-            // フォルダが新規作成された場合、設定に保存
+            // フォルダが新規作成された場合（IDがなかった場合）、設定に保存
+            // デフォルト名で作成されたので、名前も一緒に保存する
             if (result.folderId && result.folderId !== driveConfig?.folderId) {
-                const newConfig = { ...driveConfig, folderId: result.folderId };
+                const newConfig = {
+                    ...driveConfig,
+                    folderId: result.folderId,
+                    folderName: driveConfig?.folderName || DEFAULT_FOLDER_NAME,
+                };
                 await saveConfig(newConfig);
             }
 

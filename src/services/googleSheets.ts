@@ -37,14 +37,46 @@ export function getSpreadsheetName(year: number): string {
 }
 
 /**
+ * 指定したIDのフォルダが存在するか確認
+ */
+async function checkFolderExists(
+    folderId: string,
+    accessToken: string
+): Promise<boolean> {
+    try {
+        const url = `${DRIVE_API_URL}/${folderId}?fields=id,trashed`;
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const data = await response.json();
+        // trashedの場合も存在しないとみなす
+        return !data.trashed;
+    } catch (error) {
+        console.error('[checkFolderExists] Error:', error);
+        return false;
+    }
+}
+
+/**
  * 指定した年のスプレッドシートを検索
  */
 export async function findSpreadsheet(
     year: number,
-    accessToken: string
+    accessToken: string,
+    folderId?: string
 ): Promise<string | null> {
     const name = getSpreadsheetName(year);
-    const query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${name}' and trashed=false`;
+    let query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${name}' and trashed=false`;
+
+    // フォルダIDが指定されている場合は、そのフォルダ内を検索
+    if (folderId) {
+        query += ` and '${folderId}' in parents`;
+    }
 
     const response = await fetch(
         `${DRIVE_API_URL}?q=${encodeURIComponent(query)}`,
@@ -434,7 +466,8 @@ export function formatHealthDataToRows(
  */
 export async function exportToSpreadsheet(
     healthData: HealthData,
-    folderId?: string
+    folderId?: string,
+    folderName?: string
 ): Promise<{ success: boolean; spreadsheetId?: string; folderId?: string; error?: string }> {
     try {
         const accessToken = await getAccessToken();
@@ -442,10 +475,25 @@ export async function exportToSpreadsheet(
             return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
         }
 
-        // フォルダIDがない場合、デフォルトフォルダを検索/作成
+        // フォルダIDの検証と準備
+        // 指定されたフォルダが存在するか確認し、存在しなければデフォルトフォルダを使用
         let targetFolderId = folderId;
+        let folderWasRecreated = false;
+
+        if (targetFolderId) {
+            // 指定されたフォルダが存在するか確認
+            const folderCheck = await checkFolderExists(targetFolderId, accessToken);
+            if (!folderCheck) {
+                console.log('[Export] Specified folder not found, falling back to default');
+                targetFolderId = undefined;
+                folderWasRecreated = true;
+            }
+        }
+
         if (!targetFolderId) {
-            targetFolderId = await findOrCreateFolder(DEFAULT_FOLDER_NAME, accessToken) ?? undefined;
+            // フォルダを検索/作成（指定された名前またはデフォルト名を使用）
+            const targetFolderName = folderName || DEFAULT_FOLDER_NAME;
+            targetFolderId = await findOrCreateFolder(targetFolderName, accessToken) ?? undefined;
         }
 
         // 対象の年を取得（データの最新日付から）
@@ -488,7 +536,7 @@ export async function exportToSpreadsheet(
         // 各年のデータを処理
         for (const [year, yearData] of dataByYear) {
             // スプレッドシートを検索
-            let spreadsheetId = await findSpreadsheet(year, accessToken);
+            let spreadsheetId = await findSpreadsheet(year, accessToken, targetFolderId);
             let existingHeaders: string[] = [];
             let existingRows: string[][] = [];
 

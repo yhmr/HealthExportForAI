@@ -1,6 +1,6 @@
 // 設定画面（認証統合版）
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -16,9 +16,13 @@ import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import {
     loadExportPeriodDays,
     saveExportPeriodDays,
+    saveDriveConfig,
 } from '../src/services/storage';
 import type { DriveConfig } from '../src/config/driveConfig';
-import { DEFAULT_FOLDER_NAME } from '../src/services/googleDrive';
+
+import { DEFAULT_FOLDER_NAME, getFolder } from '../src/services/googleDrive';
+import { getAccessToken } from '../src/services/googleAuth';
+import { FolderPickerModal } from '../src/components/FolderPickerModal';
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -34,19 +38,58 @@ export default function SettingsScreen() {
     } = useGoogleDrive();
 
     const [folderId, setFolderId] = useState('');
+    const [folderName, setFolderName] = useState('');
     const [periodDays, setPeriodDays] = useState('7');
+    const [isPickerVisible, setPickerVisible] = useState(false);
 
     // 設定を読み込み
     useEffect(() => {
         const load = async () => {
-            const config = await loadConfig();
-            if (config) {
-                setFolderId(config.folderId);
+            try {
+                const config = await loadConfig();
+                const days = await loadExportPeriodDays();
+                setPeriodDays(days.toString());
+
+                // フォルダIDとフォルダ名を設定
+                // 注意: フォルダIDが空の場合はエクスポート時にデフォルトフォルダが自動作成される
+                const currentFolderId = config?.folderId || '';
+                const currentFolderName = config?.folderName || '';
+
+                setFolderId(currentFolderId);
+
+                if (currentFolderId && currentFolderName) {
+                    // IDと名前が両方ある = そのまま表示
+                    setFolderName(currentFolderName);
+                } else if (currentFolderId) {
+                    // IDはあるが名前がない = APIから取得を試みる
+                    const token = await getAccessToken();
+                    if (token) {
+                        const folder = await getFolder(currentFolderId, token);
+                        if (folder) {
+                            setFolderName(folder.name);
+                            // 設定を更新して保存
+                            await saveDriveConfig({ folderId: currentFolderId, folderName: folder.name });
+                        } else {
+                            // フォルダが見つからない = 削除された可能性があるのでリセット
+                            setFolderName(DEFAULT_FOLDER_NAME);
+                            setFolderId('');
+                            await saveDriveConfig({ folderId: '', folderName: '' });
+                        }
+                    } else {
+                        // 認証されていない = デフォルト名を暫定表示
+                        setFolderName(DEFAULT_FOLDER_NAME);
+                    }
+                } else {
+                    // IDがない = デフォルトフォルダが使われる
+                    setFolderName(DEFAULT_FOLDER_NAME);
+                }
+            } catch (error) {
+                console.error('[Settings] Load config error:', error);
+                setFolderName(DEFAULT_FOLDER_NAME);
             }
-            const days = await loadExportPeriodDays();
-            setPeriodDays(days.toString());
         };
         load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loadConfig]);
 
     // 認証エラー表示
@@ -56,29 +99,39 @@ export default function SettingsScreen() {
         }
     }, [authError]);
 
-    // 保存ハンドラ
-    const handleSave = async () => {
-        const config: DriveConfig = {
-            folderId,
-        };
-        await saveConfig(config);
+    // エクスポート期間の自動保存（デバウンス付き）
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isInitialLoadRef = useRef(true);
 
-        const days = parseInt(periodDays, 10);
-        if (!isNaN(days) && days > 0) {
-            await saveExportPeriodDays(days);
+    useEffect(() => {
+        // 初回読み込み時は保存しない
+        if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+            return;
         }
 
-        Alert.alert('保存完了', '設定を保存しました', [
-            { text: 'OK', onPress: () => router.back() },
-        ]);
-    };
+        // 前回のタイマーをクリア
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        // 500ms後に保存
+        debounceTimerRef.current = setTimeout(async () => {
+            const days = parseInt(periodDays, 10);
+            if (!isNaN(days) && days > 0) {
+                await saveExportPeriodDays(days);
+            }
+        }, 500);
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, [periodDays]);
 
     // サインインハンドラ
     const handleSignIn = async () => {
-        // 一旦設定を保存してからサインイン
-        const config: DriveConfig = { folderId };
-        await saveConfig(config);
-
         await signIn();
     };
 
@@ -124,18 +177,37 @@ export default function SettingsScreen() {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Google Drive</Text>
 
-                    <Text style={styles.label}>フォルダID（任意）</Text>
+                    <Text style={styles.label}>保存先フォルダ</Text>
                     <TextInput
-                        style={styles.input}
-                        value={folderId}
-                        onChangeText={setFolderId}
-                        placeholder="自動作成されます"
+                        style={[styles.input, styles.readOnlyInput]}
+                        value={folderName}
+                        editable={false}
+                        placeholder={DEFAULT_FOLDER_NAME}
                         placeholderTextColor="#666"
                     />
-                    <Text style={styles.hint}>
-                        💡 空の場合は {DEFAULT_FOLDER_NAME} が自動作成されます
-                    </Text>
+
+                    <TouchableOpacity
+                        style={styles.selectButton}
+                        onPress={() => setPickerVisible(true)}
+                    >
+                        <Text style={styles.selectButtonText}>📂 保存先を変更</Text>
+                    </TouchableOpacity>
                 </View>
+
+                {/* Folder Picker Modal */}
+                <FolderPickerModal
+                    visible={isPickerVisible}
+                    onClose={() => setPickerVisible(false)}
+                    initialFolderId={folderId}
+                    initialFolderName={folderName}
+                    onSelect={async (id, name) => {
+                        setFolderId(id);
+                        setFolderName(name);
+                        setPickerVisible(false);
+                        // 選択時に自動保存
+                        await saveDriveConfig({ folderId: id, folderName: name });
+                    }}
+                />
 
                 {/* エクスポート設定 */}
                 <View style={styles.section}>
@@ -151,11 +223,6 @@ export default function SettingsScreen() {
                         keyboardType="number-pad"
                     />
                 </View>
-
-                {/* 保存ボタン */}
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-                    <Text style={styles.saveButtonText}>設定を保存</Text>
-                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
@@ -273,5 +340,21 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    readOnlyInput: {
+        backgroundColor: '#161622',
+        color: '#9ca3af',
+    },
+    selectButton: {
+        backgroundColor: '#4b5563',
+        borderRadius: 8,
+        padding: 12,
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    selectButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
     },
 });
