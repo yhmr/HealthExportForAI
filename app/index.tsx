@@ -106,7 +106,7 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header title="Connect Health Connect" />
+            <Header title="Health Export For AI" />
 
             <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
                 {/* ステータス表示 */}

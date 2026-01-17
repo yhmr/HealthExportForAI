@@ -9,7 +9,7 @@ const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/file
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名
-export const DEFAULT_FOLDER_NAME = 'Connect Health Connect Data';
+export const DEFAULT_FOLDER_NAME = 'Health Export For AI Data';
 
 /**
  * JSONデータをファイルに保存

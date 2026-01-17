@@ -1,4 +1,4 @@
-# Connect Health Connect
+# Health Export For AI
 
 React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、JSON 形式で Google Drive にエクスポートして NotebookLM で分析できるようにします。
 

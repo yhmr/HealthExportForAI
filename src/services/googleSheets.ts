@@ -8,7 +8,7 @@ const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // デフォルトの保存フォルダ名
-export const DEFAULT_FOLDER_NAME = 'Connect Health Connect Data';
+export const DEFAULT_FOLDER_NAME = 'Health Export For AI Data';
 
 // スプレッドシートの固定ヘッダー（動的エクササイズカラムを除く）
 const FIXED_HEADERS = [
