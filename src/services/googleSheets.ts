@@ -13,6 +13,7 @@ export const DEFAULT_FOLDER_NAME = 'Health Export For AI Data';
 // スプレッドシートの固定ヘッダー（動的エクササイズカラムを除く）
 const FIXED_HEADERS = [
     'Date',
+    'Day of Week',
     'Steps',
     'Weight (kg)',
     'Body Fat (%)',
@@ -28,6 +29,21 @@ const FIXED_HEADERS = [
     'Saturated Fat (g)',
     'Exercise: Total (min)',
 ];
+
+/**
+ * 日付文字列から曜日名を取得（デバイスのタイムゾーンを使用）
+ * @param dateStr YYYY-MM-DD形式の日付文字列
+ * @returns 曜日名（英語）
+ */
+function getDayOfWeek(dateStr: string): string {
+    // 日付文字列をローカルタイムとして解釈
+    // YYYY-MM-DD形式をT00:00:00を付けずにパースするとUTCとして解釈されるので、
+    // 明示的にローカルタイムとして処理する
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // ローカルタイムで作成
+
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+}
 
 /**
  * 年からスプレッドシート名を生成
@@ -434,6 +450,7 @@ export function formatHealthDataToRows(
 
         const row: (string | number | null)[] = [
             date,
+            getDayOfWeek(date),
             stepsMap.get(date) ?? null,
             weightMap.get(date) ?? null,
             bodyFatMap.get(date) ?? null,
