@@ -1,61 +1,10 @@
-// Google Drive サービス（認証統合版）
+// Google Drive サービス
+// フォルダ操作に特化したサービス
 
-import * as FileSystem from 'expo-file-system/legacy';
-import type { DriveConfig } from '../config/driveConfig';
-import type { ExportData } from '../types/health';
-import { getAccessToken } from './googleAuth';
-
-const GOOGLE_DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名
 export const DEFAULT_FOLDER_NAME = 'Health Export For AI Data';
-
-/**
- * JSONデータをファイルに保存
- */
-export async function saveJsonToFile(
-    data: ExportData,
-    fileName: string
-): Promise<string> {
-    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(data, null, 2));
-    return fileUri;
-}
-
-/**
- * 指定した名前のフォルダを検索または作成
- */
-export async function findOrCreateFolder(
-    folderName: string,
-    accessToken: string
-): Promise<string | null> {
-    try {
-        // 1. フォルダを検索
-        const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
-        const searchResponse = await fetch(
-            `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`,
-            {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            }
-        );
-
-        if (searchResponse.ok) {
-            const data = await searchResponse.json();
-            if (data.files && data.files.length > 0) {
-                return data.files[0].id;
-            }
-        } else {
-            console.error('Search folder failed:', searchResponse.status, await searchResponse.text());
-        }
-
-        // 2. フォルダがなければ作成
-        return await createFolder(folderName, accessToken);
-    } catch (error) {
-        console.error('フォルダ作成エラー:', error);
-        return null;
-    }
-}
 
 /**
  * フォルダを作成
@@ -106,8 +55,6 @@ export async function listFolders(
     parentId: string = 'root'
 ): Promise<{ id: string; name: string }[]> {
     try {
-        // trashされていないフォルダを検索
-        // parentIdが指定されている場合はその直下、なければroot直下
         const query = `mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
         const url = `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}&orderBy=name&fields=files(id,name)`;
 
@@ -156,93 +103,59 @@ export async function getFolder(
 }
 
 /**
- * ファイルをGoogle Driveにアップロード
+ * 指定したIDのフォルダが存在するか確認
  */
-export async function uploadToDrive(
-    fileUri: string,
-    fileName: string,
-    config: DriveConfig
-): Promise<{ success: boolean; fileId?: string; error?: string; folderId?: string }> {
+export async function checkFolderExists(
+    folderId: string,
+    accessToken: string
+): Promise<boolean> {
     try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-            return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
-        }
-
-        let folderId = config.folderId;
-
-        // フォルダIDがない場合、自動作成を試みる
-        if (!folderId) {
-            const id = await findOrCreateFolder(DEFAULT_FOLDER_NAME, accessToken);
-            if (id) {
-                folderId = id;
-            } else {
-                return { success: false, error: '保存先フォルダを作成できませんでした' };
-            }
-        }
-
-        // ファイル内容を読み込み
-        const fileContent = await FileSystem.readAsStringAsync(fileUri);
-
-        // メタデータ
-        const metadata = {
-            name: fileName,
-            mimeType: 'application/json',
-            parents: [folderId],
-        };
-
-        // マルチパートリクエストのboundary
-        const boundary = '-------314159265358979323846';
-        const delimiter = `\r\n--${boundary}\r\n`;
-        const closeDelimiter = `\r\n--${boundary}--`;
-
-        // リクエストボディを構築
-        const body =
-            delimiter +
-            'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-            JSON.stringify(metadata) +
-            delimiter +
-            'Content-Type: application/json\r\n\r\n' +
-            fileContent +
-            closeDelimiter;
-
-        // アップロードリクエスト
-        const response = await fetch(`${GOOGLE_DRIVE_UPLOAD_URL}?uploadType=multipart`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': `multipart/related; boundary=${boundary}`,
-            },
-            body,
+        const url = `${GOOGLE_DRIVE_API_URL}/${folderId}?fields=id,trashed`;
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            return {
-                success: false,
-                error: errorData.error?.message || `HTTP ${response.status}`,
-            };
+            return false;
         }
 
-        const result = await response.json();
-        return {
-            success: true,
-            fileId: result.id,
-            folderId, // 自動作成された場合のためにIDを返す
-        };
+        const data = await response.json();
+        // trashedの場合も存在しないとみなす
+        return !data.trashed;
     } catch (error) {
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : '不明なエラー',
-        };
+        console.error('[checkFolderExists] Error:', error);
+        return false;
     }
 }
 
 /**
- * エクスポートファイル名を生成
+ * 指定した名前のフォルダを検索または作成
  */
-export function generateExportFileName(): string {
-    const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    return `health-data-${timestamp}.json`;
+export async function findOrCreateFolder(
+    folderName: string,
+    accessToken: string
+): Promise<string | null> {
+    try {
+        // 1. フォルダを検索
+        const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
+        const searchResponse = await fetch(
+            `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`,
+            {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            }
+        );
+
+        if (searchResponse.ok) {
+            const data = await searchResponse.json();
+            if (data.files && data.files.length > 0) {
+                return data.files[0].id;
+            }
+        }
+
+        // 2. フォルダがなければ作成
+        return await createFolder(folderName, accessToken);
+    } catch (error) {
+        console.error('フォルダ検索/作成エラー:', error);
+        return null;
+    }
 }

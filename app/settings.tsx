@@ -20,7 +20,7 @@ import {
 } from '../src/services/storage';
 import type { DriveConfig } from '../src/config/driveConfig';
 
-import { DEFAULT_FOLDER_NAME, getFolder } from '../src/services/googleDrive';
+import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/googleDrive';
 import { getAccessToken } from '../src/services/googleAuth';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 
