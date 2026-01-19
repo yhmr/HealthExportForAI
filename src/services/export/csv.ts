@@ -3,9 +3,8 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
-import { uploadFile, findOrCreateFolder, findFile, downloadFileContent, updateFile, DEFAULT_FOLDER_NAME } from '../googleDrive';
-import { getAccessToken } from '../googleAuth';
 import { formatHealthDataToRows, getExportFileName } from './utils';
+import type { StorageAdapter } from '../storage/interfaces';
 
 // エクスポート結果の型
 export interface ExportResult {
@@ -75,19 +74,20 @@ function parseCSVRow(line: string): string[] {
  */
 export async function exportToCSV(
     healthData: HealthData,
-    options?: ExportOptions
+    options: ExportOptions | undefined,
+    storageAdapter: StorageAdapter
 ): Promise<ExportResult> {
     try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-            return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
+        const isInitialized = await storageAdapter.initialize();
+        if (!isInitialized) {
+            return { success: false, error: 'ストレージの初期化に失敗しました。サインイン状態を確認してください。' };
         }
 
         // フォルダIDを確認/作成
         let folderId = options?.folderId;
         if (!folderId) {
-            const folderName = options?.folderName || DEFAULT_FOLDER_NAME;
-            folderId = await findOrCreateFolder(folderName, accessToken) ?? undefined;
+            const folderName = options?.folderName || storageAdapter.defaultFolderName;
+            folderId = await storageAdapter.findOrCreateFolder(folderName) ?? undefined;
         }
 
         // データを行形式に変換
@@ -107,12 +107,12 @@ export async function exportToCSV(
             const fileName = getExportFileName(year, 'csv', true);
 
             // 既存ファイルを検索
-            const existingFile = await findFile(fileName, 'text/csv', accessToken, folderId);
+            const existingFile = await storageAdapter.findFile(fileName, 'text/csv', folderId);
             let existingRowMap = new Map<string, string[]>();
 
             if (existingFile) {
                 // 既存ファイルの内容をダウンロード
-                const existingContent = await downloadFileContent(existingFile.id, accessToken);
+                const existingContent = await storageAdapter.downloadFileContent(existingFile.id);
                 if (existingContent) {
                     existingRowMap = parseCSV(existingContent);
                 }
@@ -122,7 +122,7 @@ export async function exportToCSV(
             for (const [date, rowData] of newRowsMap) {
                 if (new Date(date).getFullYear() === year) {
                     // 文字列配列に変換
-                    const stringRow = rowData.map(cell =>
+                    const stringRow = rowData.map((cell: string | number | null) =>
                         cell === null ? '' : String(cell)
                     );
                     existingRowMap.set(date, stringRow);
@@ -134,7 +134,7 @@ export async function exportToCSV(
 
             // CSVコンテンツを生成
             const csvLines: string[] = [];
-            csvLines.push(headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+            csvLines.push(headers.map((h: string) => `"${h.replace(/"/g, '""')}"`).join(','));
 
             for (const date of sortedDates) {
                 const row = existingRowMap.get(date)!;
@@ -151,7 +151,7 @@ export async function exportToCSV(
 
             // アップロード or 更新
             if (existingFile) {
-                const success = await updateFile(existingFile.id, csvContent, 'text/csv', accessToken);
+                const success = await storageAdapter.updateFile(existingFile.id, csvContent, 'text/csv');
                 if (success) {
                     console.log(`[CSV Export] Updated: ${fileName}`);
                     lastFileId = existingFile.id;
@@ -159,7 +159,7 @@ export async function exportToCSV(
                     return { success: false, error: 'CSVファイルの更新に失敗しました' };
                 }
             } else {
-                const fileId = await uploadFile(csvContent, fileName, 'text/csv', accessToken, folderId);
+                const fileId = await storageAdapter.uploadFile(csvContent, fileName, 'text/csv', folderId);
                 if (fileId) {
                     console.log(`[CSV Export] Created: ${fileName}`);
                     lastFileId = fileId;

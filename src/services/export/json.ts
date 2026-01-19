@@ -3,10 +3,10 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
-import { uploadFile, findOrCreateFolder, findFile, downloadFileContent, updateFile, DEFAULT_FOLDER_NAME } from '../googleDrive';
-import { getAccessToken } from '../googleAuth';
 import { getExportFileName } from './utils';
 import type { ExportResult, ExportOptions } from './csv';
+import type { StorageAdapter } from '../storage/interfaces';
+import { DEFAULT_FOLDER_NAME } from '../storage/googleDrive'; // 定数のみインポート
 
 // 日付ごとのデータ構造
 interface DailyRecord {
@@ -113,19 +113,20 @@ function healthDataToDailyRecords(healthData: HealthData): Map<string, DailyReco
  */
 export async function exportToJSON(
     healthData: HealthData,
-    options?: ExportOptions
+    options: ExportOptions | undefined,
+    storageAdapter: StorageAdapter
 ): Promise<ExportResult> {
     try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-            return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
+        const isInitialized = await storageAdapter.initialize();
+        if (!isInitialized) {
+            return { success: false, error: 'ストレージの初期化に失敗しました。サインイン状態を確認してください。' };
         }
 
         // フォルダIDを確認/作成
         let folderId = options?.folderId;
         if (!folderId) {
-            const folderName = options?.folderName || DEFAULT_FOLDER_NAME;
-            folderId = await findOrCreateFolder(folderName, accessToken) ?? undefined;
+            const folderName = options?.folderName || storageAdapter.defaultFolderName;
+            folderId = await storageAdapter.findOrCreateFolder(folderName) ?? undefined;
         }
 
         // データを日付ごとのレコードに変換
@@ -145,12 +146,12 @@ export async function exportToJSON(
             const fileName = getExportFileName(year, 'json', true);
 
             // 既存ファイルを検索
-            const existingFile = await findFile(fileName, 'application/json', accessToken, folderId);
+            const existingFile = await storageAdapter.findFile(fileName, 'application/json', folderId);
             let existingRecordsMap = new Map<string, DailyRecord>();
 
             if (existingFile) {
                 // 既存ファイルの内容をダウンロード
-                const existingContent = await downloadFileContent(existingFile.id, accessToken);
+                const existingContent = await storageAdapter.downloadFileContent(existingFile.id);
                 if (existingContent) {
                     try {
                         const existingData = JSON.parse(existingContent);
@@ -197,7 +198,7 @@ export async function exportToJSON(
 
             // アップロード or 更新
             if (existingFile) {
-                const success = await updateFile(existingFile.id, jsonContent, 'application/json', accessToken);
+                const success = await storageAdapter.updateFile(existingFile.id, jsonContent, 'application/json');
                 if (success) {
                     console.log(`[JSON Export] Updated: ${fileName}`);
                     lastFileId = existingFile.id;
@@ -205,7 +206,7 @@ export async function exportToJSON(
                     return { success: false, error: 'JSONファイルの更新に失敗しました' };
                 }
             } else {
-                const fileId = await uploadFile(jsonContent, fileName, 'application/json', accessToken, folderId);
+                const fileId = await storageAdapter.uploadFile(jsonContent, fileName, 'application/json', folderId);
                 if (fileId) {
                     console.log(`[JSON Export] Created: ${fileName}`);
                     lastFileId = fileId;

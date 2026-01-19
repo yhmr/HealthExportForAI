@@ -3,9 +3,9 @@
 
 import type { HealthData } from '../../types/health';
 import type { ExportFormat } from '../../config/driveConfig';
-import { loadExportFormats, loadExportSheetAsPdf, loadDriveConfig } from '../storage';
-import { findOrCreateFolder, DEFAULT_FOLDER_NAME } from '../googleDrive';
-import { getAccessToken } from '../googleAuth';
+import { loadExportFormats, loadExportSheetAsPdf, loadDriveConfig } from '../preferences';
+import type { StorageAdapter, SpreadsheetAdapter } from '../storage/interfaces';
+import { getAccessToken } from '../googleAuth'; // TODO: Consider removing if not strictly needed via context
 import { exportToSpreadsheet } from './sheets';
 import { exportSpreadsheetAsPDF } from './pdf';
 import { exportToCSV } from './csv';
@@ -37,18 +37,23 @@ export interface ExportResults {
 /**
  * エクスポートコンテキストを準備
  */
-async function prepareContext(folderId?: string, folderName?: string): Promise<ExportContext | null> {
+async function prepareContext(
+    storageAdapter: StorageAdapter,
+    folderId?: string,
+    folderName?: string
+): Promise<ExportContext | null> {
     const accessToken = await getAccessToken();
     if (!accessToken) {
         return null;
     }
 
-    const targetFolderName = folderName || DEFAULT_FOLDER_NAME;
+    const targetFolderName = folderName || storageAdapter.defaultFolderName;
 
     // フォルダIDを確認/作成
     let targetFolderId = folderId;
     if (!targetFolderId) {
-        targetFolderId = await findOrCreateFolder(targetFolderName, accessToken) ?? undefined;
+        const id = await storageAdapter.findOrCreateFolder(targetFolderName);
+        targetFolderId = id ?? undefined;
     }
 
     return {
@@ -78,7 +83,11 @@ function getLatestYear(healthData: HealthData): number {
  * エクスポートを実行
  * 選択された形式すべてにエクスポートを行い、結果をまとめて返す
  */
-export async function executeExport(healthData: HealthData): Promise<ExportResults> {
+export async function executeExport(
+    healthData: HealthData,
+    storageAdapter: StorageAdapter,
+    spreadsheetAdapter: SpreadsheetAdapter
+): Promise<ExportResults> {
     const results: FormatResult[] = [];
 
     try {
@@ -88,7 +97,12 @@ export async function executeExport(healthData: HealthData): Promise<ExportResul
         const driveConfig = await loadDriveConfig();
 
         // エクスポートコンテキストを準備
-        const context = await prepareContext(driveConfig?.folderId, driveConfig?.folderName);
+        const context = await prepareContext(
+            storageAdapter,
+            driveConfig?.folderId,
+            driveConfig?.folderName
+        );
+
         if (!context) {
             return {
                 success: false,
@@ -105,7 +119,10 @@ export async function executeExport(healthData: HealthData): Promise<ExportResul
             const result = await exportToSpreadsheet(
                 healthData,
                 context.folderId,
-                context.folderName
+                context.folderName,
+                undefined,
+                storageAdapter,
+                spreadsheetAdapter
             );
 
             if (result.success) {
@@ -120,6 +137,7 @@ export async function executeExport(healthData: HealthData): Promise<ExportResul
                 if (exportAsPdf && result.spreadsheetId) {
                     const pdfResult = await exportSpreadsheetAsPDF(
                         result.spreadsheetId,
+                        storageAdapter,
                         context.folderId,
                         context.folderName,
                         latestYear
@@ -138,19 +156,27 @@ export async function executeExport(healthData: HealthData): Promise<ExportResul
 
         // CSVエクスポート（年間データ蓄積）
         if (formats.includes('csv')) {
-            const result = await exportToCSV(healthData, {
-                folderId: context.folderId,
-                folderName: context.folderName,
-            });
+            const result = await exportToCSV(
+                healthData,
+                {
+                    folderId: context.folderId,
+                    folderName: context.folderName,
+                },
+                storageAdapter
+            );
             results.push({ format: 'csv', success: result.success, error: result.error, fileId: result.fileId });
         }
 
         // JSONエクスポート（年間データ蓄積）
         if (formats.includes('json')) {
-            const result = await exportToJSON(healthData, {
-                folderId: context.folderId,
-                folderName: context.folderName,
-            });
+            const result = await exportToJSON(
+                healthData,
+                {
+                    folderId: context.folderId,
+                    folderName: context.folderName,
+                },
+                storageAdapter
+            );
             results.push({ format: 'json', success: result.success, error: result.error, fileId: result.fileId });
         }
 

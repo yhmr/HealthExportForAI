@@ -2,29 +2,24 @@
 // ヘルスデータをGoogle Spreadsheetsにエクスポート
 
 import type { HealthData } from '../../types/health';
-import { getAccessToken } from '../googleAuth';
-import { checkFolderExists, findOrCreateFolder, DEFAULT_FOLDER_NAME } from '../googleDrive';
-import {
-    findSpreadsheet,
-    createSpreadsheet,
-    getSheetData,
-    updateHeaders,
-    updateRows,
-} from '../googleSheets';
+// import type { HealthData } from '../../types/health';
 import { formatHealthDataToRows, getExportFileName } from './utils';
+import type { StorageAdapter, SpreadsheetAdapter } from '../storage/interfaces';
 
 /**
  * ヘルスデータをスプレッドシートにエクスポート
  */
 export async function exportToSpreadsheet(
     healthData: HealthData,
-    folderId?: string,
-    folderName?: string,
-    baseFileName?: string  // 基本ファイル名（年が追加される）
+    folderId: string | undefined,
+    folderName: string | undefined,
+    baseFileName: string | undefined, // 基本ファイル名（年が追加される）
+    storageAdapter: StorageAdapter,
+    spreadsheetAdapter: SpreadsheetAdapter
 ): Promise<{ success: boolean; spreadsheetId?: string; folderId?: string; error?: string }> {
     try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
+        const isInitialized = await storageAdapter.initialize();
+        if (!isInitialized) {
             return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
         }
 
@@ -33,7 +28,7 @@ export async function exportToSpreadsheet(
 
         if (targetFolderId) {
             // 指定されたフォルダが存在するか確認
-            const folderExists = await checkFolderExists(targetFolderId, accessToken);
+            const folderExists = await storageAdapter.checkFolderExists(targetFolderId);
             if (!folderExists) {
                 console.log('[Export] Specified folder not found, falling back to default');
                 targetFolderId = undefined;
@@ -42,8 +37,8 @@ export async function exportToSpreadsheet(
 
         if (!targetFolderId) {
             // フォルダを検索/作成（指定された名前またはデフォルト名を使用）
-            const targetFolderName = folderName || DEFAULT_FOLDER_NAME;
-            targetFolderId = await findOrCreateFolder(targetFolderName, accessToken) ?? undefined;
+            const targetFolderName = folderName || storageAdapter.defaultFolderName;
+            targetFolderId = await storageAdapter.findOrCreateFolder(targetFolderName) ?? undefined;
         }
 
         // 対象の年を取得（データの最新日付から）
@@ -85,13 +80,13 @@ export async function exportToSpreadsheet(
         // 各年のデータを処理
         for (const [year, yearData] of dataByYear) {
             const fileName = getExportFileName(year);
-            // ファイル名を渡す（旧実装: yearを渡していた）
-            let spreadsheetId = await findSpreadsheet(fileName, accessToken, targetFolderId);
+            // ファイル名を渡す
+            let spreadsheetId = await spreadsheetAdapter.findSpreadsheet(fileName, targetFolderId);
             let existingHeaders: string[] = [];
             let existingRows: string[][] = [];
 
             if (spreadsheetId) {
-                const sheetData = await getSheetData(spreadsheetId, accessToken);
+                const sheetData = await spreadsheetAdapter.getSheetData(spreadsheetId);
                 if (sheetData) {
                     existingHeaders = sheetData.headers;
                     existingRows = sheetData.rows;
@@ -107,14 +102,14 @@ export async function exportToSpreadsheet(
             // スプレッドシートが存在しない場合は新規作成
             if (!spreadsheetId) {
                 // ファイル名を渡す
-                spreadsheetId = await createSpreadsheet(fileName, newHeaders, accessToken, targetFolderId);
+                spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, targetFolderId);
                 if (!spreadsheetId) {
                     return { success: false, error: `${year}年のスプレッドシート作成に失敗しました` };
                 }
             } else {
                 // ヘッダーが変更された場合は更新
                 if (newHeaders.length > existingHeaders.length) {
-                    const updateResult = await updateHeaders(spreadsheetId, newHeaders, accessToken);
+                    const updateResult = await spreadsheetAdapter.updateHeaders(spreadsheetId, newHeaders);
                     if (!updateResult) {
                         console.error('ヘッダー更新に失敗しました');
                     }
@@ -145,7 +140,7 @@ export async function exportToSpreadsheet(
 
             // 全データを一括で書き込み
             if (allRows.length > 0) {
-                const success = await updateRows(spreadsheetId, 2, allRows, accessToken);
+                const success = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
                 if (!success) {
                     console.error('データ書き込みに失敗しました');
                 }

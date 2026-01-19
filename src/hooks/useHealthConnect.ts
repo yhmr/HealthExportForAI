@@ -9,7 +9,7 @@ import {
     fetchAllHealthData,
 } from '../services/healthConnect';
 import { getDateDaysAgo, getEndOfToday, getCurrentISOString } from '../utils/formatters';
-import { saveLastSyncTime, loadExportPeriodDays } from '../services/storage';
+import { saveLastSyncTime, loadExportPeriodDays } from '../services/preferences';
 
 export function useHealthConnect() {
     const [isInitialized, setIsInitialized] = useState(false);

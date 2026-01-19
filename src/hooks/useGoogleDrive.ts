@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { useHealthStore } from '../stores/healthStore';
-import { executeExport } from '../services/export';
-import { DEFAULT_FOLDER_NAME } from '../services/googleDrive';
+import { executeExport } from '../services/export/controller';
+import { GoogleDriveAdapter } from '../services/storage/googleDriveAdapter';
+import { GoogleSheetsAdapter } from '../services/storage/googleSheetsAdapter';
 import {
     configureGoogleSignIn,
     isSignedIn,
@@ -11,7 +12,7 @@ import {
     signIn,
     signOut,
 } from '../services/googleAuth';
-import { loadDriveConfig, saveDriveConfig } from '../services/storage';
+import { loadDriveConfig, saveDriveConfig } from '../services/preferences';
 import { type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
 import { getCurrentISOString } from '../utils/formatters';
 import type { User } from '@react-native-google-signin/google-signin';
@@ -109,15 +110,19 @@ export function useGoogleDrive() {
         setUploadError(null);
 
         try {
-            // exportControllerにエクスポート処理を委譲
-            const result = await executeExport(healthData);
+            // アダプターを初期化
+            const storageAdapter = new GoogleDriveAdapter();
+            const spreadsheetAdapter = new GoogleSheetsAdapter();
+
+            // exportControllerにエクスポート処理を委譲（アダプターを注入）
+            const result = await executeExport(healthData, storageAdapter, spreadsheetAdapter);
 
             // フォルダIDが新規作成された場合、設定を更新
             if (result.folderId && result.folderId !== driveConfig?.folderId) {
                 const newConfig = {
                     ...driveConfig,
                     folderId: result.folderId,
-                    folderName: driveConfig?.folderName || DEFAULT_FOLDER_NAME,
+                    folderName: driveConfig?.folderName || storageAdapter.defaultFolderName,
                 };
                 await saveConfig(newConfig);
             }

@@ -2,8 +2,8 @@
 // Google SheetsをPDF形式でエクスポートしてDriveに保存
 
 import { getAccessToken } from '../googleAuth';
-import { findOrCreateFolder, DEFAULT_FOLDER_NAME } from '../googleDrive';
 import { getExportFileName } from './utils';
+import type { StorageAdapter } from '../storage/interfaces';
 
 /**
  * ArrayBufferをBase64に変換
@@ -31,15 +31,30 @@ function extractYearFromSpreadsheetId(spreadsheetId: string): number {
  */
 export async function exportSpreadsheetAsPDF(
     spreadsheetId: string,
+    storageAdapter: StorageAdapter,
     folderId?: string,
     folderName?: string,
     year?: number
 ): Promise<{ success: boolean; fileId?: string; error?: string }> {
     try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
+        const isInitialized = await storageAdapter.initialize();
+        if (!isInitialized) {
             return { success: false, error: 'アクセストークンがありません' };
         }
+
+        // 注意: Spreadsheets APIのPDFエクスポートエンドポイントは、StorageAdapterではなく
+        // Google固有の機能であるため、ここではまだ直接フェッチする必要があります。
+        // 将来的には SpreadsheetAdapter に `exportAsPDF` を追加するなども検討できますが、
+        // フォルダIDを確認/作成
+        // フォルダIDを確認/作成
+        let targetFolderId = folderId;
+        if (!targetFolderId) {
+            const targetFolderName = folderName || storageAdapter.defaultFolderName;
+            targetFolderId = await storageAdapter.findOrCreateFolder(targetFolderName) ?? undefined;
+        }
+
+        const accessToken = await getAccessToken(); // PDFエクスポートリクエスト用
+        if (!accessToken) return { success: false, error: 'アクセストークンがありません' };
 
         // SpreadsheetをPDF形式でエクスポート
         const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=pdf&portrait=false&gridlines=false&fitw=true`;
@@ -60,16 +75,29 @@ export async function exportSpreadsheetAsPDF(
         const pdfBase64 = arrayBufferToBase64(pdfArrayBuffer);
 
         // フォルダIDを確認
-        let targetFolderId = folderId;
-        if (!targetFolderId) {
-            targetFolderId = await findOrCreateFolder(folderName || DEFAULT_FOLDER_NAME, accessToken) ?? undefined;
-        }
+        // フォルダIDの計算は完了しているため、ここでは再計算しない
 
         // ファイル名を生成（統一ファイル名を使用、空白はアンダースコアに置換）
         const targetYear = year || new Date().getFullYear();
         const pdfFileName = getExportFileName(targetYear, 'pdf', true);
 
-        // PDFをDriveにアップロード
+        // PDFのアップロードは StorageAdapter.uploadFile では Base64 を受け取れないため
+        // 現状の uploadFile 実装を拡張するか、または pdf.ts は特殊ケースとして独自実装を残すか。
+        // StorageAdapter.uploadFile は content: string を受け取るが、これはテキストコンテンツを想定している実装が多い。
+        // ただし GoogleDriveAdapter.uploadFile は MIMEタイプを指定してアップロードできる。
+        // バイナリ (Base64) をアップロードするには、multipart リクエストの構築が必要。
+        // adapter.uploadFile がバイナリ文字列（Base64等）をどう扱うかによる。
+
+        // ここでは、GoogleDriveAdapterの実装を確認すると、multipart/related で content をそのままbodyに入れている。
+        // Base64のPDFを上げるには Content-Transfer-Encoding: base64 が必要だが、
+        // 汎用 uploadFile はそれをサポートしていない可能性が高い。
+
+        // そのため、PDFエクスポートロジック自体はここ（pdf.ts）に残します。
+        // ただし、フォルダ検索などは adapter を使いました。
+        // 完全な抽象化には BinaryStorageAdapter などが必要かもしれません。
+        // 現状は「Google Driveへの保存」なので、既存のロジックを踏襲しつつ、
+        // フォルダ周りのみAdapter利用としました。
+
         const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
         const metadata: any = {

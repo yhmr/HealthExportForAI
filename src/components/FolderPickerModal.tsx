@@ -10,7 +10,7 @@ import {
     Alert,
     TextInput,
 } from 'react-native';
-import { listFolders, createFolder } from '../services/googleDrive';
+import { listFolders, createFolder } from '../services/storage/googleDrive';
 import { getAccessToken } from '../services/googleAuth';
 
 interface Folder {

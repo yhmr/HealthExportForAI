@@ -21,10 +21,10 @@ import {
     saveExportFormats,
     loadExportSheetAsPdf,
     saveExportSheetAsPdf,
-} from '../src/services/storage';
+} from '../src/services/preferences';
 import type { DriveConfig, ExportFormat } from '../src/config/driveConfig';
 
-import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/googleDrive';
+import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
 import { getAccessToken } from '../src/services/googleAuth';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 import { ExportFormatCheckbox } from '../src/components/ExportFormatCheckbox';
