@@ -10,6 +10,7 @@ import {
     StyleSheet,
     ActivityIndicator,
 } from 'react-native';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface AuthCheckModalProps {
     /** モーダルの表示状態 */
@@ -32,6 +33,8 @@ export function AuthCheckModal({
     onSkip,
     onSignIn,
 }: AuthCheckModalProps) {
+    const { t } = useLanguage();
+
     return (
         <Modal
             visible={visible}
@@ -45,12 +48,11 @@ export function AuthCheckModal({
                     <Text style={styles.icon}>🔗</Text>
 
                     {/* タイトル */}
-                    <Text style={styles.title}>Googleアカウントを連携</Text>
+                    <Text style={styles.title}>{t('authModal', 'title')}</Text>
 
                     {/* 説明 */}
                     <Text style={styles.description}>
-                        健康データをGoogle Driveにエクスポートするには、{'\n'}
-                        Googleアカウントとの連携が必要です。
+                        {t('authModal', 'description')}
                     </Text>
 
                     {/* サインインボタン */}
@@ -66,7 +68,7 @@ export function AuthCheckModal({
                             <ActivityIndicator color="#ffffff" />
                         ) : (
                             <Text style={styles.signInButtonText}>
-                                🔐 Googleでサインイン
+                                🔐 {t('authModal', 'signIn')}
                             </Text>
                         )}
                     </TouchableOpacity>
@@ -77,7 +79,7 @@ export function AuthCheckModal({
                         onPress={onSkip}
                         disabled={isSigningIn}
                     >
-                        <Text style={styles.skipButtonText}>後で</Text>
+                        <Text style={styles.skipButtonText}>{t('authModal', 'skip')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>

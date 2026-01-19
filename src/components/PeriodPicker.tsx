@@ -9,18 +9,10 @@ import {
     TextInput,
     Modal,
 } from 'react-native';
+import { useLanguage } from '../contexts/LanguageContext';
 
-// プリセット選択肢
-const PERIOD_PRESETS = [
-    { label: '1日間', value: 1 },
-    { label: '3日間', value: 3 },
-    { label: '7日間', value: 7 },
-    { label: '30日間', value: 30 },
-    { label: '90日間', value: 90 },
-    { label: '180日間', value: 180 },
-    { label: '1年間', value: 365 },
-    { label: 'カスタム', value: -1 },
-] as const;
+// プリセット選択肢の値
+const PERIOD_PRESET_VALUES = [1, 3, 7, 30, 90, 180, 365, -1] as const;
 
 // デフォルト値と最大値
 export const DEFAULT_PERIOD_DAYS = 30;
@@ -39,11 +31,19 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isCustom, setIsCustom] = useState(false);
     const [customValue, setCustomValue] = useState('');
+    const { t } = useLanguage();
+
+    // プリセットのラベルを取得
+    const getPresetLabel = (days: number): string => {
+        if (days === -1) return t('periodPicker', 'custom');
+        if (days === 365) return `1${t('periodPicker', 'year')}`;
+        return `${days}${t('periodPicker', 'days')}`;
+    };
 
     // 現在の値がプリセットにあるかチェック
     useEffect(() => {
-        const isPreset = PERIOD_PRESETS.some(
-            (p) => p.value === value && p.value !== -1
+        const isPreset = PERIOD_PRESET_VALUES.some(
+            (v) => v === value && v !== -1
         );
         setIsCustom(!isPreset);
         if (!isPreset) {
@@ -78,15 +78,14 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
     // 表示ラベルを取得
     const getCurrentLabel = (): string => {
         if (isCustom) {
-            return `${value}日間`;
+            return `${value}${t('periodPicker', 'days')}`;
         }
-        const preset = PERIOD_PRESETS.find((p) => p.value === value);
-        return preset?.label || `${value}日間`;
+        return getPresetLabel(value);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>取得期間</Text>
+            <Text style={styles.label}>{t('periodPicker', 'label')}</Text>
 
             <View style={styles.row}>
                 {/* ドロップダウンボタン */}
@@ -107,11 +106,11 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
                             value={customValue}
                             onChangeText={handleCustomChange}
                             keyboardType="number-pad"
-                            placeholder="日数"
+                            placeholder={t('periodPicker', 'placeholder')}
                             placeholderTextColor="#666"
                             maxLength={4}
                         />
-                        <Text style={styles.customInputSuffix}>日</Text>
+                        <Text style={styles.customInputSuffix}>{t('periodPicker', 'days').replace('日間', '日')}</Text>
                     </View>
                 )}
             </View>
@@ -129,31 +128,31 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
                     onPress={() => setIsOpen(false)}
                 >
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>取得期間を選択</Text>
-                        {PERIOD_PRESETS.map((preset) => (
+                        <Text style={styles.modalTitle}>{t('periodPicker', 'selectPeriod')}</Text>
+                        {PERIOD_PRESET_VALUES.map((presetValue) => (
                             <TouchableOpacity
-                                key={preset.value}
+                                key={presetValue}
                                 style={[
                                     styles.modalOption,
-                                    value === preset.value &&
+                                    value === presetValue &&
                                     !isCustom &&
                                     styles.modalOptionSelected,
-                                    preset.value === -1 &&
+                                    presetValue === -1 &&
                                     isCustom &&
                                     styles.modalOptionSelected,
                                 ]}
-                                onPress={() => handlePresetSelect(preset.value)}
+                                onPress={() => handlePresetSelect(presetValue)}
                             >
                                 <Text
                                     style={[
                                         styles.modalOptionText,
-                                        (value === preset.value && !isCustom) ||
-                                            (preset.value === -1 && isCustom)
+                                        (value === presetValue && !isCustom) ||
+                                            (presetValue === -1 && isCustom)
                                             ? styles.modalOptionTextSelected
                                             : null,
                                     ]}
                                 >
-                                    {preset.label}
+                                    {getPresetLabel(presetValue)}
                                 </Text>
                             </TouchableOpacity>
                         ))}

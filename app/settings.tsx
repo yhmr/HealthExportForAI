@@ -27,6 +27,8 @@ import { getAccessToken } from '../src/services/googleAuth';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 import { ExportFormatCheckbox } from '../src/components/ExportFormatCheckbox';
 import { LicenseModal } from '../src/components/LicenseModal';
+import { useLanguage } from '../src/contexts/LanguageContext';
+import type { Language } from '../src/i18n/translations';
 
 
 export default function SettingsScreen() {
@@ -48,6 +50,9 @@ export default function SettingsScreen() {
     const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
     const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
     const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
+
+    // 翻訳
+    const { t, language, setLanguage } = useLanguage();
 
     // 設定を読み込み
     useEffect(() => {
@@ -104,7 +109,7 @@ export default function SettingsScreen() {
     // 認証エラー表示
     useEffect(() => {
         if (authError) {
-            Alert.alert('認証エラー', authError);
+            Alert.alert(t('settings', 'authError'), authError);
         }
     }, [authError]);
 
@@ -127,11 +132,11 @@ export default function SettingsScreen() {
     const handleBack = () => {
         if (exportFormats.length === 0) {
             Alert.alert(
-                '警告',
-                'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
+                t('settings', 'warningTitle'),
+                t('settings', 'noFormatSelected'),
                 [
-                    { text: 'キャンセル', style: 'cancel' },
-                    { text: 'このまま戻る', onPress: () => router.back() }
+                    { text: t('common', 'cancel'), style: 'cancel' },
+                    { text: t('settings', 'goBackAnyway'), onPress: () => router.back() }
                 ]
             );
             return;
@@ -144,16 +149,16 @@ export default function SettingsScreen() {
             {/* ヘッダー */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleBack}>
-                    <Text style={styles.backButton}>← 戻る</Text>
+                    <Text style={styles.backButton}>← {t('common', 'back')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.title}>設定</Text>
+                <Text style={styles.title}>{t('settings', 'title')}</Text>
                 <View style={styles.placeholder} />
             </View>
 
             <ScrollView style={styles.content}>
                 {/* Google認証 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Googleアカウント</Text>
+                    <Text style={styles.sectionTitle}>{t('settings', 'sectionAccount')}</Text>
 
                     {isAuthenticated && currentUser ? (
                         <View style={styles.authInfo}>
@@ -164,7 +169,7 @@ export default function SettingsScreen() {
                                 style={styles.signOutButton}
                                 onPress={signOut}
                             >
-                                <Text style={styles.signOutText}>サインアウト</Text>
+                                <Text style={styles.signOutText}>{t('settings', 'signOut')}</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
@@ -172,16 +177,16 @@ export default function SettingsScreen() {
                             style={styles.signInButton}
                             onPress={handleSignIn}
                         >
-                            <Text style={styles.signInText}>🔐 Googleでサインイン</Text>
+                            <Text style={styles.signInText}>🔐 {t('settings', 'signIn')}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
 
                 {/* Google Drive設定 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Google Drive</Text>
+                    <Text style={styles.sectionTitle}>{t('settings', 'sectionDrive')}</Text>
 
-                    <Text style={styles.label}>保存先フォルダ</Text>
+                    <Text style={styles.label}>{t('settings', 'folderLabel')}</Text>
                     <TextInput
                         style={[styles.input, styles.readOnlyInput]}
                         value={folderName}
@@ -194,7 +199,7 @@ export default function SettingsScreen() {
                         style={styles.selectButton}
                         onPress={() => setPickerVisible(true)}
                     >
-                        <Text style={styles.selectButtonText}>📂 保存先を変更</Text>
+                        <Text style={styles.selectButtonText}>📂 {t('settings', 'changeFolder')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -222,12 +227,12 @@ export default function SettingsScreen() {
 
                 {/* エクスポート形式 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>エクスポート形式</Text>
-                    <Text style={styles.hint}>複数の形式を選択できます</Text>
+                    <Text style={styles.sectionTitle}>{t('settings', 'sectionExport')}</Text>
+                    <Text style={styles.hint}>{t('settings', 'exportHint')}</Text>
 
                     <ExportFormatCheckbox
-                        label="Google Sheets"
-                        description="Googleスプレッドシートに出力"
+                        label={t('settings', 'formatSheets')}
+                        description={t('settings', 'formatSheetsDesc')}
                         checked={exportFormats.includes('googleSheets')}
                         onToggle={() => toggleExportFormat('googleSheets')}
                     />
@@ -235,8 +240,8 @@ export default function SettingsScreen() {
                     {exportFormats.includes('googleSheets') && (
                         <View style={styles.subOption}>
                             <ExportFormatCheckbox
-                                label="PDF"
-                                description="SheetsをPDFとしてもエクスポート"
+                                label={t('settings', 'formatPdf')}
+                                description={t('settings', 'formatPdfDesc')}
                                 checked={exportSheetAsPdf}
                                 onToggle={async () => {
                                     const newValue = !exportSheetAsPdf;
@@ -247,14 +252,14 @@ export default function SettingsScreen() {
                         </View>
                     )}
                     <ExportFormatCheckbox
-                        label="CSV"
-                        description="カンマ区切りファイル（他ツール連携）"
+                        label={t('settings', 'formatCsv')}
+                        description={t('settings', 'formatCsvDesc')}
                         checked={exportFormats.includes('csv')}
                         onToggle={() => toggleExportFormat('csv')}
                     />
                     <ExportFormatCheckbox
-                        label="JSON"
-                        description="構造化データ（AI連携向け）"
+                        label={t('settings', 'formatJson')}
+                        description={t('settings', 'formatJsonDesc')}
                         checked={exportFormats.includes('json')}
                         onToggle={() => toggleExportFormat('json')}
                     />
@@ -262,13 +267,44 @@ export default function SettingsScreen() {
 
                 {/* アプリ情報 */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>アプリ情報</Text>
+                    <Text style={styles.sectionTitle}>{t('settings', 'sectionAppInfo')}</Text>
                     <TouchableOpacity
                         style={styles.selectButton}
                         onPress={() => setLicenseModalVisible(true)}
                     >
-                        <Text style={styles.selectButtonText}>📜 サードパーティライセンス</Text>
+                        <Text style={styles.selectButtonText}>📜 {t('settings', 'licenses')}</Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* 言語設定 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('settings', 'sectionLanguage')}</Text>
+                    <View style={styles.languageOptions}>
+                        <TouchableOpacity
+                            style={[
+                                styles.languageButton,
+                                language === 'ja' && styles.languageButtonActive
+                            ]}
+                            onPress={() => setLanguage('ja')}
+                        >
+                            <Text style={[
+                                styles.languageButtonText,
+                                language === 'ja' && styles.languageButtonTextActive
+                            ]}>{t('settings', 'languageJa')}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.languageButton,
+                                language === 'en' && styles.languageButtonActive
+                            ]}
+                            onPress={() => setLanguage('en')}
+                        >
+                            <Text style={[
+                                styles.languageButtonText,
+                                language === 'en' && styles.languageButtonTextActive
+                            ]}>{t('settings', 'languageEn')}</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -410,5 +446,31 @@ const styles = StyleSheet.create({
         borderLeftColor: '#6366f1',
         marginLeft: 8,
         marginTop: 4,
+    },
+    languageOptions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    languageButton: {
+        flex: 1,
+        backgroundColor: '#1e1e2e',
+        borderRadius: 8,
+        padding: 14,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#2e2e3e',
+    },
+    languageButtonActive: {
+        borderColor: '#6366f1',
+        backgroundColor: '#6366f120',
+    },
+    languageButtonText: {
+        color: '#9ca3af',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    languageButtonTextActive: {
+        color: '#6366f1',
+        fontWeight: '600',
     },
 });

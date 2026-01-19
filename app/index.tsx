@@ -15,6 +15,7 @@ import { AuthCheckModal } from '../src/components/AuthCheckModal';
 import { useHealthStore } from '../src/stores/healthStore';
 import { formatDateTime } from '../src/utils/formatters';
 import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/preferences';
+import { useLanguage } from '../src/contexts/LanguageContext';
 
 export default function HomeScreen() {
     const {
@@ -50,6 +51,9 @@ export default function HomeScreen() {
 
     // 取得期間
     const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
+
+    // 翻訳
+    const { t } = useLanguage();
 
     // 初期化 & 画面フォーカス時に設定再読み込み
     useFocusEffect(
@@ -88,11 +92,11 @@ export default function HomeScreen() {
     // エラー表示
     useEffect(() => {
         if (error) {
-            Alert.alert('エラー', error);
+            Alert.alert(t('common', 'error'), error);
         }
         if (uploadError) {
             Alert.alert(
-                'アップロードエラー',
+                t('home', 'uploadError'),
                 uploadError,
                 [
                     {
@@ -130,7 +134,7 @@ export default function HomeScreen() {
         // 選択されたタグをエクスポート関数に渡す
         const success = await exportAndUpload(selectedDataTags);
         if (success) {
-            Alert.alert('成功', 'データをエクスポートしました');
+            Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
         }
     };
 
@@ -149,14 +153,14 @@ export default function HomeScreen() {
                 onSignIn={handleAuthModalSignIn}
             />
 
-            <Header title="Health Export For AI" />
+            <Header title={t('home', 'title')} />
 
             <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
                 {/* ステータス表示 */}
                 {!isAvailable && (
                     <View style={styles.warningBanner}>
                         <Text style={styles.warningText}>
-                            ⚠️ Health Connectが利用できません
+                            ⚠️ {t('home', 'healthConnectUnavailable')}
                         </Text>
                     </View>
                 )}
@@ -169,13 +173,13 @@ export default function HomeScreen() {
                     <SyncButton
                         onPress={handleSync}
                         isLoading={isLoading}
-                        label="データを取得"
+                        label={t('home', 'syncButton')}
                         icon="🔄"
                         variant="primary"
                     />
                     {lastSyncTime && (
                         <Text style={styles.lastSync}>
-                            最終取得: {formatDateTime(lastSyncTime)}
+                            {t('home', 'lastSync')} {formatDateTime(lastSyncTime)}
                         </Text>
                     )}
                 </View>
@@ -191,8 +195,8 @@ export default function HomeScreen() {
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyIcon}>📊</Text>
                         <Text style={styles.emptyText}>
-                            「データを取得」ボタンを押して{'\n'}
-                            Health Connectからデータを取得してください
+                            {t('home', 'emptyState1')}{'\n'}
+                            {t('home', 'emptyState2')}
                         </Text>
                     </View>
                 )}
@@ -202,7 +206,7 @@ export default function HomeScreen() {
                     <SyncButton
                         onPress={handleExport}
                         isLoading={isUploading}
-                        label="エクスポート"
+                        label={t('home', 'exportButton')}
                         icon="📤"
                         variant="secondary"
                     />

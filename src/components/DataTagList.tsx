@@ -8,6 +8,7 @@ import {
     ALL_DATA_TAGS,
     DATA_TAG_INFO,
 } from '../stores/healthStore';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DataTagListProps {
     healthData: HealthData;
@@ -24,15 +25,22 @@ export function DataTagList({
     selectedTags,
     onToggleTag,
 }: DataTagListProps) {
+    const { t } = useLanguage();
+
     // タグごとのデータ件数を取得
     const getDataCount = (tag: DataTagKey): number => {
         const data = healthData[tag];
         return Array.isArray(data) ? data.length : 0;
     };
 
+    // タグの翻訳ラベルを取得
+    const getTagLabel = (tag: DataTagKey): string => {
+        return t('dataTypes', tag);
+    };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>エクスポートするデータを選択</Text>
+            <Text style={styles.title}>{t('dataTagList', 'title')}</Text>
             <View style={styles.tagList}>
                 {ALL_DATA_TAGS.map((tag) => {
                     const info = DATA_TAG_INFO[tag];
@@ -71,7 +79,7 @@ export function DataTagList({
                                     !hasData && styles.labelNoData,
                                 ]}
                             >
-                                {info.label}
+                                {getTagLabel(tag)}
                             </Text>
 
                             {/* 件数バッジ */}
