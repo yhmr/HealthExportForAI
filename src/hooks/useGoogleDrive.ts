@@ -1,7 +1,7 @@
 // Google Drive/Sheets カスタムフック（認証統合版）
 
 import { useState, useCallback } from 'react';
-import { useHealthStore } from '../stores/healthStore';
+import { useHealthStore, filterHealthDataByTags, type DataTagKey } from '../stores/healthStore';
 import { executeExport } from '../services/export/controller';
 import { GoogleDriveAdapter } from '../services/storage/googleDriveAdapter';
 import { GoogleSheetsAdapter } from '../services/storage/googleSheetsAdapter';
@@ -99,8 +99,9 @@ export function useGoogleDrive() {
     /**
      * データをエクスポート
      * exportControllerに処理を委譲
+     * @param selectedTags エクスポートするデータタグのセット
      */
-    const exportAndUpload = useCallback(async () => {
+    const exportAndUpload = useCallback(async (selectedTags?: Set<DataTagKey>) => {
         if (!isConfigValid()) {
             setUploadError('サインインしてください');
             return false;
@@ -114,8 +115,16 @@ export function useGoogleDrive() {
             const storageAdapter = new GoogleDriveAdapter();
             const spreadsheetAdapter = new GoogleSheetsAdapter();
 
+            // 選択されたタグでデータをフィルタリング
+            const dataToExport = selectedTags
+                ? filterHealthDataByTags(healthData, selectedTags)
+                : healthData;
+
+            // syncDateRangeを取得（取得期間の全日付）
+            const { syncDateRange } = useHealthStore.getState();
+
             // exportControllerにエクスポート処理を委譲（アダプターを注入）
-            const result = await executeExport(healthData, storageAdapter, spreadsheetAdapter);
+            const result = await executeExport(dataToExport, storageAdapter, spreadsheetAdapter, syncDateRange ?? undefined);
 
             // フォルダIDが新規作成された場合、設定を更新
             if (result.folderId && result.folderId !== driveConfig?.folderId) {

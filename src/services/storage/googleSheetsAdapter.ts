@@ -4,7 +4,7 @@ import {
     createSpreadsheet,
     getSheetData,
     updateHeaders,
-    updateRows
+    updateRows,
 } from './googleSheets';
 import { getAccessToken } from '../googleAuth';
 

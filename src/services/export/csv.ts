@@ -118,6 +118,24 @@ export async function exportToCSV(
             }
 
             // 新規データをマージ（日付で上書き）
+            // 新しいデータの日付範囲を取得
+            const newDates = [...newRowsMap.keys()]
+                .filter(date => new Date(date).getFullYear() === year)
+                .sort();
+            const minNewDate = newDates.length > 0 ? newDates[0] : null;
+            const maxNewDate = newDates.length > 0 ? newDates[newDates.length - 1] : null;
+
+            // 新しいデータの日付範囲内にある既存データを削除
+            // （取得期間内のデータは完全に新しいデータで置き換える）
+            if (minNewDate && maxNewDate) {
+                for (const existingDate of existingRowMap.keys()) {
+                    if (existingDate >= minNewDate && existingDate <= maxNewDate) {
+                        existingRowMap.delete(existingDate);
+                    }
+                }
+            }
+
+            // 新規データを追加
             for (const [date, rowData] of newRowsMap) {
                 if (new Date(date).getFullYear() === year) {
                     // 文字列配列に変換

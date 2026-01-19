@@ -14,8 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import {
-    loadExportPeriodDays,
-    saveExportPeriodDays,
     saveDriveConfig,
     loadExportFormats,
     saveExportFormats,
@@ -46,7 +44,6 @@ export default function SettingsScreen() {
 
     const [folderId, setFolderId] = useState('');
     const [folderName, setFolderName] = useState('');
-    const [periodDays, setPeriodDays] = useState('7');
     const [isPickerVisible, setPickerVisible] = useState(false);
     const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
     const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
@@ -57,10 +54,8 @@ export default function SettingsScreen() {
         const load = async () => {
             try {
                 const config = await loadConfig();
-                const days = await loadExportPeriodDays();
                 const formats = await loadExportFormats();
                 const pdfOption = await loadExportSheetAsPdf();
-                setPeriodDays(days.toString());
                 setExportFormats(formats);
                 setExportSheetAsPdf(pdfOption);
 
@@ -113,36 +108,6 @@ export default function SettingsScreen() {
         }
     }, [authError]);
 
-    // エクスポート期間の自動保存（デバウンス付き）
-    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const isInitialLoadRef = useRef(true);
-
-    useEffect(() => {
-        // 初回読み込み時は保存しない
-        if (isInitialLoadRef.current) {
-            isInitialLoadRef.current = false;
-            return;
-        }
-
-        // 前回のタイマーをクリア
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
-        // 500ms後に保存
-        debounceTimerRef.current = setTimeout(async () => {
-            const days = parseInt(periodDays, 10);
-            if (!isNaN(days) && days > 0) {
-                await saveExportPeriodDays(days);
-            }
-        }, 500);
-
-        return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, [periodDays]);
 
     // サインインハンドラ
     const handleSignIn = async () => {
@@ -254,20 +219,6 @@ export default function SettingsScreen() {
                     onClose={() => setLicenseModalVisible(false)}
                 />
 
-                {/* エクスポート設定 */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>エクスポート設定</Text>
-
-                    <Text style={styles.label}>期間（日数）</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={periodDays}
-                        onChangeText={setPeriodDays}
-                        placeholder="7"
-                        placeholderTextColor="#666"
-                        keyboardType="number-pad"
-                    />
-                </View>
 
                 {/* エクスポート形式 */}
                 <View style={styles.section}>

@@ -8,13 +8,20 @@ import type { StorageAdapter, SpreadsheetAdapter } from '../storage/interfaces';
 
 /**
  * ヘルスデータをスプレッドシートにエクスポート
+ * @param healthData エクスポートするデータ
+ * @param folderId フォルダID
+ * @param folderName フォルダ名
+ * @param storageAdapter ストレージアダプター
+ * @param spreadsheetAdapter スプレッドシートアダプター
+ * @param originalDates フィルタリング前の元データの全日付（空行を維持するため）
  */
 export async function exportToSpreadsheet(
     healthData: HealthData,
     folderId: string | undefined,
     folderName: string | undefined,
     storageAdapter: StorageAdapter,
-    spreadsheetAdapter: SpreadsheetAdapter
+    spreadsheetAdapter: SpreadsheetAdapter,
+    originalDates?: Set<string>
 ): Promise<{ success: boolean; exportedSheets: { year: number; spreadsheetId: string }[]; folderId?: string; error?: string }> {
     const exportedSheets: { year: number; spreadsheetId: string }[] = [];
     try {
@@ -42,10 +49,12 @@ export async function exportToSpreadsheet(
         }
 
         // 対象の年を取得（データの最新日付から）
+        // originalDatesがあればそれも含める（フィルタリングでデータが空になった日付も行として出力するため）
         const allDates = [
             ...healthData.steps.map((d) => d.date),
             ...healthData.weight.map((d) => d.date),
             ...healthData.sleep.map((d) => d.date),
+            ...(originalDates ? Array.from(originalDates) : []),
         ];
 
         if (allDates.length === 0) {
@@ -92,10 +101,14 @@ export async function exportToSpreadsheet(
                 }
             }
 
-            // データを行形式に変換
+            // データを行形式に変換（originalDatesから年に該当する日付を抜出）
+            const yearOriginalDates = originalDates
+                ? new Set([...originalDates].filter(d => new Date(d).getFullYear() === year))
+                : undefined;
             const { headers: newHeaders, rows: newRowsMap } = formatHealthDataToRows(
                 yearData,
-                existingHeaders
+                existingHeaders,
+                yearOriginalDates
             );
 
             // スプレッドシートが存在しない場合は新規作成
@@ -127,7 +140,22 @@ export async function exportToSpreadsheet(
                 }
             });
 
-            // 新規データで既存データを上書き/追加
+            // 新しいデータの日付範囲を取得
+            const newDates = [...newRowsMap.keys()].sort();
+            const minNewDate = newDates.length > 0 ? newDates[0] : null;
+            const maxNewDate = newDates.length > 0 ? newDates[newDates.length - 1] : null;
+
+            // 新しいデータの日付範囲内にある既存データを削除
+            // （取得期間内のデータは完全に新しいデータで置き換える）
+            if (minNewDate && maxNewDate) {
+                for (const existingDate of existingRowMap.keys()) {
+                    if (existingDate >= minNewDate && existingDate <= maxNewDate) {
+                        existingRowMap.delete(existingDate);
+                    }
+                }
+            }
+
+            // 新規データを追加
             for (const [date, rowData] of newRowsMap) {
                 existingRowMap.set(date, rowData);
             }

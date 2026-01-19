@@ -75,65 +75,91 @@ export async function exportSpreadsheetAsPDF(
         const targetYear = year || new Date().getFullYear();
         const pdfFileName = getExportFileName(targetYear, 'pdf', true);
 
-        // PDFのアップロードは StorageAdapter.uploadFile では Base64 を受け取れないため
-        // 現状の uploadFile 実装を拡張するか、または pdf.ts は特殊ケースとして独自実装を残すか。
-        // StorageAdapter.uploadFile は content: string を受け取るが、これはテキストコンテンツを想定している実装が多い。
-        // ただし GoogleDriveAdapter.uploadFile は MIMEタイプを指定してアップロードできる。
-        // バイナリ (Base64) をアップロードするには、multipart リクエストの構築が必要。
-        // adapter.uploadFile がバイナリ文字列（Base64等）をどう扱うかによる。
+        // 既存のPDFファイルを検索
+        const existingFile = await storageAdapter.findFile(pdfFileName, 'application/pdf', targetFolderId);
 
-        // ここでは、GoogleDriveAdapterの実装を確認すると、multipart/related で content をそのままbodyに入れている。
-        // Base64のPDFを上げるには Content-Transfer-Encoding: base64 が必要だが、
-        // 汎用 uploadFile はそれをサポートしていない可能性が高い。
-
-        // そのため、PDFエクスポートロジック自体はここ（pdf.ts）に残します。
-        // ただし、フォルダ検索などは adapter を使いました。
-        // 完全な抽象化には BinaryStorageAdapter などが必要かもしれません。
-        // 現状は「Google Driveへの保存」なので、既存のロジックを踏襲しつつ、
-        // フォルダ周りのみAdapter利用としました。
-
-        const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-
-        const metadata: any = {
-            name: pdfFileName,
-            mimeType: 'application/pdf',
-        };
-
-        if (targetFolderId) {
-            metadata.parents = [targetFolderId];
-        }
-
+        const DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
         const boundary = '-------314159265358979323846pdf';
         const delimiter = `\r\n--${boundary}\r\n`;
         const closeDelimiter = `\r\n--${boundary}--`;
 
-        const multipartRequestBody =
-            delimiter +
-            'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-            JSON.stringify(metadata) +
-            delimiter +
-            'Content-Type: application/pdf\r\n' +
-            'Content-Transfer-Encoding: base64\r\n\r\n' +
-            pdfBase64 +
-            closeDelimiter;
+        if (existingFile) {
+            // 既存ファイルを上書き（PATCH）
+            const updateUrl = `${DRIVE_API_URL}/${existingFile.id}?uploadType=multipart`;
 
-        const uploadResponse = await fetch(UPLOAD_URL, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': `multipart/related; boundary=${boundary}`,
-            },
-            body: multipartRequestBody,
-        });
+            const metadata = {
+                name: pdfFileName,
+                mimeType: 'application/pdf',
+            };
 
-        if (uploadResponse.ok) {
-            const data = await uploadResponse.json();
-            console.log(`[PDF Export] Uploaded: ${pdfFileName} (ID: ${data.id})`);
-            return { success: true, fileId: data.id };
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: application/pdf\r\n' +
+                'Content-Transfer-Encoding: base64\r\n\r\n' +
+                pdfBase64 +
+                closeDelimiter;
+
+            const uploadResponse = await fetch(updateUrl, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': `multipart/related; boundary=${boundary}`,
+                },
+                body: multipartRequestBody,
+            });
+
+            if (uploadResponse.ok) {
+                console.log(`[PDF Export] Updated: ${pdfFileName}`);
+                return { success: true, fileId: existingFile.id };
+            } else {
+                const errorData = await uploadResponse.json();
+                console.error('Update PDF failed:', uploadResponse.status, errorData);
+                return { success: false, error: 'PDF更新に失敗しました' };
+            }
         } else {
-            const errorData = await uploadResponse.json();
-            console.error('Upload PDF failed:', uploadResponse.status, errorData);
-            return { success: false, error: 'PDFアップロードに失敗しました' };
+            // 新規作成（POST）
+            const uploadUrl = `${DRIVE_API_URL}?uploadType=multipart`;
+
+            const metadata: Record<string, unknown> = {
+                name: pdfFileName,
+                mimeType: 'application/pdf',
+            };
+
+            if (targetFolderId) {
+                metadata.parents = [targetFolderId];
+            }
+
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                'Content-Type: application/pdf\r\n' +
+                'Content-Transfer-Encoding: base64\r\n\r\n' +
+                pdfBase64 +
+                closeDelimiter;
+
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': `multipart/related; boundary=${boundary}`,
+                },
+                body: multipartRequestBody,
+            });
+
+            if (uploadResponse.ok) {
+                const data = await uploadResponse.json();
+                console.log(`[PDF Export] Created: ${pdfFileName} (ID: ${data.id})`);
+                return { success: true, fileId: data.id };
+            } else {
+                const errorData = await uploadResponse.json();
+                console.error('Upload PDF failed:', uploadResponse.status, errorData);
+                return { success: false, error: 'PDFアップロードに失敗しました' };
+            }
         }
     } catch (error) {
         console.error('PDFエクスポートエラー:', error);

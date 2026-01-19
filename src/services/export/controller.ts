@@ -60,11 +60,16 @@ async function prepareContext(
 /**
  * エクスポートを実行
  * 選択された形式すべてにエクスポートを行い、結果をまとめて返す
+ * @param healthData エクスポートするデータ
+ * @param storageAdapter ストレージアダプター
+ * @param spreadsheetAdapter スプレッドシートアダプター
+ * @param originalDates フィルタリング前の元データの全日付（空行を維持するため）
  */
 export async function executeExport(
     healthData: HealthData,
     storageAdapter: StorageAdapter,
-    spreadsheetAdapter: SpreadsheetAdapter
+    spreadsheetAdapter: SpreadsheetAdapter,
+    originalDates?: Set<string>
 ): Promise<ExportResults> {
     const results: FormatResult[] = [];
 
@@ -98,7 +103,8 @@ export async function executeExport(
                 context.folderId,
                 context.folderName,
                 storageAdapter,
-                spreadsheetAdapter
+                spreadsheetAdapter,
+                originalDates
             );
 
             if (result.success) {

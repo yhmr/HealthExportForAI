@@ -8,7 +8,7 @@ import {
     requestHealthPermissions,
     fetchAllHealthData,
 } from '../services/healthConnect';
-import { getDateDaysAgo, getEndOfToday, getCurrentISOString } from '../utils/formatters';
+import { getDateDaysAgo, getEndOfToday, getCurrentISOString, generateDateRange } from '../utils/formatters';
 import { saveLastSyncTime, loadExportPeriodDays } from '../services/preferences';
 
 export function useHealthConnect() {
@@ -88,18 +88,23 @@ export function useHealthConnect() {
 
     /**
      * データを同期
+     * @param periodDays 取得する日数（指定がなければ設定から読み込み）
      */
-    const syncData = useCallback(async () => {
+    const syncData = useCallback(async (periodDays?: number) => {
         setLoading(true);
         setError(null);
 
         try {
-            const periodDays = await loadExportPeriodDays();
-            const startTime = getDateDaysAgo(periodDays);
+            // 引数で日数が指定されていればそれを使用、なければ設定から読み込み
+            const days = periodDays ?? (await loadExportPeriodDays());
+            const startTime = getDateDaysAgo(days);
             const endTime = getEndOfToday();
 
+            // 取得期間の全日付を生成
+            const dateRange = generateDateRange(startTime, endTime);
+
             const data = await fetchAllHealthData(startTime, endTime);
-            setAllData(data);
+            setAllData(data, dateRange);
 
             const syncTime = getCurrentISOString();
             setLastSyncTime(syncTime);

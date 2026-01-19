@@ -1,15 +1,18 @@
 // ホーム画面
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Header } from '../src/components/Header';
-import { DataCard } from '../src/components/DataCard';
+import { DataTagList } from '../src/components/DataTagList';
 import { SyncButton } from '../src/components/SyncButton';
+import { PeriodPicker, DEFAULT_PERIOD_DAYS } from '../src/components/PeriodPicker';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
-import { formatNumber, formatDuration, formatDateTime } from '../src/utils/formatters';
+import { useHealthStore } from '../src/stores/healthStore';
+import { formatDateTime } from '../src/utils/formatters';
+import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/preferences';
 
 export default function HomeScreen() {
     const {
@@ -28,11 +31,15 @@ export default function HomeScreen() {
     const {
         isUploading,
         uploadError,
-        driveConfig,
         loadConfig,
-        isConfigValid,
         exportAndUpload,
     } = useGoogleDrive();
+
+    // ストアから選択状態とアクションを取得
+    const { selectedDataTags, toggleDataTag } = useHealthStore();
+
+    // 取得期間
+    const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
 
     // 初期化 & 画面フォーカス時に設定再読み込み
     useFocusEffect(
@@ -43,6 +50,9 @@ export default function HomeScreen() {
                     await initialize();
                 }
                 await loadConfig();
+                // 保存された期間を読み込み
+                const savedDays = await loadExportPeriodDays();
+                setPeriodDays(savedDays);
             };
             setup();
         }, [initialize, loadConfig, isInitialized])
@@ -58,7 +68,13 @@ export default function HomeScreen() {
         }
     }, [error, uploadError]);
 
-    // 同期ハンドラ
+    // 期間変更ハンドラ
+    const handlePeriodChange = async (days: number) => {
+        setPeriodDays(days);
+        await saveExportPeriodDays(days);
+    };
+
+    // データ取得ハンドラ
     const handleSync = async () => {
         if (!isInitialized) {
             const success = await initialize();
@@ -70,36 +86,22 @@ export default function HomeScreen() {
             if (!granted) return;
         }
 
-        await syncData();
+        await syncData(periodDays);
     };
 
     // エクスポートハンドラ
     const handleExport = async () => {
-        const success = await exportAndUpload();
+        // 選択されたタグをエクスポート関数に渡す
+        const success = await exportAndUpload(selectedDataTags);
         if (success) {
             Alert.alert('成功', 'データをエクスポートしました');
         }
     };
 
-    // 最新データを取得するヘルパー
-    const getLatestValue = <T extends { date: string }>(
-        data: T[],
-        getValue: (item: T) => string
-    ): string => {
-        if (data.length === 0) return '-';
-        const sorted = [...data].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        return getValue(sorted[0]);
-    };
-
-    // 値の集計
-    const totalSteps = healthData.steps.reduce((sum, s) => sum + s.count, 0);
-    const latestWeight = getLatestValue(healthData.weight, (w) => w.value.toFixed(1));
-    const latestBodyFat = getLatestValue(healthData.bodyFat, (b) => b.percentage.toFixed(1));
-    const totalCalories = healthData.totalCaloriesBurned.reduce((sum, c) => sum + c.value, 0);
-    const latestBmr = getLatestValue(healthData.basalMetabolicRate, (b) => b.value.toString());
-    const totalSleepMinutes = healthData.sleep.reduce((sum, s) => sum + s.durationMinutes, 0);
+    // データが取得済みかどうか
+    const hasData = Object.values(healthData).some(
+        (arr) => Array.isArray(arr) && arr.length > 0
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -115,73 +117,44 @@ export default function HomeScreen() {
                     </View>
                 )}
 
-                {/* データカード */}
-                <View style={styles.cardGrid}>
-                    <DataCard
-                        title="歩数"
-                        value={formatNumber(totalSteps)}
-                        unit="歩"
-                        icon="👟"
-                    />
-                    <DataCard
-                        title="体重"
-                        value={latestWeight}
-                        unit="kg"
-                        icon="⚖️"
-                    />
-                    <DataCard
-                        title="カロリー"
-                        value={formatNumber(Math.round(totalCalories))}
-                        unit="kcal"
-                        icon="🔥"
-                    />
-                    <DataCard
-                        title="睡眠"
-                        value={formatDuration(totalSleepMinutes)}
-                        icon="😴"
-                    />
-                    <DataCard
-                        title="体脂肪"
-                        value={latestBodyFat}
-                        unit="%"
-                        icon="📊"
-                    />
-                    <DataCard
-                        title="基礎代謝"
-                        value={latestBmr}
-                        unit="kcal"
-                        icon="💪"
-                    />
-                </View>
+                {/* 期間選択 */}
+                <PeriodPicker value={periodDays} onChange={handlePeriodChange} />
 
-                {/* メタ情報 */}
-                <View style={styles.metaInfo}>
-                    {lastSyncTime && (
-                        <Text style={styles.lastSync}>
-                            最終同期: {formatDateTime(lastSyncTime)}
-                        </Text>
-                    )}
-                    {healthData.exercise.length > 0 && (
-                        <Text style={styles.extraInfo}>
-                            運動: {healthData.exercise.length}件
-                        </Text>
-                    )}
-                    {healthData.nutrition.length > 0 && (
-                        <Text style={styles.extraInfo}>
-                            栄養: {healthData.nutrition.length}件
-                        </Text>
-                    )}
-                </View>
-
-                {/* アクションボタン */}
-                <View style={styles.actions}>
+                {/* データ取得ボタン */}
+                <View style={styles.syncSection}>
                     <SyncButton
                         onPress={handleSync}
                         isLoading={isLoading}
-                        label="データを同期"
+                        label="データを取得"
                         icon="🔄"
                         variant="primary"
                     />
+                    {lastSyncTime && (
+                        <Text style={styles.lastSync}>
+                            最終取得: {formatDateTime(lastSyncTime)}
+                        </Text>
+                    )}
+                </View>
+
+                {/* データタグ一覧 */}
+                {hasData ? (
+                    <DataTagList
+                        healthData={healthData}
+                        selectedTags={selectedDataTags}
+                        onToggleTag={toggleDataTag}
+                    />
+                ) : (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyIcon}>📊</Text>
+                        <Text style={styles.emptyText}>
+                            「データを取得」ボタンを押して{'\n'}
+                            Health Connectからデータを取得してください
+                        </Text>
+                    </View>
+                )}
+
+                {/* エクスポートボタン */}
+                <View style={styles.exportSection}>
                     <SyncButton
                         onPress={handleExport}
                         isLoading={isUploading}
@@ -219,28 +192,31 @@ const styles = StyleSheet.create({
         color: '#f59e0b',
         textAlign: 'center',
     },
-    cardGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        padding: 10,
-        justifyContent: 'center',
-    },
-    metaInfo: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+    syncSection: {
+        alignItems: 'center',
     },
     lastSync: {
         color: '#6b7280',
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    extraInfo: {
-        color: '#4b5563',
         fontSize: 12,
         textAlign: 'center',
-        marginTop: 4,
+        marginTop: 8,
     },
-    actions: {
-        marginTop: 16,
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: 48,
+        paddingHorizontal: 32,
+    },
+    emptyIcon: {
+        fontSize: 48,
+        marginBottom: 16,
+    },
+    emptyText: {
+        color: '#6b7280',
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    exportSection: {
+        marginTop: 24,
     },
 });

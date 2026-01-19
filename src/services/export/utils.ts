@@ -55,16 +55,27 @@ export function getExportFileSearchName(year: number, extension: string, useUnde
 
 /**
  * HealthDataを行形式に変換
+ * @param healthData エクスポートするデータ
+ * @param existingHeaders 既存のヘッダー（ヘッダーマージ用）
+ * @param additionalDates 追加で含める日付（フィルタリング前の元データの日付など）
  */
 export function formatHealthDataToRows(
     healthData: HealthData,
-    existingHeaders: string[]
+    existingHeaders: string[],
+    additionalDates?: Set<string>
 ): {
     headers: string[];
     rows: Map<string, (string | number | null)[]>;
 } {
     // すべての日付を収集
     const allDates = new Set<string>();
+
+    // 追加日付がある場合は先に追加
+    if (additionalDates) {
+        for (const date of additionalDates) {
+            allDates.add(date);
+        }
+    }
 
     healthData.steps.forEach((d) => allDates.add(d.date));
     healthData.weight.forEach((d) => allDates.add(d.date));

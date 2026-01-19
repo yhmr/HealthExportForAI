@@ -70,3 +70,25 @@ export function getEndOfToday(): Date {
     date.setHours(23, 59, 59, 999);
     return date;
 }
+
+/**
+ * 開始日から終了日までのすべての日付を生成（YYYY-MM-DD形式）
+ */
+export function generateDateRange(startDate: Date, endDate: Date): Set<string> {
+    const dates = new Set<string>();
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    while (current <= end) {
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, '0');
+        const day = String(current.getDate()).padStart(2, '0');
+        dates.add(`${year}-${month}-${day}`);
+        current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+}
