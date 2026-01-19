@@ -17,7 +17,6 @@ export interface ExportResult {
 export interface ExportOptions {
     folderId?: string;
     folderName?: string;
-    fileName?: string;
 }
 
 /**

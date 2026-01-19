@@ -69,14 +69,6 @@ export async function createSpreadsheet(
                                     {
                                         values: headers.map((h) => ({
                                             userEnteredValue: { stringValue: h },
-                                            userEnteredFormat: {
-                                                textFormat: { bold: true },
-                                                backgroundColor: {
-                                                    red: 0.9,
-                                                    green: 0.9,
-                                                    blue: 0.9,
-                                                },
-                                            },
                                         })),
                                     },
                                 ],

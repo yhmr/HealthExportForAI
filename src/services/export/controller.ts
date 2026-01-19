@@ -5,7 +5,6 @@ import type { HealthData } from '../../types/health';
 import type { ExportFormat } from '../../config/driveConfig';
 import { loadExportFormats, loadExportSheetAsPdf, loadDriveConfig } from '../preferences';
 import type { StorageAdapter, SpreadsheetAdapter } from '../storage/interfaces';
-import { getAccessToken } from '../googleAuth'; // TODO: Consider removing if not strictly needed via context
 import { exportToSpreadsheet } from './sheets';
 import { exportSpreadsheetAsPDF } from './pdf';
 import { exportToCSV } from './csv';
@@ -15,7 +14,6 @@ import { exportToJSON } from './json';
 interface ExportContext {
     folderId?: string;
     folderName: string;
-    accessToken: string;
 }
 
 // 各形式のエクスポート結果
@@ -42,11 +40,6 @@ async function prepareContext(
     folderId?: string,
     folderName?: string
 ): Promise<ExportContext | null> {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        return null;
-    }
-
     const targetFolderName = folderName || storageAdapter.defaultFolderName;
 
     // フォルダIDを確認/作成
@@ -59,25 +52,10 @@ async function prepareContext(
     return {
         folderId: targetFolderId,
         folderName: targetFolderName,
-        accessToken,
     };
 }
 
-/**
- * ヘルスデータから最も新しい年を取得
- */
-function getLatestYear(healthData: HealthData): number {
-    const allDates = [
-        ...healthData.steps.map(d => d.date),
-        ...healthData.weight.map(d => d.date),
-        ...healthData.sleep.map(d => d.date),
-    ];
-    if (allDates.length === 0) {
-        return new Date().getFullYear();
-    }
-    const latestDate = allDates.sort().pop()!;
-    return new Date(latestDate).getFullYear();
-}
+
 
 /**
  * エクスポートを実行
@@ -111,8 +89,7 @@ export async function executeExport(
             };
         }
 
-        // PDFエクスポート用に最新年を取得
-        const latestYear = getLatestYear(healthData);
+        // PDFエクスポート用に最新年を取得 (削除済み)
 
         // Google Sheetsへのエクスポート
         if (formats.includes('googleSheets')) {
@@ -120,34 +97,38 @@ export async function executeExport(
                 healthData,
                 context.folderId,
                 context.folderName,
-                undefined,
                 storageAdapter,
                 spreadsheetAdapter
             );
 
             if (result.success) {
-                results.push({ format: 'googleSheets', success: true, fileId: result.spreadsheetId });
+                // 返された全てのスプレッドシートIDを記録
+                result.exportedSheets.forEach(sheet => {
+                    results.push({ format: 'googleSheets', success: true, fileId: sheet.spreadsheetId });
+                });
 
                 // フォルダIDを更新（新規作成された場合）
                 if (result.folderId) {
                     context.folderId = result.folderId;
                 }
 
-                // PDFオプションが有効な場合
-                if (exportAsPdf && result.spreadsheetId) {
-                    const pdfResult = await exportSpreadsheetAsPDF(
-                        result.spreadsheetId,
-                        storageAdapter,
-                        context.folderId,
-                        context.folderName,
-                        latestYear
-                    );
-                    results.push({
-                        format: 'pdf',
-                        success: pdfResult.success,
-                        error: pdfResult.error,
-                        fileId: pdfResult.fileId,
-                    });
+                // PDFオプションが有効な場合、全てのスプレッドシートをPDF化
+                if (exportAsPdf && result.exportedSheets.length > 0) {
+                    for (const sheet of result.exportedSheets) {
+                        const pdfResult = await exportSpreadsheetAsPDF(
+                            sheet.spreadsheetId,
+                            storageAdapter,
+                            context.folderId,
+                            context.folderName,
+                            sheet.year
+                        );
+                        results.push({
+                            format: 'pdf',
+                            success: pdfResult.success,
+                            error: pdfResult.error,
+                            fileId: pdfResult.fileId,
+                        });
+                    }
                 }
             } else {
                 results.push({ format: 'googleSheets', success: false, error: result.error });

@@ -28,6 +28,7 @@ import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDr
 import { getAccessToken } from '../src/services/googleAuth';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 import { ExportFormatCheckbox } from '../src/components/ExportFormatCheckbox';
+import { LicenseModal } from '../src/components/LicenseModal';
 
 
 export default function SettingsScreen() {
@@ -47,6 +48,7 @@ export default function SettingsScreen() {
     const [folderName, setFolderName] = useState('');
     const [periodDays, setPeriodDays] = useState('7');
     const [isPickerVisible, setPickerVisible] = useState(false);
+    const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
     const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
     const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
 
@@ -231,7 +233,9 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Folder Picker Modal */}
+
+
+                {/* Modals */}
                 <FolderPickerModal
                     visible={isPickerVisible}
                     onClose={() => setPickerVisible(false)}
@@ -244,6 +248,10 @@ export default function SettingsScreen() {
                         // 選択時に自動保存
                         await saveDriveConfig({ folderId: id, folderName: name });
                     }}
+                />
+                <LicenseModal
+                    visible={isLicenseModalVisible}
+                    onClose={() => setLicenseModalVisible(false)}
                 />
 
                 {/* エクスポート設定 */}
@@ -299,6 +307,17 @@ export default function SettingsScreen() {
                         checked={exportFormats.includes('json')}
                         onToggle={() => toggleExportFormat('json')}
                     />
+                </View>
+
+                {/* アプリ情報 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>アプリ情報</Text>
+                    <TouchableOpacity
+                        style={styles.selectButton}
+                        onPress={() => setLicenseModalVisible(true)}
+                    >
+                        <Text style={styles.selectButtonText}>📜 サードパーティライセンス</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </SafeAreaView>

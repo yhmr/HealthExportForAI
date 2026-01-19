@@ -17,13 +17,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     return btoa(binary);
 }
 
-/**
- * スプレッドシート名から年を抽出
- */
-function extractYearFromSpreadsheetId(spreadsheetId: string): number {
-    // スプレッドシートIDからは年を取得できないため、現在の年を使用
-    return new Date().getFullYear();
-}
+
 
 /**
  * スプレッドシートをPDF形式でエクスポートしてDriveに保存

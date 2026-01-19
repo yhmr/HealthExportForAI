@@ -13,14 +13,14 @@ export async function exportToSpreadsheet(
     healthData: HealthData,
     folderId: string | undefined,
     folderName: string | undefined,
-    baseFileName: string | undefined, // 基本ファイル名（年が追加される）
     storageAdapter: StorageAdapter,
     spreadsheetAdapter: SpreadsheetAdapter
-): Promise<{ success: boolean; spreadsheetId?: string; folderId?: string; error?: string }> {
+): Promise<{ success: boolean; exportedSheets: { year: number; spreadsheetId: string }[]; folderId?: string; error?: string }> {
+    const exportedSheets: { year: number; spreadsheetId: string }[] = [];
     try {
         const isInitialized = await storageAdapter.initialize();
         if (!isInitialized) {
-            return { success: false, error: 'アクセストークンがありません。サインインしてください。' };
+            return { success: false, exportedSheets: [], error: 'アクセストークンがありません。サインインしてください。' };
         }
 
         // フォルダIDの検証と準備
@@ -49,7 +49,7 @@ export async function exportToSpreadsheet(
         ];
 
         if (allDates.length === 0) {
-            return { success: false, error: 'エクスポートするデータがありません' };
+            return { success: false, exportedSheets: [], error: 'エクスポートするデータがありません' };
         }
 
         // 年ごとにデータを分割
@@ -75,7 +75,6 @@ export async function exportToSpreadsheet(
             });
         }
 
-        let lastSpreadsheetId: string | undefined;
 
         // 各年のデータを処理
         for (const [year, yearData] of dataByYear) {
@@ -104,7 +103,7 @@ export async function exportToSpreadsheet(
                 // ファイル名を渡す
                 spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, targetFolderId);
                 if (!spreadsheetId) {
-                    return { success: false, error: `${year}年のスプレッドシート作成に失敗しました` };
+                    return { success: false, exportedSheets: [], error: `${year}年のスプレッドシート作成に失敗しました` };
                 }
             } else {
                 // ヘッダーが変更された場合は更新
@@ -146,14 +145,15 @@ export async function exportToSpreadsheet(
                 }
             }
 
-            lastSpreadsheetId = spreadsheetId;
+            exportedSheets.push({ year, spreadsheetId });
         }
 
-        return { success: true, spreadsheetId: lastSpreadsheetId, folderId: targetFolderId };
+        return { success: true, exportedSheets, folderId: targetFolderId };
     } catch (error) {
         console.error('スプレッドシートエクスポートエラー:', error);
         return {
             success: false,
+            exportedSheets: [],
             error: error instanceof Error ? error.message : '不明なエラー',
         };
     }
