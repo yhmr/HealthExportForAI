@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useHealthStore } from '../stores/healthStore';
-import { exportToSpreadsheet } from '../services/exportService';
+import { executeExport } from '../services/export';
 import { DEFAULT_FOLDER_NAME } from '../services/googleDrive';
 import {
     configureGoogleSignIn,
@@ -96,7 +96,8 @@ export function useGoogleDrive() {
     }, [isAuthenticated]);
 
     /**
-     * データをスプレッドシートにエクスポート
+     * データをエクスポート
+     * exportControllerに処理を委譲
      */
     const exportAndUpload = useCallback(async () => {
         if (!isConfigValid()) {
@@ -108,15 +109,10 @@ export function useGoogleDrive() {
         setUploadError(null);
 
         try {
-            const result = await exportToSpreadsheet(healthData, driveConfig?.folderId, driveConfig?.folderName);
+            // exportControllerにエクスポート処理を委譲
+            const result = await executeExport(healthData);
 
-            if (!result.success) {
-                setUploadError(result.error || 'エクスポート失敗');
-                return false;
-            }
-
-            // フォルダが新規作成された場合（IDがなかった場合）、設定に保存
-            // デフォルト名で作成されたので、名前も一緒に保存する
+            // フォルダIDが新規作成された場合、設定を更新
             if (result.folderId && result.folderId !== driveConfig?.folderId) {
                 const newConfig = {
                     ...driveConfig,
@@ -126,8 +122,22 @@ export function useGoogleDrive() {
                 await saveConfig(newConfig);
             }
 
-            setLastUploadTime(getCurrentISOString());
-            return true;
+            if (!result.success) {
+                // エラーがあれば表示
+                const failedFormats = result.results.filter(r => !r.success);
+                if (failedFormats.length > 0) {
+                    const errorMessages = failedFormats.map(r => `${r.format}: ${r.error}`).join(', ');
+                    setUploadError(`一部のエクスポートに失敗: ${errorMessages}`);
+                } else if (result.error) {
+                    setUploadError(result.error);
+                }
+            } else {
+                setLastUploadTime(getCurrentISOString());
+                const successCount = result.results.filter(r => r.success).length;
+                console.log(`[Export] Successfully exported ${successCount} format(s)`);
+            }
+
+            return result.success;
         } catch (err) {
             setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');
             return false;

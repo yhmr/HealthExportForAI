@@ -159,3 +159,170 @@ export async function findOrCreateFolder(
         return null;
     }
 }
+
+/**
+ * ファイルをGoogle Driveにアップロード
+ * @param fileContent ファイルの内容（文字列）
+ * @param fileName ファイル名
+ * @param mimeType MIMEタイプ
+ * @param accessToken アクセストークン
+ * @param folderId 保存先フォルダID（省略時はルート）
+ * @returns アップロードされたファイルのID、失敗時はnull
+ */
+export async function uploadFile(
+    fileContent: string,
+    fileName: string,
+    mimeType: string,
+    accessToken: string,
+    folderId?: string
+): Promise<string | null> {
+    try {
+        const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+        // メタデータ
+        const metadata: any = {
+            name: fileName,
+            mimeType: mimeType,
+        };
+
+        if (folderId) {
+            metadata.parents = [folderId];
+        }
+
+        // マルチパートリクエストを構築
+        const boundary = '-------314159265358979323846';
+        const delimiter = `\r\n--${boundary}\r\n`;
+        const closeDelimiter = `\r\n--${boundary}--`;
+
+        const multipartRequestBody =
+            delimiter +
+            'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+            JSON.stringify(metadata) +
+            delimiter +
+            `Content-Type: ${mimeType}\r\n\r\n` +
+            fileContent +
+            closeDelimiter;
+
+        const response = await fetch(UPLOAD_URL, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': `multipart/related; boundary=${boundary}`,
+            },
+            body: multipartRequestBody,
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`);
+            return data.id;
+        } else {
+            const errorData = await response.json();
+            console.error('Upload file failed:', response.status, errorData);
+            return null;
+        }
+    } catch (error) {
+        console.error('ファイルアップロードエラー:', error);
+        return null;
+    }
+}
+
+/**
+ * ファイルを検索（名前とMIMEタイプで検索）
+ */
+export async function findFile(
+    fileName: string,
+    mimeType: string,
+    accessToken: string,
+    folderId?: string
+): Promise<{ id: string; name: string } | null> {
+    try {
+        let query = `mimeType='${mimeType}' and name='${fileName}' and trashed=false`;
+        if (folderId) {
+            query += ` and '${folderId}' in parents`;
+        }
+
+        const response = await fetch(
+            `${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+            {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            }
+        );
+
+        if (!response.ok) {
+            console.error('ファイル検索エラー:', response.status);
+            return null;
+        }
+
+        const data = await response.json();
+        if (data.files && data.files.length > 0) {
+            return { id: data.files[0].id, name: data.files[0].name };
+        }
+        return null;
+    } catch (error) {
+        console.error('ファイル検索エラー:', error);
+        return null;
+    }
+}
+
+/**
+ * ファイル内容をダウンロード（テキストファイル用）
+ */
+export async function downloadFileContent(
+    fileId: string,
+    accessToken: string
+): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `${GOOGLE_DRIVE_API_URL}/${fileId}?alt=media`,
+            {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            }
+        );
+
+        if (!response.ok) {
+            console.error('ファイルダウンロードエラー:', response.status);
+            return null;
+        }
+
+        return await response.text();
+    } catch (error) {
+        console.error('ファイルダウンロードエラー:', error);
+        return null;
+    }
+}
+
+/**
+ * 既存ファイルを上書きアップロード
+ */
+export async function updateFile(
+    fileId: string,
+    fileContent: string,
+    mimeType: string,
+    accessToken: string
+): Promise<boolean> {
+    try {
+        const UPLOAD_URL = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+
+        const response = await fetch(UPLOAD_URL, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': mimeType,
+            },
+            body: fileContent,
+        });
+
+        if (response.ok) {
+            console.log(`[GoogleDrive] File updated: ${fileId}`);
+            return true;
+        } else {
+            const errorData = await response.json();
+            console.error('Update file failed:', response.status, errorData);
+            return false;
+        }
+    } catch (error) {
+        console.error('ファイル更新エラー:', error);
+        return false;
+    }
+}

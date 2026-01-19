@@ -5,22 +5,14 @@ const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 /**
- * 年からスプレッドシート名を生成
- */
-export function getSpreadsheetName(year: number): string {
-    return `Health Data ${year}`;
-}
-
-/**
- * 指定した年のスプレッドシートを検索
+ * 名前でスプレッドシートを検索
  */
 export async function findSpreadsheet(
-    year: number,
+    fileName: string,
     accessToken: string,
     folderId?: string
 ): Promise<string | null> {
-    const name = getSpreadsheetName(year);
-    let query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${name}' and trashed=false`;
+    let query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${fileName}' and trashed=false`;
 
     if (folderId) {
         query += ` and '${folderId}' in parents`;
@@ -49,13 +41,13 @@ export async function findSpreadsheet(
  * 新しいスプレッドシートを作成
  */
 export async function createSpreadsheet(
-    year: number,
+    fileName: string,
     headers: string[],
     accessToken: string,
     folderId?: string
 ): Promise<string | null> {
     try {
-        const name = getSpreadsheetName(year);
+
 
         // スプレッドシート作成
         const createResponse = await fetch(SHEETS_API_URL, {
@@ -65,7 +57,7 @@ export async function createSpreadsheet(
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                properties: { title: name },
+                properties: { title: fileName },
                 sheets: [
                     {
                         properties: { title: 'Health Data' },

@@ -17,12 +17,18 @@ import {
     loadExportPeriodDays,
     saveExportPeriodDays,
     saveDriveConfig,
+    loadExportFormats,
+    saveExportFormats,
+    loadExportSheetAsPdf,
+    saveExportSheetAsPdf,
 } from '../src/services/storage';
-import type { DriveConfig } from '../src/config/driveConfig';
+import type { DriveConfig, ExportFormat } from '../src/config/driveConfig';
 
 import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/googleDrive';
 import { getAccessToken } from '../src/services/googleAuth';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
+import { ExportFormatCheckbox } from '../src/components/ExportFormatCheckbox';
+
 
 export default function SettingsScreen() {
     const router = useRouter();
@@ -41,6 +47,8 @@ export default function SettingsScreen() {
     const [folderName, setFolderName] = useState('');
     const [periodDays, setPeriodDays] = useState('7');
     const [isPickerVisible, setPickerVisible] = useState(false);
+    const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
+    const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
 
     // 設定を読み込み
     useEffect(() => {
@@ -48,7 +56,11 @@ export default function SettingsScreen() {
             try {
                 const config = await loadConfig();
                 const days = await loadExportPeriodDays();
+                const formats = await loadExportFormats();
+                const pdfOption = await loadExportSheetAsPdf();
                 setPeriodDays(days.toString());
+                setExportFormats(formats);
+                setExportSheetAsPdf(pdfOption);
 
                 // フォルダIDとフォルダ名を設定
                 // 注意: フォルダIDが空の場合はエクスポート時にデフォルトフォルダが自動作成される
@@ -135,11 +147,36 @@ export default function SettingsScreen() {
         await signIn();
     };
 
+    // エクスポート形式のトグル
+    const toggleExportFormat = async (format: ExportFormat) => {
+        const newFormats = exportFormats.includes(format)
+            ? exportFormats.filter(f => f !== format)
+            : [...exportFormats, format];
+        setExportFormats(newFormats);
+        await saveExportFormats(newFormats);
+    };
+
+    // 戻るボタン押下時のバリデーション
+    const handleBack = () => {
+        if (exportFormats.length === 0) {
+            Alert.alert(
+                '警告',
+                'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
+                [
+                    { text: 'キャンセル', style: 'cancel' },
+                    { text: 'このまま戻る', onPress: () => router.back() }
+                ]
+            );
+            return;
+        }
+        router.back();
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             {/* ヘッダー */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity onPress={handleBack}>
                     <Text style={styles.backButton}>← 戻る</Text>
                 </TouchableOpacity>
                 <Text style={styles.title}>設定</Text>
@@ -221,6 +258,46 @@ export default function SettingsScreen() {
                         placeholder="7"
                         placeholderTextColor="#666"
                         keyboardType="number-pad"
+                    />
+                </View>
+
+                {/* エクスポート形式 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>エクスポート形式</Text>
+                    <Text style={styles.hint}>複数の形式を選択できます</Text>
+
+                    <ExportFormatCheckbox
+                        label="Google Sheets"
+                        description="Googleスプレッドシートに出力"
+                        checked={exportFormats.includes('googleSheets')}
+                        onToggle={() => toggleExportFormat('googleSheets')}
+                    />
+                    {/* PDFはSheetsのサブオプション */}
+                    {exportFormats.includes('googleSheets') && (
+                        <View style={styles.subOption}>
+                            <ExportFormatCheckbox
+                                label="PDF"
+                                description="SheetsをPDFとしてもエクスポート"
+                                checked={exportSheetAsPdf}
+                                onToggle={async () => {
+                                    const newValue = !exportSheetAsPdf;
+                                    setExportSheetAsPdf(newValue);
+                                    await saveExportSheetAsPdf(newValue);
+                                }}
+                            />
+                        </View>
+                    )}
+                    <ExportFormatCheckbox
+                        label="CSV"
+                        description="カンマ区切りファイル（他ツール連携）"
+                        checked={exportFormats.includes('csv')}
+                        onToggle={() => toggleExportFormat('csv')}
+                    />
+                    <ExportFormatCheckbox
+                        label="JSON"
+                        description="構造化データ（AI連携向け）"
+                        checked={exportFormats.includes('json')}
+                        onToggle={() => toggleExportFormat('json')}
                     />
                 </View>
             </ScrollView>
@@ -356,5 +433,12 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 14,
+    },
+    subOption: {
+        paddingLeft: 24,
+        borderLeftWidth: 2,
+        borderLeftColor: '#6366f1',
+        marginLeft: 8,
+        marginTop: 4,
     },
 });

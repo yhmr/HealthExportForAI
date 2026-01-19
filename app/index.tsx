@@ -75,18 +75,9 @@ export default function HomeScreen() {
 
     // エクスポートハンドラ
     const handleExport = async () => {
-        if (!isConfigValid()) {
-            Alert.alert(
-                '設定が必要',
-                'Google Drive APIの設定を行ってください',
-                [{ text: 'OK' }]
-            );
-            return;
-        }
-
         const success = await exportAndUpload();
         if (success) {
-            Alert.alert('成功', 'データをGoogle Driveにエクスポートしました');
+            Alert.alert('成功', 'データをエクスポートしました');
         }
     };
 
@@ -194,8 +185,8 @@ export default function HomeScreen() {
                     <SyncButton
                         onPress={handleExport}
                         isLoading={isUploading}
-                        label="Driveにエクスポート"
-                        icon="☁️"
+                        label="エクスポート"
+                        icon="📤"
                         variant="secondary"
                     />
                 </View>
