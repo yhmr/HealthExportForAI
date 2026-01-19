@@ -160,6 +160,13 @@ export function useGoogleDrive() {
         }
     }, [healthData, isConfigValid, driveConfig, saveConfig]);
 
+    /**
+     * アップロードエラーをクリア
+     */
+    const clearUploadError = useCallback(() => {
+        setUploadError(null);
+    }, []);
+
     return {
         // 状態
         isUploading,
@@ -177,5 +184,6 @@ export function useGoogleDrive() {
         exportAndUpload,
         signIn: handleSignIn,
         signOut: handleSignOut,
+        clearUploadError,
     };
 }

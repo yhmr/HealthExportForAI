@@ -10,6 +10,8 @@ import { SyncButton } from '../src/components/SyncButton';
 import { PeriodPicker, DEFAULT_PERIOD_DAYS } from '../src/components/PeriodPicker';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
+import { useAuth } from '../src/contexts/AuthContext';
+import { AuthCheckModal } from '../src/components/AuthCheckModal';
 import { useHealthStore } from '../src/stores/healthStore';
 import { formatDateTime } from '../src/utils/formatters';
 import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/preferences';
@@ -33,7 +35,15 @@ export default function HomeScreen() {
         uploadError,
         loadConfig,
         exportAndUpload,
+        clearUploadError,
     } = useGoogleDrive();
+
+    // 認証状態
+    const { isAuthenticated, isInitialized: isAuthInitialized, signIn: authSignIn } = useAuth();
+
+    // 認証チェックモーダルの表示状態
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [isSigningIn, setIsSigningIn] = useState(false);
 
     // ストアから選択状態とアクションを取得
     const { selectedDataTags, toggleDataTag } = useHealthStore();
@@ -58,15 +68,41 @@ export default function HomeScreen() {
         }, [initialize, loadConfig, isInitialized])
     );
 
+    // 認証状態が初期化された後、未認証ならモーダルを表示
+    useEffect(() => {
+        if (isAuthInitialized && !isAuthenticated) {
+            setShowAuthModal(true);
+        }
+    }, [isAuthInitialized, isAuthenticated]);
+
+    // モーダルからのサインイン処理
+    const handleAuthModalSignIn = async () => {
+        setIsSigningIn(true);
+        const success = await authSignIn();
+        setIsSigningIn(false);
+        if (success) {
+            setShowAuthModal(false);
+        }
+    };
+
     // エラー表示
     useEffect(() => {
         if (error) {
             Alert.alert('エラー', error);
         }
         if (uploadError) {
-            Alert.alert('アップロードエラー', uploadError);
+            Alert.alert(
+                'アップロードエラー',
+                uploadError,
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => clearUploadError(),
+                    },
+                ]
+            );
         }
-    }, [error, uploadError]);
+    }, [error, uploadError, clearUploadError]);
 
     // 期間変更ハンドラ
     const handlePeriodChange = async (days: number) => {
@@ -105,6 +141,14 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            {/* 認証チェックモーダル */}
+            <AuthCheckModal
+                visible={showAuthModal}
+                isSigningIn={isSigningIn}
+                onSkip={() => setShowAuthModal(false)}
+                onSignIn={handleAuthModalSignIn}
+            />
+
             <Header title="Health Export For AI" />
 
             <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
