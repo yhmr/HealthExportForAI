@@ -31,6 +31,7 @@ import { useLanguage } from '../src/contexts/LanguageContext';
 import type { Language } from '../src/i18n/translations';
 
 
+
 export default function SettingsScreen() {
     const router = useRouter();
     const {
@@ -306,6 +307,8 @@ export default function SettingsScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
+
+
             </ScrollView>
         </SafeAreaView>
     );
