@@ -5,10 +5,14 @@ import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { getNetworkStatus } from './networkService';
 import { loadAutoSyncConfig, loadLastBackgroundSync, saveLastBackgroundSync } from './preferences';
-import { processQueue, processSingleEntry } from './syncService';
-import { getQueue, addToQueue } from './offlineQueueService';
+import { processQueue } from './syncService';
+import { getQueue } from './offlineQueueService';
 import { useOfflineStore } from '../stores/offlineStore';
-import type { HealthData } from '../types/health';
+import { initializeHealthConnect, fetchAllHealthData } from './healthConnect';
+import { executeExport } from './export/controller';
+import { GoogleDriveAdapter } from './storage/googleDriveAdapter';
+import { GoogleSheetsAdapter } from './storage/googleSheetsAdapter';
+import { getDateDaysAgo, getEndOfToday, generateDateRange } from '../utils/formatters';
 
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';
@@ -62,20 +66,73 @@ async function executeBackgroundSync(): Promise<BackgroundFetch.BackgroundFetchR
         // 現在のnetworkServiceは'online'/'offline'のみを返すため
         // Wi-Fi判定が必要な場合はnetworkServiceの拡張が必要
 
-        // キュー内のデータを処理
-        const result = await processQueue();
-        console.log(`[BackgroundSync] Queue processed: ${result.successCount} success, ${result.failCount} failed`);
+        let newDataExported = false;
+
+        // === 新規データ取得・エクスポート ===
+        try {
+            // Health Connect を初期化
+            const initialized = await initializeHealthConnect();
+            if (!initialized) {
+                console.log('[BackgroundSync] Health Connect initialization failed');
+            } else {
+                // 取得日数を動的に計算
+                const fetchDays = await calculateFetchDays();
+                console.log(`[BackgroundSync] Fetching data for ${fetchDays} days`);
+
+                const startTime = getDateDaysAgo(fetchDays);
+                const endTime = getEndOfToday();
+                const dateRange = generateDateRange(startTime, endTime);
+
+                // Health Connect からデータを取得
+                const healthData = await fetchAllHealthData(startTime, endTime);
+
+                // データがあるか確認
+                const hasData = Object.values(healthData).some(
+                    (arr) => Array.isArray(arr) && arr.length > 0
+                );
+
+                if (hasData) {
+                    // アダプターを初期化
+                    const storageAdapter = new GoogleDriveAdapter();
+                    const spreadsheetAdapter = new GoogleSheetsAdapter();
+
+                    // エクスポート実行
+                    const exportResult = await executeExport(
+                        healthData,
+                        storageAdapter,
+                        spreadsheetAdapter,
+                        dateRange
+                    );
+
+                    if (exportResult.success) {
+                        console.log('[BackgroundSync] New data exported successfully');
+                        newDataExported = true;
+                    } else {
+                        console.error('[BackgroundSync] Export failed:', exportResult.error);
+                    }
+                } else {
+                    console.log('[BackgroundSync] No health data available');
+                }
+            }
+        } catch (fetchError) {
+            console.error('[BackgroundSync] Data fetch/export error:', fetchError);
+            // データ取得に失敗してもキュー処理は続行
+        }
+
+        // === オフラインキュー処理 ===
+        const queueResult = await processQueue();
+        console.log(`[BackgroundSync] Queue processed: ${queueResult.successCount} success, ${queueResult.failCount} failed`);
 
         // キュー件数を更新
         const queue = await getQueue();
         useOfflineStore.getState().setPendingCount(queue.length);
 
         // 同期成功時刻を記録
-        if (result.successCount > 0) {
+        if (newDataExported || queueResult.successCount > 0) {
             await saveLastBackgroundSync(new Date().toISOString());
         }
 
-        return result.successCount > 0
+        return (newDataExported || queueResult.successCount > 0)
             ? BackgroundFetch.BackgroundFetchResult.NewData
             : BackgroundFetch.BackgroundFetchResult.NoData;
 
