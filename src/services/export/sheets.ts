@@ -2,51 +2,24 @@
 // ヘルスデータをGoogle Spreadsheetsにエクスポート
 
 import type { HealthData } from '../../types/health';
-// import type { HealthData } from '../../types/health';
 import { formatHealthDataToRows, getExportFileName } from './utils';
-import type { StorageAdapter, SpreadsheetAdapter } from '../storage/interfaces';
+import type { SpreadsheetAdapter } from '../storage/interfaces';
 
 /**
  * ヘルスデータをスプレッドシートにエクスポート
  * @param healthData エクスポートするデータ
- * @param folderId フォルダID
- * @param folderName フォルダ名
- * @param storageAdapter ストレージアダプター
+ * @param folderId フォルダID（確定済み）
  * @param spreadsheetAdapter スプレッドシートアダプター
  * @param originalDates フィルタリング前の元データの全日付（空行を維持するため）
  */
 export async function exportToSpreadsheet(
     healthData: HealthData,
     folderId: string | undefined,
-    folderName: string | undefined,
-    storageAdapter: StorageAdapter,
     spreadsheetAdapter: SpreadsheetAdapter,
     originalDates?: Set<string>
 ): Promise<{ success: boolean; exportedSheets: { year: number; spreadsheetId: string }[]; folderId?: string; error?: string }> {
     const exportedSheets: { year: number; spreadsheetId: string }[] = [];
     try {
-        const isInitialized = await storageAdapter.initialize();
-        if (!isInitialized) {
-            return { success: false, exportedSheets: [], error: 'アクセストークンがありません。サインインしてください。' };
-        }
-
-        // フォルダIDの検証と準備
-        let targetFolderId = folderId;
-
-        if (targetFolderId) {
-            // 指定されたフォルダが存在するか確認
-            const folderExists = await storageAdapter.checkFolderExists(targetFolderId);
-            if (!folderExists) {
-                console.log('[Export] Specified folder not found, falling back to default');
-                targetFolderId = undefined;
-            }
-        }
-
-        if (!targetFolderId) {
-            // フォルダを検索/作成（指定された名前またはデフォルト名を使用）
-            const targetFolderName = folderName || storageAdapter.defaultFolderName;
-            targetFolderId = await storageAdapter.findOrCreateFolder(targetFolderName) ?? undefined;
-        }
 
         // 対象の年を取得（データの最新日付から）
         // originalDatesがあればそれも含める（フィルタリングでデータが空になった日付も行として出力するため）
@@ -89,7 +62,7 @@ export async function exportToSpreadsheet(
         for (const [year, yearData] of dataByYear) {
             const fileName = getExportFileName(year);
             // ファイル名を渡す
-            let spreadsheetId = await spreadsheetAdapter.findSpreadsheet(fileName, targetFolderId);
+            let spreadsheetId = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
             let existingHeaders: string[] = [];
             let existingRows: string[][] = [];
 
@@ -114,7 +87,7 @@ export async function exportToSpreadsheet(
             // スプレッドシートが存在しない場合は新規作成
             if (!spreadsheetId) {
                 // ファイル名を渡す
-                spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, targetFolderId);
+                spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, folderId);
                 if (!spreadsheetId) {
                     return { success: false, exportedSheets: [], error: `${year}年のスプレッドシート作成に失敗しました` };
                 }
@@ -176,7 +149,7 @@ export async function exportToSpreadsheet(
             exportedSheets.push({ year, spreadsheetId });
         }
 
-        return { success: true, exportedSheets, folderId: targetFolderId };
+        return { success: true, exportedSheets, folderId };
     } catch (error) {
         console.error('スプレッドシートエクスポートエラー:', error);
         return {

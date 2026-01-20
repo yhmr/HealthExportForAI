@@ -6,18 +6,14 @@ import type { HealthData } from '../../../src/types/health';
 
 // Mock StorageAdapter
 const mockStorageAdapter = {
-    initialize: vi.fn(),
-    defaultFolderName: 'Health Data',
-    findOrCreateFolder: vi.fn(),
     findFile: vi.fn(),
     uploadFile: vi.fn(),
     updateFile: vi.fn(),
     downloadFileContent: vi.fn(),
-    checkFolderExists: vi.fn(),
 } as unknown as StorageAdapter;
 
 // Mock Health Data
-const mockHealthData: HealthData = {
+const mockHealthData = {
     steps: [{ date: '2025-01-01', count: 5000 }],
     weight: [],
     bodyFat: [],
@@ -31,8 +27,6 @@ const mockHealthData: HealthData = {
 // Reset mocks before each test
 beforeEach(() => {
     vi.resetAllMocks();
-    mockStorageAdapter.initialize = vi.fn().mockResolvedValue(true);
-    mockStorageAdapter.findOrCreateFolder = vi.fn().mockResolvedValue('folder-123');
 });
 
 describe('CSV Export Service', () => {
@@ -41,7 +35,7 @@ describe('CSV Export Service', () => {
         (mockStorageAdapter.findFile as any).mockResolvedValue(null);
         (mockStorageAdapter.uploadFile as any).mockResolvedValue('new-file-id');
 
-        const result = await exportToCSV(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToCSV(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(true);
         expect(result.fileId).toBe('new-file-id');
@@ -61,15 +55,12 @@ describe('CSV Export Service', () => {
         );
         (mockStorageAdapter.updateFile as any).mockResolvedValue(true);
 
-        const result = await exportToCSV(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToCSV(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(true);
         expect(result.fileId).toBe('existing-file-id');
 
-        // Check if updateFile was called with merged content (new data should overwrite/merge)
-        // Note: Our mock data has 5000 steps for 2025-01-01, existing has 1000. Logic should prefer new data?
-        // Actually the logic is: "update existingRowMap with newRowsMap".
-        // So 2025-01-01 should become 5000.
+        // Check if updateFile was called with merged content
         expect(mockStorageAdapter.updateFile).toHaveBeenCalledWith(
             'existing-file-id',
             expect.stringContaining('5000'), // Should perform update
@@ -77,20 +68,13 @@ describe('CSV Export Service', () => {
         );
     });
 
-    it('should handle storage initialization failure', async () => {
-        (mockStorageAdapter.initialize as any).mockResolvedValue(false);
-
-        const result = await exportToCSV(mockHealthData, undefined, mockStorageAdapter);
-
-        expect(result.success).toBe(false);
-        expect(result.error).toContain('ストレージの初期化に失敗');
-    });
+    // Note: Storage initialization test removed - responsibility moved to controller.ts
 
     it('should handle upload failure', async () => {
         (mockStorageAdapter.findFile as any).mockResolvedValue(null);
         (mockStorageAdapter.uploadFile as any).mockResolvedValue(null); // Failure
 
-        const result = await exportToCSV(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToCSV(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(false);
         expect(result.error).toContain('アップロードに失敗');

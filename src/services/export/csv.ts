@@ -13,12 +13,6 @@ export interface ExportResult {
     error?: string;
 }
 
-// エクスポートオプション
-export interface ExportOptions {
-    folderId?: string;
-    folderName?: string;
-}
-
 /**
  * CSVデータをパースして日付→行データのマップに変換
  */
@@ -70,25 +64,16 @@ function parseCSVRow(line: string): string[] {
 
 /**
  * CSV形式へのエクスポート（年間データ蓄積対応）
+ * @param healthData エクスポートするデータ
+ * @param folderId フォルダID（確定済み）
+ * @param storageAdapter ストレージアダプター
  */
 export async function exportToCSV(
     healthData: HealthData,
-    options: ExportOptions | undefined,
+    folderId: string | undefined,
     storageAdapter: StorageAdapter
 ): Promise<ExportResult> {
     try {
-        const isInitialized = await storageAdapter.initialize();
-        if (!isInitialized) {
-            return { success: false, error: 'ストレージの初期化に失敗しました。サインイン状態を確認してください。' };
-        }
-
-        // フォルダIDを確認/作成
-        let folderId = options?.folderId;
-        if (!folderId) {
-            const folderName = options?.folderName || storageAdapter.defaultFolderName;
-            folderId = await storageAdapter.findOrCreateFolder(folderName) ?? undefined;
-        }
-
         // データを行形式に変換
         const { headers, rows: newRowsMap } = formatHealthDataToRows(healthData, []);
 

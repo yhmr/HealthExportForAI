@@ -6,18 +6,14 @@ import type { HealthData } from '../../../src/types/health';
 
 // Mock StorageAdapter
 const mockStorageAdapter = {
-    initialize: vi.fn(),
-    defaultFolderName: 'Health Data',
-    findOrCreateFolder: vi.fn(),
     findFile: vi.fn(),
     uploadFile: vi.fn(),
     updateFile: vi.fn(),
     downloadFileContent: vi.fn(),
-    checkFolderExists: vi.fn(),
 } as unknown as StorageAdapter;
 
 // Mock Health Data
-const mockHealthData: HealthData = {
+const mockHealthData = {
     steps: [{ date: '2025-01-01', count: 5000 }],
     weight: [],
     bodyFat: [],
@@ -31,8 +27,6 @@ const mockHealthData: HealthData = {
 // Reset mocks before each test
 beforeEach(() => {
     vi.resetAllMocks();
-    mockStorageAdapter.initialize = vi.fn().mockResolvedValue(true);
-    mockStorageAdapter.findOrCreateFolder = vi.fn().mockResolvedValue('folder-123');
 });
 
 describe('JSON Export Service', () => {
@@ -41,7 +35,7 @@ describe('JSON Export Service', () => {
         (mockStorageAdapter.findFile as any).mockResolvedValue(null);
         (mockStorageAdapter.uploadFile as any).mockResolvedValue('new-file-id');
 
-        const result = await exportToJSON(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(true);
         expect(result.fileId).toBe('new-file-id');
@@ -71,13 +65,13 @@ describe('JSON Export Service', () => {
             year: 2025,
             records: [
                 { date: '2025-01-01', steps: 1000 },
-                { date: '2024-12-31', steps: 2000 } // Different year shouldn't be here ideally but logic filters by year
+                { date: '2024-12-31', steps: 2000 }
             ]
         };
         (mockStorageAdapter.downloadFileContent as any).mockResolvedValue(JSON.stringify(existingData));
         (mockStorageAdapter.updateFile as any).mockResolvedValue(true);
 
-        const result = await exportToJSON(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(true);
         expect(result.fileId).toBe('existing-file-id');
@@ -121,7 +115,7 @@ describe('JSON Export Service', () => {
         (mockStorageAdapter.downloadFileContent as any).mockResolvedValue('invalid-json'); // Corrupt file
         (mockStorageAdapter.updateFile as any).mockResolvedValue(true);
 
-        const result = await exportToJSON(mockHealthData, undefined, mockStorageAdapter);
+        const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
 
         expect(result.success).toBe(true);
         // It should start fresh if parsing fails

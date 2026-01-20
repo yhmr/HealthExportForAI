@@ -21,32 +21,18 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 
 /**
  * スプレッドシートをPDF形式でエクスポートしてDriveに保存
+ * @param spreadsheetId スプレッドシートID
+ * @param folderId フォルダID（確定済み）
+ * @param storageAdapter ストレージアダプター
  * @param year 対象年（ファイル名に使用）
  */
 export async function exportSpreadsheetAsPDF(
     spreadsheetId: string,
+    folderId: string | undefined,
     storageAdapter: StorageAdapter,
-    folderId?: string,
-    folderName?: string,
     year?: number
 ): Promise<{ success: boolean; fileId?: string; error?: string }> {
     try {
-        const isInitialized = await storageAdapter.initialize();
-        if (!isInitialized) {
-            return { success: false, error: 'アクセストークンがありません' };
-        }
-
-        // 注意: Spreadsheets APIのPDFエクスポートエンドポイントは、StorageAdapterではなく
-        // Google固有の機能であるため、ここではまだ直接フェッチする必要があります。
-        // 将来的には SpreadsheetAdapter に `exportAsPDF` を追加するなども検討できますが、
-        // フォルダIDを確認/作成
-        // フォルダIDを確認/作成
-        let targetFolderId = folderId;
-        if (!targetFolderId) {
-            const targetFolderName = folderName || storageAdapter.defaultFolderName;
-            targetFolderId = await storageAdapter.findOrCreateFolder(targetFolderName) ?? undefined;
-        }
-
         const accessToken = await getAccessToken(); // PDFエクスポートリクエスト用
         if (!accessToken) return { success: false, error: 'アクセストークンがありません' };
 
@@ -68,15 +54,12 @@ export async function exportSpreadsheetAsPDF(
         const pdfArrayBuffer = await exportResponse.arrayBuffer();
         const pdfBase64 = arrayBufferToBase64(pdfArrayBuffer);
 
-        // フォルダIDを確認
-        // フォルダIDの計算は完了しているため、ここでは再計算しない
-
         // ファイル名を生成（統一ファイル名を使用、空白はアンダースコアに置換）
         const targetYear = year || new Date().getFullYear();
         const pdfFileName = getExportFileName(targetYear, 'pdf', true);
 
         // 既存のPDFファイルを検索
-        const existingFile = await storageAdapter.findFile(pdfFileName, 'application/pdf', targetFolderId);
+        const existingFile = await storageAdapter.findFile(pdfFileName, 'application/pdf', folderId);
 
         const DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
         const boundary = '-------314159265358979323846pdf';
@@ -128,8 +111,8 @@ export async function exportSpreadsheetAsPDF(
                 mimeType: 'application/pdf',
             };
 
-            if (targetFolderId) {
-                metadata.parents = [targetFolderId];
+            if (folderId) {
+                metadata.parents = [folderId];
             }
 
             const multipartRequestBody =

@@ -4,9 +4,8 @@
 
 import type { HealthData } from '../../types/health';
 import { getExportFileName } from './utils';
-import type { ExportResult, ExportOptions } from './csv';
+import type { ExportResult } from './csv';
 import type { StorageAdapter } from '../storage/interfaces';
-import { DEFAULT_FOLDER_NAME } from '../storage/googleDrive'; // 定数のみインポート
 
 // 日付ごとのデータ構造
 interface DailyRecord {
@@ -110,25 +109,16 @@ function healthDataToDailyRecords(healthData: HealthData): Map<string, DailyReco
 
 /**
  * JSON形式へのエクスポート（年間データ蓄積対応）
+ * @param healthData エクスポートするデータ
+ * @param folderId フォルダID（確定済み）
+ * @param storageAdapter ストレージアダプター
  */
 export async function exportToJSON(
     healthData: HealthData,
-    options: ExportOptions | undefined,
+    folderId: string | undefined,
     storageAdapter: StorageAdapter
 ): Promise<ExportResult> {
     try {
-        const isInitialized = await storageAdapter.initialize();
-        if (!isInitialized) {
-            return { success: false, error: 'ストレージの初期化に失敗しました。サインイン状態を確認してください。' };
-        }
-
-        // フォルダIDを確認/作成
-        let folderId = options?.folderId;
-        if (!folderId) {
-            const folderName = options?.folderName || storageAdapter.defaultFolderName;
-            folderId = await storageAdapter.findOrCreateFolder(folderName) ?? undefined;
-        }
-
         // データを日付ごとのレコードに変換
         const newRecordsMap = healthDataToDailyRecords(healthData);
 

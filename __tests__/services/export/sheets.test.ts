@@ -1,17 +1,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
-import type { StorageAdapter, SpreadsheetAdapter } from '../../../src/services/storage/interfaces';
-import type { HealthData } from '../../../src/types/health';
+import type { SpreadsheetAdapter } from '../../../src/services/storage/interfaces';
 
 // Mock Adapters
-const mockStorageAdapter = {
-    initialize: vi.fn(),
-    defaultFolderName: 'Health Data',
-    findOrCreateFolder: vi.fn(),
-    checkFolderExists: vi.fn(),
-} as unknown as StorageAdapter;
-
 const mockSpreadsheetAdapter = {
     findSpreadsheet: vi.fn(),
     createSpreadsheet: vi.fn(),
@@ -21,7 +13,7 @@ const mockSpreadsheetAdapter = {
 } as unknown as SpreadsheetAdapter;
 
 // Mock Health Data
-const mockHealthData: HealthData = {
+const mockHealthData = {
     steps: [{ date: '2025-01-01', count: 5000 }],
     weight: [],
     bodyFat: [],
@@ -35,9 +27,6 @@ const mockHealthData: HealthData = {
 // Reset mocks before each test
 beforeEach(() => {
     vi.resetAllMocks();
-    mockStorageAdapter.initialize = vi.fn().mockResolvedValue(true);
-    mockStorageAdapter.checkFolderExists = vi.fn().mockResolvedValue(true);
-    mockStorageAdapter.findOrCreateFolder = vi.fn().mockResolvedValue('folder-123');
 });
 
 describe('Sheets Export Service', () => {
@@ -49,9 +38,7 @@ describe('Sheets Export Service', () => {
 
         const result = await exportToSpreadsheet(
             mockHealthData,
-            undefined,
-            undefined,
-            mockStorageAdapter,
+            'folder-123',
             mockSpreadsheetAdapter
         );
 
@@ -80,18 +67,14 @@ describe('Sheets Export Service', () => {
 
         const result = await exportToSpreadsheet(
             mockHealthData,
-            undefined,
-            undefined,
-            mockStorageAdapter,
+            'folder-123',
             mockSpreadsheetAdapter
         );
 
         expect(result.success).toBe(true);
         expect(result.exportedSheets[0].spreadsheetId).toBe('existing-sheet-id');
 
-        // updateHeaders should NOT be called if headers match (checking simple case)
-        // Actually our mock data headers are much longer (FIXED_HEADERS), existing is short.
-        // So updateHeaders SHOULD be called to expand headers.
+        // updateHeaders should be called to expand headers
         expect(mockSpreadsheetAdapter.updateHeaders).toHaveBeenCalled();
 
         expect(mockSpreadsheetAdapter.updateRows).toHaveBeenCalledWith(
@@ -101,24 +84,7 @@ describe('Sheets Export Service', () => {
         );
     });
 
-    it('should fall back to default folder if specified folder not found', async () => {
-        // Setup: Specified folder failure
-        (mockStorageAdapter.checkFolderExists as any).mockResolvedValue(false);
-        (mockStorageAdapter.findOrCreateFolder as any).mockResolvedValue('default-folder-id');
-        (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue('sheet-id');
-        (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(true);
-
-        const result = await exportToSpreadsheet(
-            mockHealthData,
-            'missing-folder-id',
-            undefined,
-            mockStorageAdapter,
-            mockSpreadsheetAdapter
-        );
-
-        expect(result.success).toBe(true);
-        expect(result.folderId).toBe('default-folder-id');
-    });
+    // Note: Folder fallback test removed - responsibility moved to controller.ts
 
     it('should handle spreadsheet creation failure', async () => {
         (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(null);
@@ -126,9 +92,7 @@ describe('Sheets Export Service', () => {
 
         const result = await exportToSpreadsheet(
             mockHealthData,
-            undefined,
-            undefined,
-            mockStorageAdapter,
+            'folder-123',
             mockSpreadsheetAdapter
         );
 

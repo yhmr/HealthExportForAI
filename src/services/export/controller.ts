@@ -114,12 +114,19 @@ export async function handleExportRequest(healthData: HealthData, dateRange: Set
 
 /**
  * エクスポートコンテキストを準備
+ * ストレージの初期化とフォルダIDの取得を一括で行う
  */
 async function prepareContext(
     storageAdapter: StorageAdapter,
     folderId?: string,
     folderName?: string
 ): Promise<ExportContext | null> {
+    // ストレージを初期化（1回だけ実行）
+    const isInitialized = await storageAdapter.initialize();
+    if (!isInitialized) {
+        return null;
+    }
+
     const targetFolderName = folderName || storageAdapter.defaultFolderName;
 
     let targetFolderId = folderId;
@@ -176,8 +183,6 @@ export async function executeExport(
             const result = await exportToSpreadsheet(
                 healthData,
                 context.folderId,
-                context.folderName,
-                storageAdapter,
                 spreadsheetAdapter,
                 originalDates
             );
@@ -196,9 +201,8 @@ export async function executeExport(
                     for (const sheet of result.exportedSheets) {
                         const pdfResult = await exportSpreadsheetAsPDF(
                             sheet.spreadsheetId,
-                            storageAdapter,
                             context.folderId,
-                            context.folderName,
+                            storageAdapter,
                             sheet.year
                         );
                         results.push({
@@ -218,10 +222,7 @@ export async function executeExport(
         if (formats.includes('csv')) {
             const result = await exportToCSV(
                 healthData,
-                {
-                    folderId: context.folderId,
-                    folderName: context.folderName,
-                },
+                context.folderId,
                 storageAdapter
             );
             results.push({ format: 'csv', success: result.success, error: result.error, fileId: result.fileId });
@@ -231,10 +232,7 @@ export async function executeExport(
         if (formats.includes('json')) {
             const result = await exportToJSON(
                 healthData,
-                {
-                    folderId: context.folderId,
-                    folderName: context.folderName,
-                },
+                context.folderId,
                 storageAdapter
             );
             results.push({ format: 'json', success: result.success, error: result.error, fileId: result.fileId });
