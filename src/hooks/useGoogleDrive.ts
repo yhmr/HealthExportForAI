@@ -3,8 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useHealthStore, filterHealthDataByTags, type DataTagKey } from '../stores/healthStore';
 import { executeExport } from '../services/export/controller';
-import { GoogleDriveAdapter } from '../services/storage/googleDriveAdapter';
-import { GoogleSheetsAdapter } from '../services/storage/googleSheetsAdapter';
+import { createStorageAdapter, createSpreadsheetAdapter } from '../services/storage/adapterFactory';
 import {
     configureGoogleSignIn,
     isSignedIn,
@@ -145,9 +144,9 @@ export function useGoogleDrive() {
         setUploadError(null);
 
         try {
-            // アダプターを初期化
-            const storageAdapter = new GoogleDriveAdapter();
-            const spreadsheetAdapter = new GoogleSheetsAdapter();
+            // ファクトリ経由でアダプターを取得
+            const storageAdapter = createStorageAdapter();
+            const spreadsheetAdapter = createSpreadsheetAdapter();
 
             // exportControllerにエクスポート処理を委譲（アダプターを注入）
             const result = await executeExport(dataToExport, storageAdapter, spreadsheetAdapter, syncDateRange ?? undefined);

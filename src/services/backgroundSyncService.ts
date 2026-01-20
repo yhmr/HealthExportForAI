@@ -10,8 +10,7 @@ import { getQueue } from './offlineQueueService';
 import { useOfflineStore } from '../stores/offlineStore';
 import { initializeHealthConnect, fetchAllHealthData } from './healthConnect';
 import { executeExport } from './export/controller';
-import { GoogleDriveAdapter } from './storage/googleDriveAdapter';
-import { GoogleSheetsAdapter } from './storage/googleSheetsAdapter';
+import { createStorageAdapter, createSpreadsheetAdapter } from './storage/adapterFactory';
 import { getDateDaysAgo, getEndOfToday, generateDateRange } from '../utils/formatters';
 
 /** バックグラウンド同期タスク名 */
@@ -92,9 +91,9 @@ async function executeBackgroundSync(): Promise<BackgroundFetch.BackgroundFetchR
                 );
 
                 if (hasData) {
-                    // アダプターを初期化
-                    const storageAdapter = new GoogleDriveAdapter();
-                    const spreadsheetAdapter = new GoogleSheetsAdapter();
+                    // ファクトリ経由でアダプターを取得
+                    const storageAdapter = createStorageAdapter();
+                    const spreadsheetAdapter = createSpreadsheetAdapter();
 
                     // エクスポート実行
                     const exportResult = await executeExport(

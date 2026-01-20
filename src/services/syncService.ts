@@ -5,8 +5,7 @@ import type { PendingExport } from '../types/offline';
 import type { DataTagKey } from '../stores/healthStore';
 import { filterHealthDataByTags } from '../stores/healthStore';
 import { executeExport } from './export/controller';
-import { GoogleDriveAdapter } from './storage/googleDriveAdapter';
-import { GoogleSheetsAdapter } from './storage/googleSheetsAdapter';
+import { createStorageAdapter, createSpreadsheetAdapter } from './storage/adapterFactory';
 import {
     getQueue,
     removeFromQueue,
@@ -46,9 +45,9 @@ export async function processSingleEntry(entry: PendingExport): Promise<boolean>
             return false;
         }
 
-        // アダプターを初期化
-        const storageAdapter = new GoogleDriveAdapter();
-        const spreadsheetAdapter = new GoogleSheetsAdapter();
+        // ファクトリ経由でアダプターを取得
+        const storageAdapter = createStorageAdapter();
+        const spreadsheetAdapter = createSpreadsheetAdapter();
 
         // 選択されたタグでデータをフィルタリング
         const selectedTags = new Set(entry.selectedTags as DataTagKey[]);
