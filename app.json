@@ -1,13 +1,13 @@
 {
   "expo": {
     "name": "Health Export For AI",
-    "slug": "health-export-for-ai",
+    "slug": "connect-health-connect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "health-export-for-ai",
+    "scheme": "connect-health-connect",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
