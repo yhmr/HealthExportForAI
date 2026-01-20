@@ -16,6 +16,7 @@ import { useHealthStore } from '../src/stores/healthStore';
 import { formatDateTime } from '../src/utils/formatters';
 import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/preferences';
 import { useLanguage } from '../src/contexts/LanguageContext';
+import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
 
 export default function HomeScreen() {
     const {
@@ -132,9 +133,14 @@ export default function HomeScreen() {
     // エクスポートハンドラ
     const handleExport = async () => {
         // 選択されたタグをエクスポート関数に渡す
-        const success = await exportAndUpload(selectedDataTags);
-        if (success) {
-            Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
+        const result = await exportAndUpload(selectedDataTags);
+        if (result.success) {
+            if (result.queued) {
+                // オフラインキューに追加された場合
+                Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
+            } else {
+                Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
+            }
         }
     };
 
@@ -154,6 +160,9 @@ export default function HomeScreen() {
             />
 
             <Header title={t('home', 'title')} />
+
+            {/* ネットワーク状態バナー */}
+            <NetworkStatusBanner />
 
             <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
                 {/* ステータス表示 */}

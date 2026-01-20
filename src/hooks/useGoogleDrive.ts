@@ -16,6 +16,9 @@ import { loadDriveConfig, saveDriveConfig } from '../services/preferences';
 import { type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
 import { getCurrentISOString } from '../utils/formatters';
 import type { User } from '@react-native-google-signin/google-signin';
+import { getNetworkStatus } from '../services/networkService';
+import { addToQueue, getQueueCount } from '../services/offlineQueueService';
+import { useOfflineStore } from '../stores/offlineStore';
 
 export function useGoogleDrive() {
     const [isUploading, setIsUploading] = useState(false);
@@ -99,12 +102,43 @@ export function useGoogleDrive() {
     /**
      * データをエクスポート
      * exportControllerに処理を委譲
+     * オフライン時はキューに追加し、オンライン復帰時に自動同期
      * @param selectedTags エクスポートするデータタグのセット
+     * @returns { success: boolean, queued?: boolean } 成功/キュー追加の結果
      */
     const exportAndUpload = useCallback(async (selectedTags?: Set<DataTagKey>) => {
         if (!isConfigValid()) {
             setUploadError('サインインしてください');
-            return false;
+            return { success: false };
+        }
+
+        // 選択されたタグでデータをフィルタリング
+        const dataToExport = selectedTags
+            ? filterHealthDataByTags(healthData, selectedTags)
+            : healthData;
+
+        // syncDateRangeを取得（取得期間の全日付）
+        const { syncDateRange } = useHealthStore.getState();
+
+        // ネットワーク状態を確認
+        const networkStatus = await getNetworkStatus();
+        if (networkStatus !== 'online') {
+            // オフライン時はキューに追加
+            try {
+                await addToQueue({
+                    healthData: dataToExport,
+                    selectedTags: Array.from(selectedTags || new Set()),
+                    syncDateRange: syncDateRange ? Array.from(syncDateRange) : null,
+                });
+                // キュー件数を更新
+                const count = await getQueueCount();
+                useOfflineStore.getState().setPendingCount(count);
+                console.log('[useGoogleDrive] Offline: Added to queue');
+                return { success: true, queued: true };
+            } catch (err) {
+                setUploadError('オフラインキューへの追加に失敗しました');
+                return { success: false };
+            }
         }
 
         setIsUploading(true);
@@ -114,14 +148,6 @@ export function useGoogleDrive() {
             // アダプターを初期化
             const storageAdapter = new GoogleDriveAdapter();
             const spreadsheetAdapter = new GoogleSheetsAdapter();
-
-            // 選択されたタグでデータをフィルタリング
-            const dataToExport = selectedTags
-                ? filterHealthDataByTags(healthData, selectedTags)
-                : healthData;
-
-            // syncDateRangeを取得（取得期間の全日付）
-            const { syncDateRange } = useHealthStore.getState();
 
             // exportControllerにエクスポート処理を委譲（アダプターを注入）
             const result = await executeExport(dataToExport, storageAdapter, spreadsheetAdapter, syncDateRange ?? undefined);
@@ -151,10 +177,10 @@ export function useGoogleDrive() {
                 console.log(`[Export] Successfully exported ${successCount} format(s)`);
             }
 
-            return result.success;
+            return { success: result.success };
         } catch (err) {
             setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');
-            return false;
+            return { success: false };
         } finally {
             setIsUploading(false);
         }

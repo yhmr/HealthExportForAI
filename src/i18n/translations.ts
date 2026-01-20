@@ -91,6 +91,15 @@ export const translations = {
             placeholder: '日数',
             selectPeriod: '取得期間を選択',
         },
+        // ネットワーク状態
+        network: {
+            offline: 'オフライン',
+            offlineWithCount: 'オフライン（{{count}}件の未同期データ）',
+            syncing: '同期中...',
+            syncComplete: '同期完了',
+            syncError: '同期エラー',
+            pendingItems: '{{count}}件の未同期データ',
+        },
     },
     en: {
         // Common
@@ -178,6 +187,15 @@ export const translations = {
             custom: 'Custom',
             placeholder: 'Days',
             selectPeriod: 'Select Period',
+        },
+        // Network status
+        network: {
+            offline: 'Offline',
+            offlineWithCount: 'Offline ({{count}} pending items)',
+            syncing: 'Syncing...',
+            syncComplete: 'Sync complete',
+            syncError: 'Sync error',
+            pendingItems: '{{count}} pending items',
         },
     },
 } as const;

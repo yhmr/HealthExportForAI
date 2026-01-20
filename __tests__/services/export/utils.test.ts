@@ -92,7 +92,7 @@ describe('Export Utils', () => {
                 { date: '2025-01-02', count: 6000 }
             ],
             weight: [
-                { date: '2025-01-01', value: 70.5 }
+                { date: '2025-01-01', value: 70.5, unit: 'kg', time: '08:00' }
             ],
             bodyFat: [],
             totalCaloriesBurned: [],
