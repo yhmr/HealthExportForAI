@@ -17,10 +17,10 @@ export interface StorageAdapter {
     findFile(fileName: string, mimeType: string, folderId?: string): Promise<FileInfo | null>;
 
     /** ファイルをアップロード（新規作成） */
-    uploadFile(content: string, fileName: string, mimeType: string, folderId?: string): Promise<string | null>;
+    uploadFile(content: string, fileName: string, mimeType: string, folderId?: string, isBase64?: boolean): Promise<string | null>;
 
     /** 既存のファイルを更新 */
-    updateFile(fileId: string, content: string, mimeType: string): Promise<boolean>;
+    updateFile(fileId: string, content: string, mimeType: string, isBase64?: boolean): Promise<boolean>;
 
     /** デフォルトの保存フォルダ名 */
     readonly defaultFolderName: string;
@@ -44,4 +44,7 @@ export interface SpreadsheetAdapter {
 
     /** 行データを更新/追加 */
     updateRows(spreadsheetId: string, startRow: number, rows: (string | number | null)[][]): Promise<boolean>;
+
+    /** PDFエクスポート（Base64文字列として取得） */
+    fetchPDF(spreadsheetId: string): Promise<string | null>;
 }

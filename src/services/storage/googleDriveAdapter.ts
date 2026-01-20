@@ -49,14 +49,14 @@ export class GoogleDriveAdapter implements StorageAdapter {
         return findFile(fileName, mimeType, token, folderId);
     }
 
-    async uploadFile(content: string, fileName: string, mimeType: string, folderId?: string): Promise<string | null> {
+    async uploadFile(content: string, fileName: string, mimeType: string, folderId?: string, isBase64?: boolean): Promise<string | null> {
         const token = await this.ensureAccessToken();
-        return uploadFile(content, fileName, mimeType, token, folderId);
+        return uploadFile(content, fileName, mimeType, token, folderId, isBase64);
     }
 
-    async updateFile(fileId: string, content: string, mimeType: string): Promise<boolean> {
+    async updateFile(fileId: string, content: string, mimeType: string, isBase64?: boolean): Promise<boolean> {
         const token = await this.ensureAccessToken();
-        return updateFile(fileId, content, mimeType, token);
+        return updateFile(fileId, content, mimeType, token, isBase64);
     }
 
     async downloadFileContent(fileId: string): Promise<string | null> {

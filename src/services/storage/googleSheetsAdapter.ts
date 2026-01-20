@@ -5,6 +5,7 @@ import {
     getSheetData,
     updateHeaders,
     updateRows,
+    fetchPDF,
 } from './googleSheets';
 import { getAccessToken } from '../googleAuth';
 
@@ -44,5 +45,10 @@ export class GoogleSheetsAdapter implements SpreadsheetAdapter {
     async updateRows(spreadsheetId: string, startRow: number, rows: (string | number | null)[][]): Promise<boolean> {
         const token = await this.ensureAccessToken();
         return updateRows(spreadsheetId, startRow, rows, token);
+    }
+
+    async fetchPDF(spreadsheetId: string): Promise<string | null> {
+        const token = await this.ensureAccessToken();
+        return fetchPDF(spreadsheetId, token);
     }
 }

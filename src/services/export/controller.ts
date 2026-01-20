@@ -203,7 +203,8 @@ export async function executeExport(
                             sheet.spreadsheetId,
                             context.folderId,
                             storageAdapter,
-                            sheet.year
+                            spreadsheetAdapter,
+                            sheet.year,
                         );
                         results.push({
                             format: 'pdf',

@@ -247,6 +247,41 @@ export async function updateRows(
 }
 
 /**
+ * スプレッドシートをPDFとして取得（Base64形式）
+ * @param spreadsheetId スプレッドシートID
+ * @param accessToken アクセストークン
+ */
+export async function fetchPDF(
+    spreadsheetId: string,
+    accessToken: string
+): Promise<string | null> {
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=pdf&portrait=false&size=A4&gridlines=false`;
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!response.ok) {
+            console.error('Fetch PDF failed:', response.status);
+            return null;
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+
+        // ArrayBuffer to Base64
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    } catch (error) {
+        console.error('PDF取得エラー:', error);
+        return null;
+    }
+}
+
+/**
  * 列番号を列文字に変換（1 -> A, 27 -> AA）
  */
 export function columnToLetter(column: number): string {

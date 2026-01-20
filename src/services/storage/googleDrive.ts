@@ -173,7 +173,8 @@ export async function uploadFile(
     fileName: string,
     mimeType: string,
     accessToken: string,
-    folderId?: string
+    folderId?: string,
+    isBase64?: boolean
 ): Promise<string | null> {
     try {
         const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
@@ -193,12 +194,17 @@ export async function uploadFile(
         const delimiter = `\r\n--${boundary}\r\n`;
         const closeDelimiter = `\r\n--${boundary}--`;
 
+        let contentTypeHeader = `Content-Type: ${mimeType}\r\n\r\n`;
+        if (isBase64) {
+            contentTypeHeader = `Content-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
+        }
+
         const multipartRequestBody =
             delimiter +
             'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
             JSON.stringify(metadata) +
             delimiter +
-            `Content-Type: ${mimeType}\r\n\r\n` +
+            contentTypeHeader +
             fileContent +
             closeDelimiter;
 
@@ -298,27 +304,68 @@ export async function updateFile(
     fileId: string,
     fileContent: string,
     mimeType: string,
-    accessToken: string
+    accessToken: string,
+    isBase64?: boolean
 ): Promise<boolean> {
     try {
-        const UPLOAD_URL = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+        // Base64の場合はmultipart/relatedでアップロード
+        if (isBase64) {
+            const UPLOAD_URL = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
+            const boundary = '-------314159265358979323846';
+            const delimiter = `\r\n--${boundary}\r\n`;
+            const closeDelimiter = `\r\n--${boundary}--`;
+            const metadata = {};
 
-        const response = await fetch(UPLOAD_URL, {
-            method: 'PATCH',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': mimeType,
-            },
-            body: fileContent,
-        });
+            const contentTypeHeader = `Content-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
 
-        if (response.ok) {
-            console.log(`[GoogleDrive] File updated: ${fileId}`);
-            return true;
+            const multipartRequestBody =
+                delimiter +
+                'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+                JSON.stringify(metadata) +
+                delimiter +
+                contentTypeHeader +
+                fileContent +
+                closeDelimiter;
+
+            const response = await fetch(UPLOAD_URL, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': `multipart/related; boundary=${boundary}`,
+                },
+                body: multipartRequestBody,
+            });
+
+            if (response.ok) {
+                console.log(`[GoogleDrive] File updated (Base64): ${fileId}`);
+                return true;
+            } else {
+                const errorData = await response.json();
+                console.error('Update file (Base64) failed:', response.status, errorData);
+                return false;
+            }
         } else {
-            const errorData = await response.json();
-            console.error('Update file failed:', response.status, errorData);
-            return false;
+            // 従来のテキスト更新（Simple Upload / Media Upload）
+            // uploadType=media はコンテンツのみをPUT/PATCHする
+            const MEDIA_UPLOAD_URL = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+
+            const response = await fetch(MEDIA_UPLOAD_URL, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': mimeType,
+                },
+                body: fileContent,
+            });
+
+            if (response.ok) {
+                console.log(`[GoogleDrive] File updated: ${fileId}`);
+                return true;
+            } else {
+                const errorData = await response.json();
+                console.error('Update file failed:', response.status, errorData);
+                return false;
+            }
         }
     } catch (error) {
         console.error('ファイル更新エラー:', error);
