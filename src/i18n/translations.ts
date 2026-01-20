@@ -100,6 +100,18 @@ export const translations = {
             syncError: '同期エラー',
             pendingItems: '{{count}}件の未同期データ',
         },
+        // 自動同期設定
+        autoSync: {
+            sectionTitle: '自動同期',
+            enabled: '自動同期',
+            enabledDesc: 'バックグラウンドで定期的に同期',
+            interval: '同期間隔',
+            wifiOnly: 'Wi-Fi接続時のみ',
+            wifiOnlyDesc: 'モバイルデータ通信時は同期しない',
+            lastSync: '最終バックグラウンド同期',
+            never: '未実行',
+            nextSync: '次回同期予定',
+        },
     },
     en: {
         // Common
@@ -196,6 +208,18 @@ export const translations = {
             syncComplete: 'Sync complete',
             syncError: 'Sync error',
             pendingItems: '{{count}} pending items',
+        },
+        // Auto sync settings
+        autoSync: {
+            sectionTitle: 'Auto Sync',
+            enabled: 'Auto Sync',
+            enabledDesc: 'Sync periodically in background',
+            interval: 'Sync Interval',
+            wifiOnly: 'Wi-Fi Only',
+            wifiOnlyDesc: 'Do not sync on mobile data',
+            lastSync: 'Last Background Sync',
+            never: 'Never',
+            nextSync: 'Next Sync',
         },
     },
 } as const;

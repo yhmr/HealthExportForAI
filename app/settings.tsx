@@ -9,6 +9,7 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
+    Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,8 +20,15 @@ import {
     saveExportFormats,
     loadExportSheetAsPdf,
     saveExportSheetAsPdf,
+    loadAutoSyncConfig,
+    saveAutoSyncConfig,
+    loadLastBackgroundSync,
+    getSyncIntervalLabel,
+    SYNC_INTERVALS,
 } from '../src/services/preferences';
+import { syncBackgroundTaskWithConfig } from '../src/services/backgroundSyncService';
 import type { DriveConfig, ExportFormat } from '../src/config/driveConfig';
+import type { AutoSyncConfig, SyncInterval } from '../src/types/offline';
 
 import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
 import { getAccessToken } from '../src/services/googleAuth';
@@ -52,6 +60,15 @@ export default function SettingsScreen() {
     const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
     const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
 
+    // 自動同期設定
+    const [autoSyncConfig, setAutoSyncConfigState] = useState<AutoSyncConfig>({
+        enabled: false,
+        intervalMinutes: 1440,
+        wifiOnly: true,
+    });
+    const [lastBackgroundSync, setLastBackgroundSync] = useState<string | null>(null);
+    const [showIntervalPicker, setShowIntervalPicker] = useState(false);
+
     // 翻訳
     const { t, language, setLanguage } = useLanguage();
 
@@ -64,6 +81,12 @@ export default function SettingsScreen() {
                 const pdfOption = await loadExportSheetAsPdf();
                 setExportFormats(formats);
                 setExportSheetAsPdf(pdfOption);
+
+                // 自動同期設定を読み込み
+                const syncConfig = await loadAutoSyncConfig();
+                setAutoSyncConfigState(syncConfig);
+                const lastSync = await loadLastBackgroundSync();
+                setLastBackgroundSync(lastSync);
 
                 // フォルダIDとフォルダ名を設定
                 // 注意: フォルダIDが空の場合はエクスポート時にデフォルトフォルダが自動作成される
@@ -127,6 +150,30 @@ export default function SettingsScreen() {
             : [...exportFormats, format];
         setExportFormats(newFormats);
         await saveExportFormats(newFormats);
+    };
+
+    // 自動同期のON/OFFトグル
+    const handleAutoSyncToggle = async (enabled: boolean) => {
+        const newConfig = { ...autoSyncConfig, enabled };
+        setAutoSyncConfigState(newConfig);
+        await saveAutoSyncConfig(newConfig);
+        await syncBackgroundTaskWithConfig();
+    };
+
+    // 同期間隔の変更
+    const handleIntervalChange = async (interval: SyncInterval) => {
+        const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
+        setAutoSyncConfigState(newConfig);
+        await saveAutoSyncConfig(newConfig);
+        await syncBackgroundTaskWithConfig();
+        setShowIntervalPicker(false);
+    };
+
+    // Wi-Fiのみ同期のトグル
+    const handleWifiOnlyToggle = async (wifiOnly: boolean) => {
+        const newConfig = { ...autoSyncConfig, wifiOnly };
+        setAutoSyncConfigState(newConfig);
+        await saveAutoSyncConfig(newConfig);
     };
 
     // 戻るボタン押下時のバリデーション
@@ -204,9 +251,89 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* 自動同期設定 */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('autoSync', 'sectionTitle')}</Text>
+
+                    {/* 自動同期ON/OFF */}
+                    <View style={styles.settingRow}>
+                        <View style={styles.settingLabelContainer}>
+                            <Text style={styles.settingLabel}>{t('autoSync', 'enabled')}</Text>
+                            <Text style={styles.settingDesc}>{t('autoSync', 'enabledDesc')}</Text>
+                        </View>
+                        <Switch
+                            value={autoSyncConfig.enabled}
+                            onValueChange={handleAutoSyncToggle}
+                            trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
+                            thumbColor={autoSyncConfig.enabled ? '#6366f1' : '#9ca3af'}
+                        />
+                    </View>
+
+                    {/* 同期間隔（有効時のみ表示） */}
+                    {autoSyncConfig.enabled && (
+                        <>
+                            <TouchableOpacity
+                                style={styles.settingRow}
+                                onPress={() => setShowIntervalPicker(!showIntervalPicker)}
+                            >
+                                <Text style={styles.settingLabel}>{t('autoSync', 'interval')}</Text>
+                                <Text style={styles.settingValue}>
+                                    {getSyncIntervalLabel(autoSyncConfig.intervalMinutes)[language]} ▼
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* 間隔選択（展開時） */}
+                            {showIntervalPicker && (
+                                <View style={styles.intervalPicker}>
+                                    {SYNC_INTERVALS.map((interval) => (
+                                        <TouchableOpacity
+                                            key={interval}
+                                            style={[
+                                                styles.intervalOption,
+                                                autoSyncConfig.intervalMinutes === interval && styles.intervalOptionActive
+                                            ]}
+                                            onPress={() => handleIntervalChange(interval)}
+                                        >
+                                            <Text style={[
+                                                styles.intervalOptionText,
+                                                autoSyncConfig.intervalMinutes === interval && styles.intervalOptionTextActive
+                                            ]}>
+                                                {getSyncIntervalLabel(interval)[language]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+
+                            {/* Wi-Fiのみ同期 */}
+                            <View style={styles.settingRow}>
+                                <View style={styles.settingLabelContainer}>
+                                    <Text style={styles.settingLabel}>{t('autoSync', 'wifiOnly')}</Text>
+                                    <Text style={styles.settingDesc}>{t('autoSync', 'wifiOnlyDesc')}</Text>
+                                </View>
+                                <Switch
+                                    value={autoSyncConfig.wifiOnly}
+                                    onValueChange={handleWifiOnlyToggle}
+                                    trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
+                                    thumbColor={autoSyncConfig.wifiOnly ? '#6366f1' : '#9ca3af'}
+                                />
+                            </View>
+
+                            {/* 最終バックグラウンド同期 */}
+                            <View style={styles.settingRow}>
+                                <Text style={styles.settingLabel}>{t('autoSync', 'lastSync')}</Text>
+                                <Text style={styles.settingValue}>
+                                    {lastBackgroundSync
+                                        ? new Date(lastBackgroundSync).toLocaleString(language === 'ja' ? 'ja-JP' : 'en-US')
+                                        : t('autoSync', 'never')}
+                                </Text>
+                            </View>
+                        </>
+                    )}
+                </View>
 
 
-                {/* Modals */}
+
                 <FolderPickerModal
                     visible={isPickerVisible}
                     onClose={() => setPickerVisible(false)}
@@ -473,6 +600,64 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     languageButtonTextActive: {
+        color: '#6366f1',
+        fontWeight: '600',
+    },
+    // 自動同期設定用スタイル
+    settingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#1e1e2e',
+        borderRadius: 8,
+        padding: 14,
+        marginBottom: 8,
+    },
+    settingLabelContainer: {
+        flex: 1,
+        marginRight: 12,
+    },
+    settingLabel: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    settingDesc: {
+        color: '#6b7280',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    settingValue: {
+        color: '#6366f1',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    intervalPicker: {
+        backgroundColor: '#1e1e2e',
+        borderRadius: 8,
+        padding: 8,
+        marginBottom: 8,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    intervalOption: {
+        backgroundColor: '#2e2e3e',
+        borderRadius: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#3e3e4e',
+    },
+    intervalOptionActive: {
+        backgroundColor: '#6366f120',
+        borderColor: '#6366f1',
+    },
+    intervalOptionText: {
+        color: '#9ca3af',
+        fontSize: 13,
+    },
+    intervalOptionTextActive: {
         color: '#6366f1',
         fontWeight: '600',
     },

@@ -33,3 +33,21 @@ export interface OfflineQueueData {
     /** 最後に更新された日時 */
     updatedAt: string;
 }
+
+/**
+ * 同期間隔（分）
+ * 1h, 3h, 6h, 12h, 24h, 48h, 72h
+ */
+export type SyncInterval = 60 | 180 | 360 | 720 | 1440 | 2880 | 4320;
+
+/**
+ * 自動同期の設定
+ */
+export interface AutoSyncConfig {
+    /** 自動同期の有効/無効 */
+    enabled: boolean;
+    /** 同期間隔（分） */
+    intervalMinutes: SyncInterval;
+    /** Wi-Fi接続時のみ同期するか */
+    wifiOnly: boolean;
+}

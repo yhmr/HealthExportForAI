@@ -1,11 +1,17 @@
 // ルートレイアウト
 
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { LanguageProvider } from '../src/contexts/LanguageContext';
 import { useOfflineSync } from '../src/hooks/useOfflineSync';
 import * as Sentry from '@sentry/react-native';
+
+// バックグラウンドタスクをグローバルスコープで定義
+// このimportによりTaskManager.defineTaskが実行される
+import '../src/services/backgroundSyncService';
+import { syncBackgroundTaskWithConfig } from '../src/services/backgroundSyncService';
 
 Sentry.init({
     dsn: 'https://9cbd9eeaca1880f9a2f5ec4367245444@o4510736582770688.ingest.us.sentry.io/4510736586506240',
@@ -19,6 +25,13 @@ Sentry.init({
 export default Sentry.wrap(function RootLayout() {
     // オフライン同期の初期化・ネットワーク監視を開始
     useOfflineSync();
+
+    // バックグラウンド同期タスクを設定に基づいて初期化
+    useEffect(() => {
+        syncBackgroundTaskWithConfig().catch((error) => {
+            console.error('[RootLayout] Failed to sync background task:', error);
+        });
+    }, []);
 
     return (
         <LanguageProvider>
@@ -37,3 +50,4 @@ export default Sentry.wrap(function RootLayout() {
         </LanguageProvider>
     );
 });
+

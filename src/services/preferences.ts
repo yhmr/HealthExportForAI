@@ -92,3 +92,76 @@ export async function loadExportSheetAsPdf(): Promise<boolean> {
     const value = await AsyncStorage.getItem('@export_sheet_as_pdf');
     return value === 'true';
 }
+
+// ============================================
+// 自動同期設定
+// ============================================
+
+import type { AutoSyncConfig, SyncInterval } from '../types/offline';
+
+const AUTO_SYNC_STORAGE_KEYS = {
+    AUTO_SYNC_CONFIG: '@auto_sync_config',
+    LAST_BACKGROUND_SYNC: '@last_background_sync',
+} as const;
+
+/** デフォルトの自動同期設定 */
+export const DEFAULT_AUTO_SYNC_CONFIG: AutoSyncConfig = {
+    enabled: false,
+    intervalMinutes: 1440, // 24時間
+    wifiOnly: true,
+};
+
+/**
+ * 自動同期設定を保存
+ */
+export async function saveAutoSyncConfig(config: AutoSyncConfig): Promise<void> {
+    await AsyncStorage.setItem(
+        AUTO_SYNC_STORAGE_KEYS.AUTO_SYNC_CONFIG,
+        JSON.stringify(config)
+    );
+}
+
+/**
+ * 自動同期設定を取得
+ */
+export async function loadAutoSyncConfig(): Promise<AutoSyncConfig> {
+    const json = await AsyncStorage.getItem(AUTO_SYNC_STORAGE_KEYS.AUTO_SYNC_CONFIG);
+    if (json) {
+        return JSON.parse(json);
+    }
+    return DEFAULT_AUTO_SYNC_CONFIG;
+}
+
+/**
+ * 最後のバックグラウンド同期時刻を保存
+ */
+export async function saveLastBackgroundSync(time: string): Promise<void> {
+    await AsyncStorage.setItem(AUTO_SYNC_STORAGE_KEYS.LAST_BACKGROUND_SYNC, time);
+}
+
+/**
+ * 最後のバックグラウンド同期時刻を取得
+ */
+export async function loadLastBackgroundSync(): Promise<string | null> {
+    return AsyncStorage.getItem(AUTO_SYNC_STORAGE_KEYS.LAST_BACKGROUND_SYNC);
+}
+
+/**
+ * 同期間隔のラベルを取得
+ */
+export function getSyncIntervalLabel(interval: SyncInterval): { ja: string; en: string } {
+    const labels: Record<SyncInterval, { ja: string; en: string }> = {
+        60: { ja: '1時間', en: '1 hour' },
+        180: { ja: '3時間', en: '3 hours' },
+        360: { ja: '6時間', en: '6 hours' },
+        720: { ja: '12時間', en: '12 hours' },
+        1440: { ja: '24時間', en: '24 hours' },
+        2880: { ja: '48時間', en: '48 hours' },
+        4320: { ja: '72時間', en: '72 hours' },
+    };
+    return labels[interval];
+}
+
+/** 利用可能な同期間隔一覧 */
+export const SYNC_INTERVALS: SyncInterval[] = [60, 180, 360, 720, 1440, 2880, 4320];
+
