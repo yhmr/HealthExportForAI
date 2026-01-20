@@ -11,10 +11,10 @@ export type NetworkStatus = 'online' | 'offline' | 'unknown';
  * @returns 簡略化されたネットワーク状態
  */
 function toNetworkStatus(state: NetInfoState): NetworkStatus {
-    if (state.isConnected === null) {
-        return 'unknown';
-    }
-    return state.isConnected ? 'online' : 'offline';
+  if (state.isConnected === null) {
+    return 'unknown';
+  }
+  return state.isConnected ? 'online' : 'offline';
 }
 
 /**
@@ -22,13 +22,13 @@ function toNetworkStatus(state: NetInfoState): NetworkStatus {
  * @returns Promise<NetworkStatus> 現在のネットワーク状態
  */
 export async function getNetworkStatus(): Promise<NetworkStatus> {
-    try {
-        const state = await NetInfo.fetch();
-        return toNetworkStatus(state);
-    } catch (error) {
-        console.error('[NetworkService] Failed to get network status:', error);
-        return 'unknown';
-    }
+  try {
+    const state = await NetInfo.fetch();
+    return toNetworkStatus(state);
+  } catch (error) {
+    console.error('[NetworkService] Failed to get network status:', error);
+    return 'unknown';
+  }
 }
 
 /**
@@ -36,16 +36,14 @@ export async function getNetworkStatus(): Promise<NetworkStatus> {
  * @param callback 状態変化時に呼ばれるコールバック関数
  * @returns 購読解除関数
  */
-export function subscribeToNetworkChanges(
-    callback: (status: NetworkStatus) => void
-): () => void {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-        const status = toNetworkStatus(state);
-        console.log(`[NetworkService] Network status changed: ${status}`);
-        callback(status);
-    });
+export function subscribeToNetworkChanges(callback: (status: NetworkStatus) => void): () => void {
+  const unsubscribe = NetInfo.addEventListener((state) => {
+    const status = toNetworkStatus(state);
+    console.log(`[NetworkService] Network status changed: ${status}`);
+    callback(status);
+  });
 
-    return unsubscribe;
+  return unsubscribe;
 }
 
 /**
@@ -54,12 +52,12 @@ export function subscribeToNetworkChanges(
  * @returns Promise<boolean> インターネットに到達可能な場合true
  */
 export async function isInternetReachable(): Promise<boolean> {
-    try {
-        const state = await NetInfo.fetch();
-        // isInternetReachableがnullの場合はisConnectedで判断
-        return state.isInternetReachable ?? state.isConnected ?? false;
-    } catch (error) {
-        console.error('[NetworkService] Failed to check internet reachability:', error);
-        return false;
-    }
+  try {
+    const state = await NetInfo.fetch();
+    // isInternetReachableがnullの場合はisConnectedで判断
+    return state.isInternetReachable ?? state.isConnected ?? false;
+  } catch (error) {
+    console.error('[NetworkService] Failed to check internet reachability:', error);
+    return false;
+  }
 }

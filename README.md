@@ -2,7 +2,6 @@
 
 [English](./README_en.md)
 
-
 React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、柔軟な形式（Google Sheets, PDF, CSV, JSON）で Google Drive にエクスポートして NotebookLM 等の AI ツールで分析できるようにします。
 
 ## 機能

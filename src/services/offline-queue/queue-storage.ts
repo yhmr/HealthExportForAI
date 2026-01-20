@@ -2,7 +2,7 @@
 // AsyncStorageを使用してエクスポート待ちデータを永続化
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { PendingExport, OfflineQueueData } from '../../types/offline';
+import type { OfflineQueueData, PendingExport } from '../../types/offline';
 
 import { addDebugLog } from '../debugLogService';
 
@@ -17,11 +17,11 @@ export const MAX_RETRY_COUNT = 3;
  * React Nativeでは crypto.randomUUID() が使えない場合があるため
  */
 function generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 /**
@@ -29,15 +29,15 @@ function generateUUID(): string {
  * @returns キューデータ（存在しない場合は空のキュー）
  */
 async function loadQueue(): Promise<OfflineQueueData> {
-    try {
-        const json = await AsyncStorage.getItem(STORAGE_KEY);
-        if (json) {
-            return JSON.parse(json) as OfflineQueueData;
-        }
-    } catch (error) {
-        await addDebugLog(`[OfflineQueue] Failed to load queue: ${error}`, 'error');
+  try {
+    const json = await AsyncStorage.getItem(STORAGE_KEY);
+    if (json) {
+      return JSON.parse(json) as OfflineQueueData;
     }
-    return { pending: [], updatedAt: new Date().toISOString() };
+  } catch (error) {
+    await addDebugLog(`[OfflineQueue] Failed to load queue: ${error}`, 'error');
+  }
+  return { pending: [], updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -45,13 +45,13 @@ async function loadQueue(): Promise<OfflineQueueData> {
  * @param data 保存するキューデータ
  */
 async function saveQueue(data: OfflineQueueData): Promise<void> {
-    try {
-        data.updatedAt = new Date().toISOString();
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-        await addDebugLog(`[OfflineQueue] Failed to save queue: ${error}`, 'error');
-        throw error;
-    }
+  try {
+    data.updatedAt = new Date().toISOString();
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    await addDebugLog(`[OfflineQueue] Failed to save queue: ${error}`, 'error');
+    throw error;
+  }
 }
 
 /**
@@ -60,22 +60,25 @@ async function saveQueue(data: OfflineQueueData): Promise<void> {
  * @returns 生成されたエントリのID
  */
 export async function addToQueue(
-    entry: Omit<PendingExport, 'id' | 'createdAt' | 'retryCount'>
+  entry: Omit<PendingExport, 'id' | 'createdAt' | 'retryCount'>
 ): Promise<string> {
-    const queue = await loadQueue();
+  const queue = await loadQueue();
 
-    const newEntry: PendingExport = {
-        ...entry,
-        id: generateUUID(),
-        createdAt: new Date().toISOString(),
-        retryCount: 0,
-    };
+  const newEntry: PendingExport = {
+    ...entry,
+    id: generateUUID(),
+    createdAt: new Date().toISOString(),
+    retryCount: 0
+  };
 
-    queue.pending.push(newEntry);
-    await saveQueue(queue);
+  queue.pending.push(newEntry);
+  await saveQueue(queue);
 
-    await addDebugLog(`[OfflineQueue] Added entry ${newEntry.id} to queue. Total: ${queue.pending.length}`, 'info');
-    return newEntry.id;
+  await addDebugLog(
+    `[OfflineQueue] Added entry ${newEntry.id} to queue. Total: ${queue.pending.length}`,
+    'info'
+  );
+  return newEntry.id;
 }
 
 /**
@@ -83,13 +86,16 @@ export async function addToQueue(
  * @param id 削除するエントリのID
  */
 export async function removeFromQueue(id: string): Promise<void> {
-    const queue = await loadQueue();
-    const beforeCount = queue.pending.length;
+  const queue = await loadQueue();
+  const beforeCount = queue.pending.length;
 
-    queue.pending = queue.pending.filter((entry) => entry.id !== id);
-    await saveQueue(queue);
+  queue.pending = queue.pending.filter((entry) => entry.id !== id);
+  await saveQueue(queue);
 
-    await addDebugLog(`[OfflineQueue] Removed entry ${id}. Before: ${beforeCount}, After: ${queue.pending.length}`, 'info');
+  await addDebugLog(
+    `[OfflineQueue] Removed entry ${id}. Before: ${beforeCount}, After: ${queue.pending.length}`,
+    'info'
+  );
 }
 
 /**
@@ -97,11 +103,11 @@ export async function removeFromQueue(id: string): Promise<void> {
  * @returns 待機中のエクスポートリスト（作成日時順）
  */
 export async function getQueue(): Promise<PendingExport[]> {
-    const queue = await loadQueue();
-    // 作成日時の早い順にソート
-    return queue.pending.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+  const queue = await loadQueue();
+  // 作成日時の早い順にソート
+  return queue.pending.sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 }
 
 /**
@@ -109,16 +115,16 @@ export async function getQueue(): Promise<PendingExport[]> {
  * @returns 待機中のエントリ数
  */
 export async function getQueueCount(): Promise<number> {
-    const queue = await loadQueue();
-    return queue.pending.length;
+  const queue = await loadQueue();
+  return queue.pending.length;
 }
 
 /**
  * キューをクリア
  */
 export async function clearQueue(): Promise<void> {
-    await saveQueue({ pending: [], updatedAt: new Date().toISOString() });
-    await addDebugLog('[OfflineQueue] Queue cleared', 'info');
+  await saveQueue({ pending: [], updatedAt: new Date().toISOString() });
+  await addDebugLog('[OfflineQueue] Queue cleared', 'info');
 }
 
 /**
@@ -127,15 +133,18 @@ export async function clearQueue(): Promise<void> {
  * @param error エラーメッセージ
  */
 export async function incrementRetry(id: string, error: string): Promise<void> {
-    const queue = await loadQueue();
-    const entry = queue.pending.find((e) => e.id === id);
+  const queue = await loadQueue();
+  const entry = queue.pending.find((e) => e.id === id);
 
-    if (entry) {
-        entry.retryCount += 1;
-        entry.lastError = error;
-        await saveQueue(queue);
-        await addDebugLog(`[OfflineQueue] Entry ${id} retry count: ${entry.retryCount}/${MAX_RETRY_COUNT}`, 'info');
-    }
+  if (entry) {
+    entry.retryCount += 1;
+    entry.lastError = error;
+    await saveQueue(queue);
+    await addDebugLog(
+      `[OfflineQueue] Entry ${id} retry count: ${entry.retryCount}/${MAX_RETRY_COUNT}`,
+      'info'
+    );
+  }
 }
 
 /**
@@ -144,7 +153,7 @@ export async function incrementRetry(id: string, error: string): Promise<void> {
  * @returns 最大リトライ回数に達している場合true
  */
 export function hasExceededMaxRetries(entry: PendingExport): boolean {
-    return entry.retryCount >= MAX_RETRY_COUNT;
+  return entry.retryCount >= MAX_RETRY_COUNT;
 }
 
 /**
@@ -152,6 +161,6 @@ export function hasExceededMaxRetries(entry: PendingExport): boolean {
  * @returns 最初のエントリ、またはキューが空の場合null
  */
 export async function peekQueue(): Promise<PendingExport | null> {
-    const queue = await getQueue();
-    return queue.length > 0 ? queue[0] : null;
+  const queue = await getQueue();
+  return queue.length > 0 ? queue[0] : null;
 }

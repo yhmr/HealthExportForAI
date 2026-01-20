@@ -4,10 +4,10 @@
 export type ExportFormat = 'googleSheets' | 'csv' | 'json';
 
 export interface DriveConfig {
-    folderId: string;
-    folderName?: string;
-    exportFormats?: ExportFormat[]; // 選択されたエクスポート形式
-    exportSheetAsPdf?: boolean; // Google SheetsをPDFとしてもエクスポートするか
+  folderId: string;
+  folderName?: string;
+  exportFormats?: ExportFormat[]; // 選択されたエクスポート形式
+  exportSheetAsPdf?: boolean; // Google SheetsをPDFとしてもエクスポートするか
 }
 
 // 設定ファイルのパス（アプリ内では手動で設定を読み込む）
@@ -23,16 +23,15 @@ export const DEFAULT_EXPORT_FORMATS: ExportFormat[] = ['googleSheets'];
  * デフォルトの空設定
  */
 export const DEFAULT_DRIVE_CONFIG: DriveConfig = {
-    folderId: '',
-    folderName: '',
-    exportFormats: DEFAULT_EXPORT_FORMATS,
-    exportSheetAsPdf: false,
+  folderId: '',
+  folderName: '',
+  exportFormats: DEFAULT_EXPORT_FORMATS,
+  exportSheetAsPdf: false
 };
 
 /**
  * 設定が有効かチェック
  */
 export function isValidDriveConfig(config: DriveConfig): boolean {
-    return Boolean(config.folderId);
+  return Boolean(config.folderId);
 }
-

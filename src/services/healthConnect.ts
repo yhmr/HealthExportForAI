@@ -1,86 +1,86 @@
 // Health Connect サービス
 
 import {
-    initialize,
-    requestPermission,
-    readRecords,
-    getSdkStatus,
-    SdkAvailabilityStatus,
-    aggregateGroupByDuration,
-    ExerciseType,
+  aggregateGroupByDuration,
+  ExerciseType,
+  getSdkStatus,
+  initialize,
+  readRecords,
+  requestPermission,
+  SdkAvailabilityStatus
 } from 'react-native-health-connect';
 import type {
-    HealthData,
-    StepsData,
-    WeightData,
-    BodyFatData,
-    CaloriesData,
-    BasalMetabolicRateData,
-    SleepData,
-    ExerciseData,
-    NutritionData,
+  BasalMetabolicRateData,
+  BodyFatData,
+  CaloriesData,
+  ExerciseData,
+  HealthData,
+  NutritionData,
+  SleepData,
+  StepsData,
+  WeightData
 } from '../types/health';
 import { formatDate } from '../utils/formatters';
 
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [
-    { accessType: 'read', recordType: 'Steps' },
-    { accessType: 'read', recordType: 'TotalCaloriesBurned' },
-    { accessType: 'read', recordType: 'Weight' },
-    { accessType: 'read', recordType: 'BodyFat' },
-    { accessType: 'read', recordType: 'BasalMetabolicRate' },
-    { accessType: 'read', recordType: 'SleepSession' },
-    { accessType: 'read', recordType: 'ExerciseSession' },
-    { accessType: 'read', recordType: 'Nutrition' },
+  { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'TotalCaloriesBurned' },
+  { accessType: 'read', recordType: 'Weight' },
+  { accessType: 'read', recordType: 'BodyFat' },
+  { accessType: 'read', recordType: 'BasalMetabolicRate' },
+  { accessType: 'read', recordType: 'SleepSession' },
+  { accessType: 'read', recordType: 'ExerciseSession' },
+  { accessType: 'read', recordType: 'Nutrition' }
 ] as const;
 
 /**
  * Health Connectの初期化
  */
 export async function initializeHealthConnect(): Promise<boolean> {
-    try {
-        const isInitialized = await initialize();
-        return isInitialized;
-    } catch (error) {
-        console.error('Health Connect初期化エラー:', error);
-        return false;
-    }
+  try {
+    const isInitialized = await initialize();
+    return isInitialized;
+  } catch (error) {
+    console.error('Health Connect初期化エラー:', error);
+    return false;
+  }
 }
 
 /**
  * Health Connect SDKの利用可否をチェック
  */
 export async function checkHealthConnectAvailability(): Promise<{
-    available: boolean;
-    status: number;
+  available: boolean;
+  status: number;
 }> {
-    try {
-        const status = await getSdkStatus();
-        return {
-            available: status === SdkAvailabilityStatus.SDK_AVAILABLE,
-            status,
-        };
-    } catch (error) {
-        console.error('SDK状態チェックエラー:', error);
-        return {
-            available: false,
-            status: SdkAvailabilityStatus.SDK_UNAVAILABLE,
-        };
-    }
+  try {
+    const status = await getSdkStatus();
+    return {
+      available: status === SdkAvailabilityStatus.SDK_AVAILABLE,
+      status
+    };
+  } catch (error) {
+    console.error('SDK状態チェックエラー:', error);
+    return {
+      available: false,
+      status: SdkAvailabilityStatus.SDK_UNAVAILABLE
+    };
+  }
 }
 
 /**
  * 権限をリクエスト
  */
 export async function requestHealthPermissions(): Promise<boolean> {
-    try {
-        const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
-        // すべての権限が付与されたかチェック
-        return permissions.length > 0;
-    } catch (error) {
-        console.error('権限リクエストエラー:', error);
-        return false;
-    }
+  try {
+    const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
+    // すべての権限が付与されたかチェック
+    return permissions.length > 0;
+  } catch (error) {
+    console.error('権限リクエストエラー:', error);
+    return false;
+  }
 }
 
 /**
@@ -92,21 +92,21 @@ type DailyAggregation<T> = { [date: string]: T };
  * ExerciseType IDを名前に変換するマッピング
  */
 const exerciseTypeIdToName: { [key: number]: string } = Object.entries(ExerciseType).reduce(
-    (acc, [name, id]) => {
-        acc[id] = name
-            .replace(/_/g, ' ')
-            .toLowerCase()
-            .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case に変換
-        return acc;
-    },
-    {} as { [key: number]: string }
+  (acc, [name, id]) => {
+    acc[id] = name
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case に変換
+    return acc;
+  },
+  {} as { [key: number]: string }
 );
 
 /**
  * ExerciseType IDから名前を取得
  */
 function getExerciseTypeName(typeId: number): string {
-    return exerciseTypeIdToName[typeId] || `Unknown (${typeId})`;
+  return exerciseTypeIdToName[typeId] || `Unknown (${typeId})`;
 }
 
 /**
@@ -115,38 +115,37 @@ function getExerciseTypeName(typeId: number): string {
  * 1. aggregateGroupByPeriodを使用して日ごとの集計データを取得
  * 2. Health Connectが内部で重複除去を行うため、複数ソースからのデータが正しく集計される
  */
-export async function fetchStepsData(
-    startTime: Date,
-    endTime: Date
-): Promise<StepsData[]> {
-    try {
-        console.log(`[HealthConnect] 歩数データを取得開始: ${startTime.toISOString()} - ${endTime.toISOString()}`);
+export async function fetchStepsData(startTime: Date, endTime: Date): Promise<StepsData[]> {
+  try {
+    console.log(
+      `[HealthConnect] 歩数データを取得開始: ${startTime.toISOString()} - ${endTime.toISOString()}`
+    );
 
-        // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
-        const result = await aggregateGroupByDuration({
-            recordType: 'Steps',
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-            timeRangeSlicer: {
-                duration: 'DAYS',
-                length: 1,
-            },
-        });
+    // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
+    const result = await aggregateGroupByDuration({
+      recordType: 'Steps',
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      },
+      timeRangeSlicer: {
+        duration: 'DAYS',
+        length: 1
+      }
+    });
 
-        // 結果を StepsData 形式に変換
-        const stepsData: StepsData[] = result.map((item) => ({
-            date: formatDate(item.startTime),
-            count: item.result.COUNT_TOTAL ?? 0,
-        }));
+    // 結果を StepsData 形式に変換
+    const stepsData: StepsData[] = result.map((item) => ({
+      date: formatDate(item.startTime),
+      count: item.result.COUNT_TOTAL ?? 0
+    }));
 
-        return stepsData.sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('歩数データ取得エラー:', error);
-        return [];
-    }
+    return stepsData.sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('歩数データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -156,41 +155,38 @@ export async function fetchStepsData(
  * 2. レコードを日付ごとにグループ化
  * 3. 同じ日に複数の記録がある場合、計測時刻(time)が最も遅いデータを採用
  */
-export async function fetchWeightData(
-    startTime: Date,
-    endTime: Date
-): Promise<WeightData[]> {
-    try {
-        console.log(`[HealthConnect] 体重データを取得開始`);
-        const result = await readRecords('Weight', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+export async function fetchWeightData(startTime: Date, endTime: Date): Promise<WeightData[]> {
+  try {
+    console.log(`[HealthConnect] 体重データを取得開始`);
+    const result = await readRecords('Weight', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        const aggregation: DailyAggregation<WeightData> = {};
+    const aggregation: DailyAggregation<WeightData> = {};
 
-        for (const record of result.records) {
-            const date = formatDate(record.time);
+    for (const record of result.records) {
+      const date = formatDate(record.time);
 
-            // 既存のデータがない、または今回のレコードの方が時刻が新しい場合に更新
-            if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-                aggregation[date] = {
-                    date,
-                    value: record.weight.inKilograms,
-                    unit: 'kg' as const,
-                    time: record.time,
-                };
-            }
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('体重データ取得エラー:', error);
-        return [];
+      // 既存のデータがない、または今回のレコードの方が時刻が新しい場合に更新
+      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
+        aggregation[date] = {
+          date,
+          value: record.weight.inKilograms,
+          unit: 'kg' as const,
+          time: record.time
+        };
+      }
     }
+
+    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('体重データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -199,40 +195,37 @@ export async function fetchWeightData(
  * 1. 指定期間の体脂肪レコードを取得
  * 2. 日付ごとにグループ化し、計測時刻が最も遅いデータを採用
  */
-export async function fetchBodyFatData(
-    startTime: Date,
-    endTime: Date
-): Promise<BodyFatData[]> {
-    try {
-        console.log(`[HealthConnect] 体脂肪データを取得開始`);
-        const result = await readRecords('BodyFat', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<BodyFatData[]> {
+  try {
+    console.log(`[HealthConnect] 体脂肪データを取得開始`);
+    const result = await readRecords('BodyFat', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        const aggregation: DailyAggregation<BodyFatData> = {};
+    const aggregation: DailyAggregation<BodyFatData> = {};
 
-        for (const record of result.records) {
-            const date = formatDate(record.time);
+    for (const record of result.records) {
+      const date = formatDate(record.time);
 
-            // 最新のデータを採用
-            if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-                aggregation[date] = {
-                    date,
-                    percentage: record.percentage,
-                    time: record.time,
-                };
-            }
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('体脂肪データ取得エラー:', error);
-        return [];
+      // 最新のデータを採用
+      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
+        aggregation[date] = {
+          date,
+          percentage: record.percentage,
+          time: record.time
+        };
+      }
     }
+
+    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('体脂肪データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -242,38 +235,38 @@ export async function fetchBodyFatData(
  * 2. Health Connectが内部で重複除去を行うため、複数ソースからのデータが正しく集計される
  */
 export async function fetchTotalCaloriesData(
-    startTime: Date,
-    endTime: Date
+  startTime: Date,
+  endTime: Date
 ): Promise<CaloriesData[]> {
-    try {
-        console.log(`[HealthConnect] 消費カロリーデータを取得開始`);
+  try {
+    console.log(`[HealthConnect] 消費カロリーデータを取得開始`);
 
-        // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
-        const result = await aggregateGroupByDuration({
-            recordType: 'TotalCaloriesBurned',
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-            timeRangeSlicer: {
-                duration: 'DAYS',
-                length: 1,
-            },
-        });
+    // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
+    const result = await aggregateGroupByDuration({
+      recordType: 'TotalCaloriesBurned',
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      },
+      timeRangeSlicer: {
+        duration: 'DAYS',
+        length: 1
+      }
+    });
 
-        // 結果を CaloriesData 形式に変換
-        const caloriesData: CaloriesData[] = result.map((item) => ({
-            date: formatDate(item.startTime),
-            value: item.result.ENERGY_TOTAL?.inKilocalories ?? 0,
-            unit: 'kcal' as const,
-        }));
+    // 結果を CaloriesData 形式に変換
+    const caloriesData: CaloriesData[] = result.map((item) => ({
+      date: formatDate(item.startTime),
+      value: item.result.ENERGY_TOTAL?.inKilocalories ?? 0,
+      unit: 'kcal' as const
+    }));
 
-        return caloriesData.sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('カロリーデータ取得エラー:', error);
-        return [];
-    }
+    return caloriesData.sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('カロリーデータ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -283,40 +276,40 @@ export async function fetchTotalCaloriesData(
  * 2. 日付ごとに最新の記録を採用（基礎代謝は日によって変動しにくいため、最新値が妥当と判断）
  */
 export async function fetchBasalMetabolicRateData(
-    startTime: Date,
-    endTime: Date
+  startTime: Date,
+  endTime: Date
 ): Promise<BasalMetabolicRateData[]> {
-    try {
-        console.log(`[HealthConnect] 基礎代謝データを取得開始`);
-        const result = await readRecords('BasalMetabolicRate', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+  try {
+    console.log(`[HealthConnect] 基礎代謝データを取得開始`);
+    const result = await readRecords('BasalMetabolicRate', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        const aggregation: DailyAggregation<BasalMetabolicRateData> = {};
+    const aggregation: DailyAggregation<BasalMetabolicRateData> = {};
 
-        for (const record of result.records) {
-            const date = formatDate(record.time);
+    for (const record of result.records) {
+      const date = formatDate(record.time);
 
-            if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time || '')) {
-                // record.time が存在しない場合もあるかもしれないが、通常はあるはず
-                aggregation[date] = {
-                    date,
-                    value: record.basalMetabolicRate.inKilocaloriesPerDay,
-                    unit: 'kcal/day' as const,
-                    time: record.time,
-                };
-            }
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('基礎代謝データ取得エラー:', error);
-        return [];
+      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time || '')) {
+        // record.time が存在しない場合もあるかもしれないが、通常はあるはず
+        aggregation[date] = {
+          date,
+          value: record.basalMetabolicRate.inKilocaloriesPerDay,
+          unit: 'kcal/day' as const,
+          time: record.time
+        };
+      }
     }
+
+    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('基礎代謝データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -326,75 +319,73 @@ export async function fetchBasalMetabolicRateData(
  * 2. 日付ごとに睡眠時間（分）と「深い眠り」の時間を集計
  * 3. 割合を計算して返却
  */
-export async function fetchSleepData(
-    startTime: Date,
-    endTime: Date
-): Promise<SleepData[]> {
-    try {
-        console.log(`[HealthConnect] 睡眠データを取得開始`);
-        const result = await readRecords('SleepSession', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+export async function fetchSleepData(startTime: Date, endTime: Date): Promise<SleepData[]> {
+  try {
+    console.log(`[HealthConnect] 睡眠データを取得開始`);
+    const result = await readRecords('SleepSession', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        // 集計用の一時型
-        type SleepAggregation = SleepData & { totalDeepSleepMinutes: number };
-        const aggregation: DailyAggregation<SleepAggregation> = {};
+    // 集計用の一時型
+    type SleepAggregation = SleepData & { totalDeepSleepMinutes: number };
+    const aggregation: DailyAggregation<SleepAggregation> = {};
 
-        for (const record of result.records) {
-            // 睡眠の終了日を基準にする（「昨晩の睡眠」＝「今日の朝起きた睡眠」として扱うのが一般的）
-            const date = formatDate(record.endTime);
-            const start = new Date(record.startTime);
-            const end = new Date(record.endTime);
-            const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    for (const record of result.records) {
+      // 睡眠の終了日を基準にする（「昨晩の睡眠」＝「今日の朝起きた睡眠」として扱うのが一般的）
+      const date = formatDate(record.endTime);
+      const start = new Date(record.startTime);
+      const end = new Date(record.endTime);
+      const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
 
-            // 深い眠りの時間を計算
-            // Health Connect のステージ定数 (一般的に 5 が Deep Sleep)
-            let deepSleepMinutes = 0;
-            if (record.stages) {
-                for (const stage of record.stages) {
-                    // stage.stage の型によって比較方法を変える
-                    // 型エラーを防ぐため any キャスト等で柔軟に対応
-                    const sType = stage.stage as any;
-                    if (sType === 5 || sType === 'DEEP') {
-                        const sStart = new Date(stage.startTime);
-                        const sEnd = new Date(stage.endTime);
-                        deepSleepMinutes += (sEnd.getTime() - sStart.getTime()) / 60000;
-                    }
-                }
-            }
-
-            if (!aggregation[date]) {
-                aggregation[date] = {
-                    date,
-                    durationMinutes: 0,
-                    totalDeepSleepMinutes: 0,
-                };
-            }
-
-            aggregation[date].durationMinutes += durationMinutes;
-            aggregation[date].totalDeepSleepMinutes += deepSleepMinutes;
+      // 深い眠りの時間を計算
+      // Health Connect のステージ定数 (一般的に 5 が Deep Sleep)
+      let deepSleepMinutes = 0;
+      if (record.stages) {
+        for (const stage of record.stages) {
+          // stage.stage の型によって比較方法を変える
+          // 型エラーを防ぐため any キャスト等で柔軟に対応
+          const sType = stage.stage as any;
+          if (sType === 5 || sType === 'DEEP') {
+            const sStart = new Date(stage.startTime);
+            const sEnd = new Date(stage.endTime);
+            deepSleepMinutes += (sEnd.getTime() - sStart.getTime()) / 60000;
+          }
         }
+      }
 
-        return Object.values(aggregation)
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .map((item) => {
-                const { totalDeepSleepMinutes, ...rest } = item;
-                const percentage = item.durationMinutes > 0
-                    ? Math.round((item.totalDeepSleepMinutes / item.durationMinutes) * 100)
-                    : 0;
-                return {
-                    ...rest,
-                    deepSleepPercentage: percentage,
-                };
-            });
-    } catch (error) {
-        console.error('睡眠データ取得エラー:', error);
-        return [];
+      if (!aggregation[date]) {
+        aggregation[date] = {
+          date,
+          durationMinutes: 0,
+          totalDeepSleepMinutes: 0
+        };
+      }
+
+      aggregation[date].durationMinutes += durationMinutes;
+      aggregation[date].totalDeepSleepMinutes += deepSleepMinutes;
     }
+
+    return Object.values(aggregation)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((item) => {
+        const { totalDeepSleepMinutes, ...rest } = item;
+        const percentage =
+          item.durationMinutes > 0
+            ? Math.round((item.totalDeepSleepMinutes / item.durationMinutes) * 100)
+            : 0;
+        return {
+          ...rest,
+          deepSleepPercentage: percentage
+        };
+      });
+  } catch (error) {
+    console.error('睡眠データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -404,48 +395,45 @@ export async function fetchSleepData(
  * 2. (日付 + 運動種別) をキーとしてグルーピング
  * 3. 継続時間を合計（カロリーは集計しない）
  */
-export async function fetchExerciseData(
-    startTime: Date,
-    endTime: Date
-): Promise<ExerciseData[]> {
-    try {
-        console.log(`[HealthConnect] エクササイズデータを取得開始`);
-        const result = await readRecords('ExerciseSession', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+export async function fetchExerciseData(startTime: Date, endTime: Date): Promise<ExerciseData[]> {
+  try {
+    console.log(`[HealthConnect] エクササイズデータを取得開始`);
+    const result = await readRecords('ExerciseSession', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        // キー: "yyyy-MM-dd_ExerciseType"
-        const aggregation: { [key: string]: ExerciseData } = {};
+    // キー: "yyyy-MM-dd_ExerciseType"
+    const aggregation: { [key: string]: ExerciseData } = {};
 
-        for (const record of result.records) {
-            const date = formatDate(record.startTime);
-            const type = getExerciseTypeName(record.exerciseType); // IDを名前に変換
-            const key = `${date}_${type}`;
+    for (const record of result.records) {
+      const date = formatDate(record.startTime);
+      const type = getExerciseTypeName(record.exerciseType); // IDを名前に変換
+      const key = `${date}_${type}`;
 
-            const start = new Date(record.startTime);
-            const end = new Date(record.endTime);
-            const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+      const start = new Date(record.startTime);
+      const end = new Date(record.endTime);
+      const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
 
-            if (!aggregation[key]) {
-                aggregation[key] = {
-                    date,
-                    type,
-                    durationMinutes: 0,
-                };
-            }
+      if (!aggregation[key]) {
+        aggregation[key] = {
+          date,
+          type,
+          durationMinutes: 0
+        };
+      }
 
-            aggregation[key].durationMinutes += durationMinutes;
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('エクササイズデータ取得エラー:', error);
-        return [];
+      aggregation[key].durationMinutes += durationMinutes;
     }
+
+    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('エクササイズデータ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
@@ -461,90 +449,94 @@ export async function fetchExerciseData(
  *    - 食物繊維 (dietaryFiber)
  *    - 飽和脂肪 (saturatedFat)
  */
-export async function fetchNutritionData(
-    startTime: Date,
-    endTime: Date
-): Promise<NutritionData[]> {
-    try {
-        console.log(`[HealthConnect] 栄養データを取得開始`);
-        const result = await readRecords('Nutrition', {
-            timeRangeFilter: {
-                operator: 'between',
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
-            },
-        });
+export async function fetchNutritionData(startTime: Date, endTime: Date): Promise<NutritionData[]> {
+  try {
+    console.log(`[HealthConnect] 栄養データを取得開始`);
+    const result = await readRecords('Nutrition', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      }
+    });
 
-        const aggregation: DailyAggregation<NutritionData> = {};
+    const aggregation: DailyAggregation<NutritionData> = {};
 
-        for (const record of result.records) {
-            const date = formatDate(record.startTime);
+    for (const record of result.records) {
+      const date = formatDate(record.startTime);
 
-            if (!aggregation[date]) {
-                aggregation[date] = {
-                    date,
-                    calories: 0,
-                    protein: 0,
-                    totalFat: 0,
-                    totalCarbohydrate: 0,
-                    dietaryFiber: 0,
-                    saturatedFat: 0,
-                };
-            }
+      if (!aggregation[date]) {
+        aggregation[date] = {
+          date,
+          calories: 0,
+          protein: 0,
+          totalFat: 0,
+          totalCarbohydrate: 0,
+          dietaryFiber: 0,
+          saturatedFat: 0
+        };
+      }
 
-            // 安全に加算するためにヘルパー関数を利用（undefined/nullなら0扱い）
-            const add = (current: number | undefined, value: number | undefined | null) => (current || 0) + (value || 0);
+      // 安全に加算するためにヘルパー関数を利用（undefined/nullなら0扱い）
+      const add = (current: number | undefined, value: number | undefined | null) =>
+        (current || 0) + (value || 0);
 
-            aggregation[date].calories = add(aggregation[date].calories, record.energy?.inKilocalories);
-            aggregation[date].protein = add(aggregation[date].protein, record.protein?.inGrams);
-            aggregation[date].totalFat = add(aggregation[date].totalFat, record.totalFat?.inGrams);
-            aggregation[date].totalCarbohydrate = add(aggregation[date].totalCarbohydrate, record.totalCarbohydrate?.inGrams);
-            aggregation[date].dietaryFiber = add(aggregation[date].dietaryFiber, record.dietaryFiber?.inGrams);
-            aggregation[date].saturatedFat = add(aggregation[date].saturatedFat, record.saturatedFat?.inGrams);
-        }
-
-        return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
-    } catch (error) {
-        console.error('栄養データ取得エラー:', error);
-        return [];
+      aggregation[date].calories = add(aggregation[date].calories, record.energy?.inKilocalories);
+      aggregation[date].protein = add(aggregation[date].protein, record.protein?.inGrams);
+      aggregation[date].totalFat = add(aggregation[date].totalFat, record.totalFat?.inGrams);
+      aggregation[date].totalCarbohydrate = add(
+        aggregation[date].totalCarbohydrate,
+        record.totalCarbohydrate?.inGrams
+      );
+      aggregation[date].dietaryFiber = add(
+        aggregation[date].dietaryFiber,
+        record.dietaryFiber?.inGrams
+      );
+      aggregation[date].saturatedFat = add(
+        aggregation[date].saturatedFat,
+        record.saturatedFat?.inGrams
+      );
     }
+
+    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+  } catch (error) {
+    console.error('栄養データ取得エラー:', error);
+    return [];
+  }
 }
 
 /**
  * すべてのヘルスデータを取得（変更なし、各fetch関数が日次データを返すようになる）
  */
-export async function fetchAllHealthData(
-    startTime: Date,
-    endTime: Date
-): Promise<HealthData> {
-    const [
-        steps,
-        weight,
-        bodyFat,
-        totalCaloriesBurned,
-        basalMetabolicRate,
-        sleep,
-        exercise,
-        nutrition,
-    ] = await Promise.all([
-        fetchStepsData(startTime, endTime),
-        fetchWeightData(startTime, endTime),
-        fetchBodyFatData(startTime, endTime),
-        fetchTotalCaloriesData(startTime, endTime),
-        fetchBasalMetabolicRateData(startTime, endTime),
-        fetchSleepData(startTime, endTime),
-        fetchExerciseData(startTime, endTime),
-        fetchNutritionData(startTime, endTime),
-    ]);
+export async function fetchAllHealthData(startTime: Date, endTime: Date): Promise<HealthData> {
+  const [
+    steps,
+    weight,
+    bodyFat,
+    totalCaloriesBurned,
+    basalMetabolicRate,
+    sleep,
+    exercise,
+    nutrition
+  ] = await Promise.all([
+    fetchStepsData(startTime, endTime),
+    fetchWeightData(startTime, endTime),
+    fetchBodyFatData(startTime, endTime),
+    fetchTotalCaloriesData(startTime, endTime),
+    fetchBasalMetabolicRateData(startTime, endTime),
+    fetchSleepData(startTime, endTime),
+    fetchExerciseData(startTime, endTime),
+    fetchNutritionData(startTime, endTime)
+  ]);
 
-    return {
-        steps,
-        weight,
-        bodyFat,
-        totalCaloriesBurned,
-        basalMetabolicRate,
-        sleep,
-        exercise,
-        nutrition,
-    };
+  return {
+    steps,
+    weight,
+    bodyFat,
+    totalCaloriesBurned,
+    basalMetabolicRate,
+    sleep,
+    exercise,
+    nutrition
+  };
 }
