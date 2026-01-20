@@ -2,8 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { useHealthStore, filterHealthDataByTags, type DataTagKey } from '../stores/healthStore';
-import { executeExport } from '../services/export/controller';
-import { createStorageAdapter, createSpreadsheetAdapter } from '../services/storage/adapterFactory';
 import {
     configureGoogleSignIn,
     isSignedIn,
@@ -11,13 +9,12 @@ import {
     signIn,
     signOut,
 } from '../services/googleAuth';
-import { loadDriveConfig, saveDriveConfig } from '../services/preferences';
+import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { type DriveConfig, WEB_CLIENT_ID } from '../config/driveConfig';
 import { getCurrentISOString } from '../utils/formatters';
 import type { User } from '@react-native-google-signin/google-signin';
 import { getNetworkStatus } from '../services/networkService';
-import { addToQueue, getQueueCount } from '../services/offlineQueueService';
-import { useOfflineStore } from '../stores/offlineStore';
+import { handleExportRequest } from '../services/export/controller';
 
 export function useGoogleDrive() {
     const [isUploading, setIsUploading] = useState(false);
@@ -100,8 +97,8 @@ export function useGoogleDrive() {
 
     /**
      * データをエクスポート
-     * exportControllerに処理を委譲
-     * オフライン時はキューに追加し、オンライン復帰時に自動同期
+     * processorのhandleExportRequestに処理を委譲
+     * オンラインなら即時実行、オフラインならキューに追加
      * @param selectedTags エクスポートするデータタグのセット
      * @returns { success: boolean, queued?: boolean } 成功/キュー追加の結果
      */
@@ -118,72 +115,37 @@ export function useGoogleDrive() {
 
         // syncDateRangeを取得（取得期間の全日付）
         const { syncDateRange } = useHealthStore.getState();
-
-        // ネットワーク状態を確認
-        const networkStatus = await getNetworkStatus();
-        if (networkStatus !== 'online') {
-            // オフライン時はキューに追加
-            try {
-                await addToQueue({
-                    healthData: dataToExport,
-                    selectedTags: Array.from(selectedTags || new Set()),
-                    syncDateRange: syncDateRange ? Array.from(syncDateRange) : null,
-                });
-                // キュー件数を更新
-                const count = await getQueueCount();
-                useOfflineStore.getState().setPendingCount(count);
-                console.log('[useGoogleDrive] Offline: Added to queue');
-                return { success: true, queued: true };
-            } catch (err) {
-                setUploadError('オフラインキューへの追加に失敗しました');
-                return { success: false };
-            }
-        }
+        const dateRange = syncDateRange ?? new Set<string>();
 
         setIsUploading(true);
         setUploadError(null);
 
         try {
-            // ファクトリ経由でアダプターを取得
-            const storageAdapter = createStorageAdapter();
-            const spreadsheetAdapter = createSpreadsheetAdapter();
+            // processorに処理を委譲（オンラインなら実行、オフラインならキュー）
+            const success = await handleExportRequest(dataToExport, dateRange);
 
-            // exportControllerにエクスポート処理を委譲（アダプターを注入）
-            const result = await executeExport(dataToExport, storageAdapter, spreadsheetAdapter, syncDateRange ?? undefined);
-
-            // フォルダIDが新規作成された場合、設定を更新
-            if (result.folderId && result.folderId !== driveConfig?.folderId) {
-                const newConfig = {
-                    ...driveConfig,
-                    folderId: result.folderId,
-                    folderName: driveConfig?.folderName || storageAdapter.defaultFolderName,
-                };
-                await saveConfig(newConfig);
-            }
-
-            if (!result.success) {
-                // エラーがあれば表示
-                const failedFormats = result.results.filter(r => !r.success);
-                if (failedFormats.length > 0) {
-                    const errorMessages = failedFormats.map(r => `${r.format}: ${r.error}`).join(', ');
-                    setUploadError(`一部のエクスポートに失敗: ${errorMessages}`);
-                } else if (result.error) {
-                    setUploadError(result.error);
-                }
-            } else {
+            if (success) {
                 setLastUploadTime(getCurrentISOString());
-                const successCount = result.results.filter(r => r.success).length;
-                console.log(`[Export] Successfully exported ${successCount} format(s)`);
+                console.log('[useGoogleDrive] Export completed successfully');
+                return { success: true };
+            } else {
+                // キューに追加された場合（オフラインまたは失敗）
+                const networkStatus = await getNetworkStatus();
+                if (networkStatus !== 'online') {
+                    console.log('[useGoogleDrive] Offline: Added to queue');
+                    return { success: true, queued: true };
+                } else {
+                    setUploadError('エクスポートに失敗しました。後で再試行されます。');
+                    return { success: false };
+                }
             }
-
-            return { success: result.success };
         } catch (err) {
             setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');
             return { success: false };
         } finally {
             setIsUploading(false);
         }
-    }, [healthData, isConfigValid, driveConfig, saveConfig]);
+    }, [healthData, isConfigValid]);
 
     /**
      * アップロードエラーをクリア

@@ -38,7 +38,7 @@ export interface OfflineQueueData {
  * 同期間隔（分）
  * 1h, 3h, 6h, 12h, 24h, 48h, 72h
  */
-export type SyncInterval = 60 | 180 | 360 | 720 | 1440 | 2880 | 4320;
+export type SyncInterval = 5 | 60 | 180 | 360 | 720 | 1440 | 2880 | 4320;
 
 /**
  * 自動同期の設定
@@ -51,3 +51,10 @@ export interface AutoSyncConfig {
     /** Wi-Fi接続時のみ同期するか */
     wifiOnly: boolean;
 }
+
+/** デフォルトの自動同期設定 */
+export const DEFAULT_AUTO_SYNC_CONFIG: AutoSyncConfig = {
+    enabled: false,
+    intervalMinutes: 1440, // 24時間
+    wifiOnly: true,
+};

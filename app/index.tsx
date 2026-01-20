@@ -14,7 +14,7 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { AuthCheckModal } from '../src/components/AuthCheckModal';
 import { useHealthStore } from '../src/stores/healthStore';
 import { formatDateTime } from '../src/utils/formatters';
-import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/preferences';
+import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/config/exportConfig';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
 

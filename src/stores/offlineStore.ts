@@ -1,7 +1,7 @@
 // オフラインキュー状態のZustandストア
 
 import { create } from 'zustand';
-import { getQueueCount } from '../services/offlineQueueService';
+import { getQueueCount } from '../services/offline-queue/queue-storage';
 
 /**
  * オフラインストアのインターフェース

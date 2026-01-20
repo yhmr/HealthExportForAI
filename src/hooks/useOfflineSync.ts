@@ -4,8 +4,8 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useNetworkStore } from '../stores/networkStore';
 import { useOfflineStore } from '../stores/offlineStore';
-import { addToQueue, getQueueCount } from '../services/offlineQueueService';
-import { processQueue } from '../services/syncService';
+import { addToQueue, getQueueCount } from '../services/offline-queue/queue-storage';
+import { processQueue } from '../services/offline-queue/processor';
 import { getNetworkStatus, subscribeToNetworkChanges } from '../services/networkService';
 import type { HealthData } from '../types/health';
 import type { DataTagKey } from '../stores/healthStore';

@@ -1,8 +1,10 @@
-// オフラインキュー管理サービス
+// オフラインキュー ストレージサービス
 // AsyncStorageを使用してエクスポート待ちデータを永続化
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { PendingExport, OfflineQueueData } from '../types/offline';
+import type { PendingExport, OfflineQueueData } from '../../types/offline';
+
+import { addDebugLog } from '../debugLogService';
 
 /** AsyncStorageのキー */
 const STORAGE_KEY = '@offline_queue';
@@ -33,7 +35,7 @@ async function loadQueue(): Promise<OfflineQueueData> {
             return JSON.parse(json) as OfflineQueueData;
         }
     } catch (error) {
-        console.error('[OfflineQueue] Failed to load queue:', error);
+        await addDebugLog(`[OfflineQueue] Failed to load queue: ${error}`, 'error');
     }
     return { pending: [], updatedAt: new Date().toISOString() };
 }
@@ -47,7 +49,7 @@ async function saveQueue(data: OfflineQueueData): Promise<void> {
         data.updatedAt = new Date().toISOString();
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
-        console.error('[OfflineQueue] Failed to save queue:', error);
+        await addDebugLog(`[OfflineQueue] Failed to save queue: ${error}`, 'error');
         throw error;
     }
 }
@@ -72,7 +74,7 @@ export async function addToQueue(
     queue.pending.push(newEntry);
     await saveQueue(queue);
 
-    console.log(`[OfflineQueue] Added entry ${newEntry.id} to queue. Total: ${queue.pending.length}`);
+    await addDebugLog(`[OfflineQueue] Added entry ${newEntry.id} to queue. Total: ${queue.pending.length}`, 'info');
     return newEntry.id;
 }
 
@@ -87,7 +89,7 @@ export async function removeFromQueue(id: string): Promise<void> {
     queue.pending = queue.pending.filter((entry) => entry.id !== id);
     await saveQueue(queue);
 
-    console.log(`[OfflineQueue] Removed entry ${id}. Before: ${beforeCount}, After: ${queue.pending.length}`);
+    await addDebugLog(`[OfflineQueue] Removed entry ${id}. Before: ${beforeCount}, After: ${queue.pending.length}`, 'info');
 }
 
 /**
@@ -116,7 +118,7 @@ export async function getQueueCount(): Promise<number> {
  */
 export async function clearQueue(): Promise<void> {
     await saveQueue({ pending: [], updatedAt: new Date().toISOString() });
-    console.log('[OfflineQueue] Queue cleared');
+    await addDebugLog('[OfflineQueue] Queue cleared', 'info');
 }
 
 /**
@@ -132,7 +134,7 @@ export async function incrementRetry(id: string, error: string): Promise<void> {
         entry.retryCount += 1;
         entry.lastError = error;
         await saveQueue(queue);
-        console.log(`[OfflineQueue] Entry ${id} retry count: ${entry.retryCount}/${MAX_RETRY_COUNT}`);
+        await addDebugLog(`[OfflineQueue] Entry ${id} retry count: ${entry.retryCount}/${MAX_RETRY_COUNT}`, 'info');
     }
 }
 

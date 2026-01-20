@@ -1,6 +1,5 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
-
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名

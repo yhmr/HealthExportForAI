@@ -10,8 +10,8 @@ import * as Sentry from '@sentry/react-native';
 
 // バックグラウンドタスクをグローバルスコープで定義
 // このimportによりTaskManager.defineTaskが実行される
-import '../src/services/backgroundSyncService';
-import { syncBackgroundTaskWithConfig } from '../src/services/backgroundSyncService';
+import '../src/services/background/scheduler';
+import { syncBackgroundTaskWithConfig } from '../src/services/background/scheduler';
 
 Sentry.init({
     dsn: 'https://9cbd9eeaca1880f9a2f5ec4367245444@o4510736582770688.ingest.us.sentry.io/4510736586506240',

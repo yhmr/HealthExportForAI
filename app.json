@@ -28,7 +28,8 @@
         "android.permission.health.READ_BASAL_METABOLIC_RATE",
         "android.permission.health.READ_SLEEP",
         "android.permission.health.READ_EXERCISE",
-        "android.permission.health.READ_NUTRITION"
+        "android.permission.health.READ_NUTRITION",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
       ]
     },
     "plugins": [
@@ -55,7 +56,8 @@
             "android.permission.health.READ_BASAL_METABOLIC_RATE",
             "android.permission.health.READ_SLEEP",
             "android.permission.health.READ_EXERCISE",
-            "android.permission.health.READ_NUTRITION"
+            "android.permission.health.READ_NUTRITION",
+            "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
           ]
         }
       ],

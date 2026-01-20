@@ -1,51 +1,71 @@
 // 設定画面（認証統合版）
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     TextInput,
     StyleSheet,
-    ScrollView,
     TouchableOpacity,
     Alert,
     Switch,
+    ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+
+// Hooks & Contexts
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
+import { useLanguage } from '../src/contexts/LanguageContext';
+
+// Services & Config
 import {
     saveDriveConfig,
+} from '../src/services/config/driveConfig';
+import {
     loadExportFormats,
     saveExportFormats,
     loadExportSheetAsPdf,
     saveExportSheetAsPdf,
-    loadAutoSyncConfig,
-    saveAutoSyncConfig,
+} from '../src/services/config/exportConfig';
+import {
+    loadBackgroundSyncConfig,
+    saveBackgroundSyncConfig,
     loadLastBackgroundSync,
     getSyncIntervalLabel,
     SYNC_INTERVALS,
-} from '../src/services/preferences';
-import { syncBackgroundTaskWithConfig } from '../src/services/backgroundSyncService';
-import type { DriveConfig, ExportFormat } from '../src/config/driveConfig';
-import type { AutoSyncConfig, SyncInterval } from '../src/types/offline';
+} from '../src/services/config/backgroundSyncConfig';
+import {
+    loadDebugLogs,
+    clearDebugLogs,
+    type DebugLogEntry,
+} from '../src/services/debugLogService';
+import {
+    syncBackgroundTaskWithConfig
+} from '../src/services/background/scheduler';
+import {
+    getAccessToken
+} from '../src/services/googleAuth';
+import {
+    getFolder,
+    DEFAULT_FOLDER_NAME
+} from '../src/services/storage/googleDrive';
 
-import { getFolder, DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
-import { getAccessToken } from '../src/services/googleAuth';
+// Components
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 import { ExportFormatCheckbox } from '../src/components/ExportFormatCheckbox';
 import { LicenseModal } from '../src/components/LicenseModal';
-import { useLanguage } from '../src/contexts/LanguageContext';
-import type { Language } from '../src/i18n/translations';
+
+// Types
+import type { ExportFormat } from '../src/config/driveConfig';
+import type { AutoSyncConfig, SyncInterval } from '../src/types/offline';
 
 
 
 export default function SettingsScreen() {
     const router = useRouter();
     const {
-        driveConfig,
         loadConfig,
-        saveConfig,
         isAuthenticated,
         currentUser,
         authError,
@@ -69,8 +89,18 @@ export default function SettingsScreen() {
     const [lastBackgroundSync, setLastBackgroundSync] = useState<string | null>(null);
     const [showIntervalPicker, setShowIntervalPicker] = useState(false);
 
+    // デバッグログ
+    const [debugLogs, setDebugLogs] = useState<DebugLogEntry[]>([]);
+    const [isDebugExpanded, setIsDebugExpanded] = useState(false);
+
     // 翻訳
     const { t, language, setLanguage } = useLanguage();
+
+    // ログ読み込みヘルパー
+    const refreshLogs = async () => {
+        const logs = await loadDebugLogs();
+        setDebugLogs(logs);
+    };
 
     // 設定を読み込み
     useEffect(() => {
@@ -83,10 +113,12 @@ export default function SettingsScreen() {
                 setExportSheetAsPdf(pdfOption);
 
                 // 自動同期設定を読み込み
-                const syncConfig = await loadAutoSyncConfig();
+                const syncConfig = await loadBackgroundSyncConfig();
                 setAutoSyncConfigState(syncConfig);
                 const lastSync = await loadLastBackgroundSync();
                 setLastBackgroundSync(lastSync);
+
+                await refreshLogs();
 
                 // フォルダIDとフォルダ名を設定
                 // 注意: フォルダIDが空の場合はエクスポート時にデフォルトフォルダが自動作成される
@@ -156,24 +188,32 @@ export default function SettingsScreen() {
     const handleAutoSyncToggle = async (enabled: boolean) => {
         const newConfig = { ...autoSyncConfig, enabled };
         setAutoSyncConfigState(newConfig);
-        await saveAutoSyncConfig(newConfig);
+        await saveBackgroundSyncConfig(newConfig);
         await syncBackgroundTaskWithConfig();
+        await refreshLogs(); // 設定変更時にログ更新
     };
 
     // 同期間隔の変更
     const handleIntervalChange = async (interval: SyncInterval) => {
         const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
         setAutoSyncConfigState(newConfig);
-        await saveAutoSyncConfig(newConfig);
+        await saveBackgroundSyncConfig(newConfig);
         await syncBackgroundTaskWithConfig();
         setShowIntervalPicker(false);
+        await refreshLogs();
     };
 
     // Wi-Fiのみ同期のトグル
     const handleWifiOnlyToggle = async (wifiOnly: boolean) => {
         const newConfig = { ...autoSyncConfig, wifiOnly };
         setAutoSyncConfigState(newConfig);
-        await saveAutoSyncConfig(newConfig);
+        await saveBackgroundSyncConfig(newConfig);
+    };
+
+    // ログクリア
+    const handleClearLogs = async () => {
+        await clearDebugLogs();
+        await refreshLogs();
     };
 
     // 戻るボタン押下時のバリデーション
@@ -332,7 +372,51 @@ export default function SettingsScreen() {
                     )}
                 </View>
 
+                {/* デバッグログ（開発者用） */}
+                <View style={[styles.section, styles.debugSection]}>
+                    <TouchableOpacity
+                        style={styles.debugHeader}
+                        onPress={() => setIsDebugExpanded(!isDebugExpanded)}
+                    >
+                        <Text style={styles.sectionTitle}>🛠 Debug Logs</Text>
+                        <Text style={styles.debugToggleIcon}>{isDebugExpanded ? '▼' : '▶'}</Text>
+                    </TouchableOpacity>
 
+                    {isDebugExpanded && (
+                        <View style={styles.debugContent}>
+                            <View style={styles.debugControls}>
+                                <TouchableOpacity onPress={refreshLogs} style={styles.debugButton}>
+                                    <Text style={styles.debugButtonText}>🔄 Refresh</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleClearLogs} style={[styles.debugButton, styles.debugButtonDestructive]}>
+                                    <Text style={styles.debugButtonText}>🗑 Clear</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {debugLogs.length === 0 ? (
+                                <Text style={styles.debugEmpty}>No logs available</Text>
+                            ) : (
+                                debugLogs.map((log, index) => (
+                                    <View key={index} style={styles.logEntry}>
+                                        <View style={styles.logHeader}>
+                                            <Text style={styles.logTime}>
+                                                {new Date(log.timestamp).toLocaleTimeString()}
+                                            </Text>
+                                            <Text style={[
+                                                styles.logType,
+                                                log.type === 'error' ? styles.logError :
+                                                    log.type === 'success' ? styles.logSuccess : styles.logInfo
+                                            ]}>
+                                                {log.type.toUpperCase()}
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.logMessage}>{log.message}</Text>
+                                    </View>
+                                ))
+                            )}
+                        </View>
+                    )}
+                </View>
 
                 <FolderPickerModal
                     visible={isPickerVisible}
@@ -660,5 +744,83 @@ const styles = StyleSheet.create({
     intervalOptionTextActive: {
         color: '#6366f1',
         fontWeight: '600',
+    },
+    // デバッグログ用スタイル
+    debugSection: {
+        borderTopWidth: 1,
+        borderTopColor: '#2e2e3e',
+        paddingTop: 24,
+    },
+    debugHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    debugToggleIcon: {
+        color: '#6b7280',
+        fontSize: 12,
+    },
+    debugContent: {
+        backgroundColor: '#161622',
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 8,
+    },
+    debugControls: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 8,
+        marginBottom: 8,
+    },
+    debugButton: {
+        backgroundColor: '#2e2e3e',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 4,
+    },
+    debugButtonDestructive: {
+        backgroundColor: '#451a1a',
+    },
+    debugButtonText: {
+        color: '#fff',
+        fontSize: 10,
+    },
+    debugEmpty: {
+        color: '#6b7280',
+        fontSize: 12,
+        textAlign: 'center',
+        padding: 12,
+    },
+    logEntry: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#2e2e3e',
+        paddingVertical: 8,
+    },
+    logHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 4,
+    },
+    logTime: {
+        color: '#6b7280',
+        fontSize: 10,
+        fontFamily: 'monospace',
+    },
+    logType: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        paddingHorizontal: 4,
+        borderRadius: 2,
+        backgroundColor: '#2e2e3e',
+        color: '#a0a0b0',
+        overflow: 'hidden',
+    },
+    logInfo: { color: '#60a5fa' },
+    logSuccess: { color: '#34d399' },
+    logError: { color: '#f87171' },
+    logMessage: {
+        color: '#d1d5db',
+        fontSize: 11,
+        fontFamily: 'monospace',
     },
 });
