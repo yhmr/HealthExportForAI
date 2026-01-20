@@ -75,16 +75,49 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * アクセストークンを取得
+ * トークン取得のPromiseを保持（重複実行防止用）
+ */
+let tokenRefreshPromise: Promise<string | null> | null = null;
+
+/**
+ * アクセストークンを取得（重複実行防止とリトライロジック付き）
  */
 export async function getAccessToken(): Promise<string | null> {
-  try {
-    const tokens = await GoogleSignin.getTokens();
-    return tokens.accessToken;
-  } catch (error) {
-    console.error('トークン取得エラー:', error);
-    return null;
+  // すでに実行中のトークン取得処理があれば、その結果を待つ
+  if (tokenRefreshPromise) {
+    return tokenRefreshPromise;
   }
+
+  tokenRefreshPromise = (async () => {
+    try {
+      // 既存のトークン取得を試みる
+      const tokens = await GoogleSignin.getTokens();
+      return tokens.accessToken;
+    } catch (error: any) {
+      console.error('トークン取得エラー(1回目):', error);
+
+      // "previous promise did not settle" エラーなどの場合、少し待って再試行
+      if (error.message && error.message.includes('previous promise')) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+          const retryTokens = await GoogleSignin.getTokens();
+          return retryTokens.accessToken;
+        } catch (retryError) {
+          console.error('トークン取得エラー(リトライ):', retryError);
+        }
+      }
+
+      // トークンが無効な場合などは、signInSilentlyを試みる価値があるかもしれないが、
+      // バックグラウンドでは慎重に行う必要がある。
+      // とりあえずnullを返す。
+      return null;
+    } finally {
+      // 処理完了後にPromiseをクリア
+      tokenRefreshPromise = null;
+    }
+  })();
+
+  return tokenRefreshPromise;
 }
 
 /**

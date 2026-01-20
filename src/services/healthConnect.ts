@@ -1,5 +1,4 @@
-// Health Connect サービス
-
+import { PermissionsAndroid, Platform } from 'react-native';
 import {
   aggregateGroupByDuration,
   ExerciseType,
@@ -21,6 +20,7 @@ import type {
   WeightData
 } from '../types/health';
 import { formatDate } from '../utils/formatters';
+import { addDebugLog } from './debugLogService';
 
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [
@@ -43,6 +43,7 @@ export async function initializeHealthConnect(): Promise<boolean> {
     return isInitialized;
   } catch (error) {
     console.error('Health Connect初期化エラー:', error);
+    await addDebugLog(`[HealthConnect] Init Error: ${error}`, 'error');
     return false;
   }
 }
@@ -74,11 +75,32 @@ export async function checkHealthConnectAvailability(): Promise<{
  */
 export async function requestHealthPermissions(): Promise<boolean> {
   try {
+    // 1. Health Connect のデータ読み取り権限をリクエスト
     const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
-    // すべての権限が付与されたかチェック
+
+    // 2. Android 14+ (UPSIDE_DOWN_CAKE) の場合、バックグラウンド読み取り権限も必要
+    if (Platform.OS === 'android' && Platform.Version >= 34) {
+      const backgroundPermission =
+        'android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND' as any;
+      const hasBackgroundPermission = await PermissionsAndroid.check(backgroundPermission);
+
+      if (!hasBackgroundPermission) {
+        await addDebugLog('[HealthConnect] Requesting background permission', 'info');
+        const granted = await PermissionsAndroid.request(backgroundPermission);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          await addDebugLog('[HealthConnect] Background permission denied', 'error');
+          // バックグラウンド権限がなくてもフォアグラウンドは動くので、ここではfalseを返さないが警告は残す
+        } else {
+          await addDebugLog('[HealthConnect] Background permission granted', 'success');
+        }
+      }
+    }
+
+    // すべての権限が付与されたかチェック (Health Connectの権限)
     return permissions.length > 0;
   } catch (error) {
     console.error('権限リクエストエラー:', error);
+    await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
     return false;
   }
 }
@@ -144,6 +166,7 @@ export async function fetchStepsData(startTime: Date, endTime: Date): Promise<St
     return stepsData.sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('歩数データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Steps Error: ${error}`, 'error');
     return [];
   }
 }
@@ -185,6 +208,7 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
     return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('体重データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Weight Error: ${error}`, 'error');
     return [];
   }
 }
@@ -224,6 +248,7 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
     return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('体脂肪データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch BodyFat Error: ${error}`, 'error');
     return [];
   }
 }
@@ -265,6 +290,7 @@ export async function fetchTotalCaloriesData(
     return caloriesData.sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('カロリーデータ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Calories Error: ${error}`, 'error');
     return [];
   }
 }
@@ -308,6 +334,7 @@ export async function fetchBasalMetabolicRateData(
     return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('基礎代謝データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch BMR Error: ${error}`, 'error');
     return [];
   }
 }
@@ -384,6 +411,7 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
       });
   } catch (error) {
     console.error('睡眠データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Sleep Error: ${error}`, 'error');
     return [];
   }
 }
@@ -432,6 +460,7 @@ export async function fetchExerciseData(startTime: Date, endTime: Date): Promise
     return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('エクササイズデータ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Exercise Error: ${error}`, 'error');
     return [];
   }
 }
@@ -501,6 +530,7 @@ export async function fetchNutritionData(startTime: Date, endTime: Date): Promis
     return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error('栄養データ取得エラー:', error);
+    await addDebugLog(`[HealthConnect] Fetch Nutrition Error: ${error}`, 'error');
     return [];
   }
 }
