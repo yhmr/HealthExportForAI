@@ -53,59 +53,12 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   const language = await getLanguage();
   const t = translations[language].notification;
 
-  // フォアグラウンドサービスとして実行するための通知ID
+  // 通知ID
   const notificationId = 'bg-sync-notification';
 
-  if (Platform.OS === 'android') {
-    try {
-      await createChannel();
-      // まずフォアグラウンドサービスとしての起動を試みる
-      await notifee.displayNotification({
-        id: notificationId,
-        title: t.syncing,
-        body: t.syncingBody,
-        android: {
-          channelId: NOTIFICATION_CHANNEL_ID,
-          asForegroundService: true, // Android 12以降ではバックグラウンドからの起動が制限される場合がある
-          color: '#4a90e2',
-          ongoing: true,
-          progress: {
-            indeterminate: true
-          }
-        }
-      });
-      await addDebugLog('[Scheduler] Foreground service started', 'info');
-    } catch (e: any) {
-      // Android 12+の制約で失敗した場合は、通常の通知として表示を試みる（フォールバック）
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      await addDebugLog(
-        `[Scheduler] Foreground service blocked (${errorMessage}), falling back to normal notification`,
-        'info'
-      );
-
-      try {
-        await notifee.displayNotification({
-          id: notificationId,
-          title: t.syncing,
-          body: t.syncingBody,
-          android: {
-            channelId: NOTIFICATION_CHANNEL_ID,
-            asForegroundService: false, // 通常の通知
-            color: '#4a90e2',
-            ongoing: true, // 処理中は消せないようにする
-            progress: {
-              indeterminate: true
-            }
-          }
-        });
-      } catch (fallbackError) {
-        await addDebugLog(
-          `[Scheduler] Failed to display fallback notification: ${fallbackError}`,
-          'error'
-        );
-      }
-    }
-  }
+  // Android 12+ の制約により、バックグラウンドからフォアグラウンドサービスを開始することは困難なため、
+  // 進行中の通知 ("同期中...") は表示しない。
+  // OSによってタスクがサスペンドされた場合に通知が残り続ける問題を回避するため。
 
   try {
     const config = await loadBackgroundSyncConfig();
@@ -117,21 +70,24 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
         'success'
       );
 
-      // 成功通知に更新（サービス終了）
-      if (Platform.OS === 'android') {
-        await notifee.displayNotification({
-          id: notificationId,
-          title: t.syncSuccess,
-          body: t.syncSuccessBody,
-          android: {
-            channelId: NOTIFICATION_CHANNEL_ID,
-            // asForegroundService: false, // falseにするか、stopForegroundServiceを呼ぶ
-            progress: undefined,
-            timeoutAfter: 3000 // 3秒後に消える
+      // 新しいデータがあった、またはキュー処理が行われた場合のみ完了通知を表示
+      if (result.hasNewData || result.hasQueueProcessed) {
+        if (Platform.OS === 'android') {
+          try {
+            await createChannel();
+            await notifee.displayNotification({
+              id: notificationId,
+              title: t.syncSuccess,
+              body: t.syncSuccessBody,
+              android: {
+                channelId: NOTIFICATION_CHANNEL_ID,
+                timeoutAfter: 5000 // 5秒後に消える
+              }
+            });
+          } catch (notifError) {
+            console.error('Success notification error:', notifError);
           }
-        });
-        // サービス停止
-        await notifee.stopForegroundService();
+        }
       }
 
       return result.hasNewData || result.hasQueueProcessed
@@ -139,10 +95,6 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
         : BackgroundFetch.BackgroundFetchResult.NoData;
     } else {
       await addDebugLog('[Scheduler] Task logic returned false', 'error');
-
-      if (Platform.OS === 'android') {
-        await notifee.stopForegroundService();
-      }
       return BackgroundFetch.BackgroundFetchResult.Failed;
     }
   } catch (error) {
@@ -151,17 +103,22 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       'error'
     );
 
+    // エラー時のみ通知を表示
     if (Platform.OS === 'android') {
-      await notifee.displayNotification({
-        id: notificationId,
-        title: t.syncError,
-        body: t.syncErrorBody,
-        android: {
-          channelId: NOTIFICATION_CHANNEL_ID,
-          timeoutAfter: 5000
-        }
-      });
-      await notifee.stopForegroundService();
+      try {
+        await createChannel();
+        await notifee.displayNotification({
+          id: notificationId,
+          title: t.syncError,
+          body: t.syncErrorBody,
+          android: {
+            channelId: NOTIFICATION_CHANNEL_ID,
+            timeoutAfter: 5000
+          }
+        });
+      } catch (notifError) {
+        console.error('Error notification error:', notifError);
+      }
     }
 
     return BackgroundFetch.BackgroundFetchResult.Failed;
