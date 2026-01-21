@@ -1,12 +1,9 @@
 // バックグラウンド同期実行ロジック
 // スケジューラから呼び出され、データ取得とエクスポート処理の開始を担当する
 
+import { AutoSyncConfig } from '../../types/offline';
 import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../../utils/formatters';
-import {
-  loadBackgroundSyncConfig,
-  loadLastBackgroundSync,
-  saveLastBackgroundSync
-} from '../config/backgroundSyncConfig';
+import { loadLastBackgroundSync, saveLastBackgroundSync } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
 import { createDefaultExportConfig, handleExportRequest } from '../export/controller';
 import { fetchAllHealthData, initializeHealthConnect } from '../healthConnect';
@@ -51,7 +48,7 @@ export async function calculateFetchDays(): Promise<number> {
  * 同期処理のメインロジックを実行
  * @returns 実行結果
  */
-export async function executeSyncLogic(): Promise<SyncExecutionResult> {
+export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExecutionResult> {
   await addDebugLog('[SyncOperation] Starting execution', 'info');
 
   const result: SyncExecutionResult = {
@@ -61,8 +58,7 @@ export async function executeSyncLogic(): Promise<SyncExecutionResult> {
   };
 
   try {
-    // 設定を確認
-    const config = await loadBackgroundSyncConfig();
+    // 意図しないタイミングで同期が行われた場合に備えて、設定を確認する
     if (!config.enabled) {
       await addDebugLog('[SyncOperation] Auto sync is disabled', 'info');
       return { ...result, success: false };

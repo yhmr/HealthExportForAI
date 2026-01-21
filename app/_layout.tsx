@@ -11,7 +11,8 @@ import { useOfflineSync } from '../src/hooks/useOfflineSync';
 // バックグラウンドタスクをグローバルスコープで定義
 // このimportによりTaskManager.defineTaskが実行される
 import '../src/services/background/scheduler';
-import { syncBackgroundTaskWithConfig } from '../src/services/background/scheduler';
+import { syncBackgroundTask } from '../src/services/background/scheduler';
+import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 
 Sentry.init({
   dsn: 'https://9cbd9eeaca1880f9a2f5ec4367245444@o4510736582770688.ingest.us.sentry.io/4510736586506240',
@@ -28,9 +29,15 @@ export default Sentry.wrap(function RootLayout() {
 
   // バックグラウンド同期タスクを設定に基づいて初期化
   useEffect(() => {
-    syncBackgroundTaskWithConfig().catch((error) => {
-      console.error('[RootLayout] Failed to sync background task:', error);
-    });
+    const initBackgroundTask = async () => {
+      try {
+        const config = await loadBackgroundSyncConfig();
+        await syncBackgroundTask(config);
+      } catch (error) {
+        console.error('[RootLayout] Failed to sync background task:', error);
+      }
+    };
+    initBackgroundTask();
   }, []);
 
   return (

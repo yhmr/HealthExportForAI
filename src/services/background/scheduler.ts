@@ -4,6 +4,7 @@
 
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
+import { AutoSyncConfig } from '../../types/offline';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
 import { executeSyncLogic } from './sync-operation';
@@ -19,7 +20,10 @@ addDebugLog('[Scheduler] Module loaded', 'info').catch(() => {});
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   await addDebugLog('[Scheduler] Background task triggered', 'info');
   try {
-    const result = await executeSyncLogic();
+    // ここで設定をロードしてDIを行う
+    // これにより executeSyncLogic は設定のロード方法を知る必要がなくなる
+    const config = await loadBackgroundSyncConfig();
+    const result = await executeSyncLogic(config);
 
     if (result.success) {
       await addDebugLog(
@@ -96,10 +100,10 @@ export async function getBackgroundFetchStatus(): Promise<BackgroundFetch.Backgr
 
 /**
  * 設定に基づいてバックグラウンド同期を有効化/無効化
+ * @param config バックグラウンド同期設定
  */
-export async function syncBackgroundTaskWithConfig(): Promise<void> {
+export async function syncBackgroundTask(config: AutoSyncConfig): Promise<void> {
   try {
-    const config = await loadBackgroundSyncConfig();
     const isRegistered = await isBackgroundSyncRegistered();
 
     if (config.enabled && !isRegistered) {
@@ -107,7 +111,9 @@ export async function syncBackgroundTaskWithConfig(): Promise<void> {
     } else if (!config.enabled && isRegistered) {
       await unregisterBackgroundSync();
     } else if (config.enabled && isRegistered) {
-      // 間隔が変更された可能性があるため再登録
+      // 設定上の間隔と現在の登録状況の整合性はここではチェックせず、
+      // 呼び出し側で変更があった場合に明示的に呼ばれることを想定するが、
+      // 念のため再登録して確実に最新の間隔を反映させる
       await unregisterBackgroundSync();
       await registerBackgroundSync(config.intervalMinutes);
     }

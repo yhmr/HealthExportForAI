@@ -19,7 +19,7 @@ import { useLanguage } from '../src/contexts/LanguageContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 
 // Services & Config
-import { syncBackgroundTaskWithConfig } from '../src/services/background/scheduler';
+import { syncBackgroundTask } from '../src/services/background/scheduler';
 import {
   getSyncIntervalLabel,
   loadBackgroundSyncConfig,
@@ -166,7 +166,7 @@ export default function SettingsScreen() {
     const newConfig = { ...autoSyncConfig, enabled };
     setAutoSyncConfigState(newConfig);
     await saveBackgroundSyncConfig(newConfig);
-    await syncBackgroundTaskWithConfig();
+    await syncBackgroundTask(newConfig);
     await refreshLogs(); // 設定変更時にログ更新
   };
 
@@ -175,7 +175,7 @@ export default function SettingsScreen() {
     const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
     setAutoSyncConfigState(newConfig);
     await saveBackgroundSyncConfig(newConfig);
-    await syncBackgroundTaskWithConfig();
+    await syncBackgroundTask(newConfig);
     setShowIntervalPicker(false);
     await refreshLogs();
   };
