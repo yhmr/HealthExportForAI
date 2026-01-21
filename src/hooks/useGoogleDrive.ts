@@ -1,17 +1,11 @@
 // Google Drive/Sheets カスタムフック（認証統合版）
 
-import type { User } from '@react-native-google-signin/google-signin';
 import { useCallback, useState } from 'react';
 import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
+import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { handleExportRequest } from '../services/export/controller';
-import {
-  configureGoogleSignIn,
-  getCurrentUser,
-  isSignedIn,
-  signIn,
-  signOut
-} from '../services/googleAuth';
+import { configureGoogleSignIn } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
 import { getCurrentISOString } from '../utils/formatters';
@@ -22,15 +16,14 @@ export function useGoogleDrive() {
   const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
   const [driveConfig, setDriveConfigState] = useState<DriveConfig | null>(null);
 
-  // 認証状態
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  // 認証状態はAuthContextから取得
+  const { isAuthenticated, currentUser, authError, signIn, signOut } = useAuth();
 
   const { healthData } = useHealthStore();
 
   /**
    * Drive設定を読み込み
+   * 認証状態はAuthContextで管理されるため、ここではDrive設定のみ読み込む
    */
   const loadConfig = useCallback(async () => {
     const config = await loadDriveConfig();
@@ -38,14 +31,6 @@ export function useGoogleDrive() {
 
     // Google Sign-Inを設定（埋め込みIDを使用）
     configureGoogleSignIn(WEB_CLIENT_ID);
-
-    // 認証状態をチェック
-    const signedIn = await isSignedIn();
-    setIsAuthenticated(signedIn);
-    if (signedIn) {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-    }
 
     return config;
   }, []);
@@ -56,35 +41,6 @@ export function useGoogleDrive() {
   const saveConfig = useCallback(async (config: DriveConfig) => {
     await saveDriveConfig(config);
     setDriveConfigState(config);
-  }, []);
-
-  /**
-   * Googleアカウントでサインイン
-   */
-  const handleSignIn = useCallback(async () => {
-    setAuthError(null);
-
-    configureGoogleSignIn(WEB_CLIENT_ID);
-    const result = await signIn();
-
-    if (result.success && result.user) {
-      setIsAuthenticated(true);
-      setCurrentUser(result.user);
-      return true;
-    } else {
-      console.error('Sign in failed:', result.error);
-      setAuthError(result.error || 'サインインに失敗しました');
-      return false;
-    }
-  }, []);
-
-  /**
-   * サインアウト
-   */
-  const handleSignOut = useCallback(async () => {
-    await signOut();
-    setIsAuthenticated(false);
-    setCurrentUser(null);
   }, []);
 
   /**
@@ -172,8 +128,8 @@ export function useGoogleDrive() {
     saveConfig,
     isConfigValid,
     exportAndUpload,
-    signIn: handleSignIn,
-    signOut: handleSignOut,
+    signIn,
+    signOut,
     clearUploadError
   };
 }
