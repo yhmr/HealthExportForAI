@@ -1,9 +1,11 @@
 // 設定画面（認証統合版）
 
+import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -163,6 +165,18 @@ export default function SettingsScreen() {
 
   // 自動同期のON/OFFトグル
   const handleAutoSyncToggle = async (enabled: boolean) => {
+    if (enabled && Platform.OS === 'android') {
+      const settings = await notifee.requestPermission();
+      if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
+        Alert.alert(
+          t('settings', 'permissionRequired'),
+          t('settings', 'notificationPermissionDesc'),
+          [{ text: 'OK', onPress: () => {} }]
+        );
+        return;
+      }
+    }
+
     const newConfig = { ...autoSyncConfig, enabled };
     setAutoSyncConfigState(newConfig);
     await saveBackgroundSyncConfig(newConfig);

@@ -60,7 +60,9 @@ export const translations = {
       warningTitle: '警告',
       noFormatSelected:
         'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
-      goBackAnyway: 'このまま戻る'
+      goBackAnyway: 'このまま戻る',
+      permissionRequired: '権限が必要です',
+      notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
     },
     // 認証モーダル
     authModal: {
@@ -179,7 +181,9 @@ export const translations = {
       // Warning
       warningTitle: 'Warning',
       noFormatSelected: 'No export format selected. Please select at least one format.',
-      goBackAnyway: 'Go Back Anyway'
+      goBackAnyway: 'Go Back Anyway',
+      permissionRequired: 'Permission Required',
+      notificationPermissionDesc: 'Notification permission is required to run background sync.'
     },
     // Auth modal
     authModal: {

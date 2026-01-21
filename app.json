@@ -31,7 +31,8 @@
         "android.permission.health.READ_NUTRITION",
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "plugins": [
