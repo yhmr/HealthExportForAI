@@ -107,9 +107,20 @@ export async function getAccessToken(): Promise<string | null> {
         }
       }
 
-      // トークンが無効な場合などは、signInSilentlyを試みる価値があるかもしれないが、
-      // バックグラウンドでは慎重に行う必要がある。
-      // とりあえずnullを返す。
+      // トークンが無効な場合、サイレントサインインを試みてトークンをリフレッシュ
+      try {
+        console.log('サイレントサインインを試みます...');
+        const userInfo = await GoogleSignin.signInSilently();
+        if (userInfo.data) {
+          // サイレントサインイン成功後、再度トークン取得
+          const refreshedTokens = await GoogleSignin.getTokens();
+          console.log('サイレントサインインでトークン取得成功');
+          return refreshedTokens.accessToken;
+        }
+      } catch (silentError) {
+        console.error('サイレントサインインエラー:', silentError);
+      }
+
       return null;
     } finally {
       // 処理完了後にPromiseをクリア
