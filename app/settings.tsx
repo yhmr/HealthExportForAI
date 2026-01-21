@@ -38,6 +38,7 @@ import {
 } from '../src/services/config/exportConfig';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../src/services/debugLogService';
 import { getAccessToken } from '../src/services/googleAuth';
+import { requestBackgroundHealthPermission } from '../src/services/healthConnect';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../src/services/storage/googleDrive';
 
 // Components
@@ -166,11 +167,25 @@ export default function SettingsScreen() {
   // 自動同期のON/OFFトグル
   const handleAutoSyncToggle = async (enabled: boolean) => {
     if (enabled && Platform.OS === 'android') {
+      // 1. 通知権限
       const settings = await notifee.requestPermission();
       if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
         Alert.alert(
           t('settings', 'permissionRequired'),
           t('settings', 'notificationPermissionDesc'),
+          [{ text: 'OK', onPress: () => {} }]
+        );
+        return;
+      }
+
+      // 2. バックグラウンド読み取り権限 (Android 14+)
+      const bgGranted = await requestBackgroundHealthPermission();
+      if (!bgGranted) {
+        Alert.alert(
+          t('settings', 'permissionRequired'),
+          language === 'ja'
+            ? '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。'
+            : 'Background data read permission is required to use auto sync.',
           [{ text: 'OK', onPress: () => {} }]
         );
         return;

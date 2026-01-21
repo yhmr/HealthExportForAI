@@ -6,6 +6,7 @@ import {
   checkHealthConnectAvailability,
   fetchAllHealthData,
   initializeHealthConnect,
+  requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
 import { useHealthStore } from '../stores/healthStore';
@@ -127,6 +128,29 @@ export function useHealthConnect() {
     [setAllData, setLastSyncTime, setLoading, setError]
   );
 
+  const requestBackgroundPermissions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const granted = await requestBackgroundHealthPermission();
+      // バックグラウンド権限の結果のみで全体の権限状態を更新してよいかは
+      // アプリの仕様によりますが、ここではユーザー実装に合わせて更新します
+      if (granted) {
+        setHasPermissions(true);
+      } else {
+        setError('バックグラウンド権限が付与されませんでした');
+      }
+
+      return granted;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'バックグラウンド権限リクエストエラー');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setError]);
+
   return {
     // 状態
     isInitialized,
@@ -139,6 +163,8 @@ export function useHealthConnect() {
     // アクション
     initialize,
     requestPermissions,
-    syncData
+    syncData,
+    /** Android 14+ 向けのバックグラウンド権限リクエスト */
+    requestBackgroundPermissions
   };
 }

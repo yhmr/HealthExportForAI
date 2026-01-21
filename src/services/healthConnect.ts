@@ -76,7 +76,19 @@ export async function requestHealthPermissions(): Promise<boolean> {
     // 1. Health Connect のデータ読み取り権限をリクエスト
     const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
 
-    // 2. Android 14+ (UPSIDE_DOWN_CAKE) の場合、バックグラウンド読み取り権限も必要
+    // すべての権限が付与されたかチェック (Health Connectの権限)
+    return permissions.length > 0;
+  } catch (error) {
+    await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
+    return false;
+  }
+}
+
+/**
+ * バックグラウンド読み取り権限をリクエスト (Android 14+)
+ */
+export async function requestBackgroundHealthPermission(): Promise<boolean> {
+  try {
     if (Platform.OS === 'android' && Platform.Version >= 34) {
       const backgroundPermission =
         'android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND' as any;
@@ -87,17 +99,17 @@ export async function requestHealthPermissions(): Promise<boolean> {
         const granted = await PermissionsAndroid.request(backgroundPermission);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           await addDebugLog('[HealthConnect] Background permission denied', 'error');
-          // バックグラウンド権限がなくてもフォアグラウンドは動くので、ここではfalseを返さないが警告は残す
+          return false;
         } else {
           await addDebugLog('[HealthConnect] Background permission granted', 'success');
+          return true;
         }
       }
+      return true; // 既に許可されている
     }
-
-    // すべての権限が付与されたかチェック (Health Connectの権限)
-    return permissions.length > 0;
+    return true; // 対象外のOSバージョンは常に許可扱い
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
+    await addDebugLog(`[HealthConnect] Background Permission Request Error: ${error}`, 'error');
     return false;
   }
 }
