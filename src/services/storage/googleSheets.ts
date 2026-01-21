@@ -1,6 +1,7 @@
 // Google Sheets サービス
 // スプレッドシートのCRUD操作に特化
 
+import { addDebugLog } from '../debugLogService';
 const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
@@ -23,7 +24,7 @@ export async function findSpreadsheet(
   });
 
   if (!response.ok) {
-    console.error('スプレッドシート検索エラー:', response.status);
+    await addDebugLog(`[GoogleSheets] Find spreadsheet failed: ${response.status}`, 'error');
     return null;
   }
 
@@ -75,7 +76,10 @@ export async function createSpreadsheet(
     });
 
     if (!createResponse.ok) {
-      console.error('スプレッドシート作成エラー:', await createResponse.text());
+      await addDebugLog(
+        `[GoogleSheets] Create spreadsheet failed: ${await createResponse.text()}`,
+        'error'
+      );
       return null;
     }
 
@@ -88,8 +92,12 @@ export async function createSpreadsheet(
     }
 
     return spreadsheetId;
-  } catch (error) {
-    console.error('スプレッドシート作成エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (CreateSpreadsheet)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Create spreadsheet error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -128,8 +136,12 @@ export async function moveToFolder(
     );
 
     return moveResponse.ok;
-  } catch (error) {
-    console.error('ファイル移動エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (MoveToFolder)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Move file error: ${error}`, 'error');
+    }
     return false;
   }
 }
@@ -147,7 +159,7 @@ export async function getSheetData(
     });
 
     if (!response.ok) {
-      console.error('シートデータ取得エラー:', response.status);
+      await addDebugLog(`[GoogleSheets] Get sheet data failed: ${response.status}`, 'error');
       return null;
     }
 
@@ -162,8 +174,12 @@ export async function getSheetData(
       headers: values[0] || [],
       rows: values.slice(1)
     };
-  } catch (error) {
-    console.error('シートデータ取得エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (GetSheetData)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Get sheet data error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -192,8 +208,12 @@ export async function updateHeaders(
     );
 
     return response.ok;
-  } catch (error) {
-    console.error('ヘッダー更新エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (UpdateHeaders)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Update headers error: ${error}`, 'error');
+    }
     return false;
   }
 }
@@ -229,8 +249,12 @@ export async function updateRows(
     );
 
     return response.ok;
-  } catch (error) {
-    console.error('行更新エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (UpdateRows)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Update rows error: ${error}`, 'error');
+    }
     return false;
   }
 }
@@ -248,7 +272,7 @@ export async function fetchPDF(spreadsheetId: string, accessToken: string): Prom
     });
 
     if (!response.ok) {
-      console.error('Fetch PDF failed:', response.status);
+      await addDebugLog(`[GoogleSheets] Fetch PDF failed: ${response.status}`, 'error');
       return null;
     }
 
@@ -261,8 +285,12 @@ export async function fetchPDF(spreadsheetId: string, accessToken: string): Prom
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
-  } catch (error) {
-    console.error('PDF取得エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (FetchPDF)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Fetch PDF error: ${error}`, 'error');
+    }
     return null;
   }
 }

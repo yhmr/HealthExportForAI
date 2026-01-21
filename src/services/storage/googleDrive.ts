@@ -1,5 +1,6 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
+import { addDebugLog } from '../debugLogService';
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名
@@ -37,11 +38,15 @@ export async function createFolder(
       return data.id;
     } else {
       const errorData = await createResponse.json();
-      console.error('Create folder failed:', createResponse.status, errorData);
+      await addDebugLog(`[GoogleDrive] Create folder failed: ${createResponse.status}`, 'error');
       return null;
     }
-  } catch (error) {
-    console.error('フォルダ作成エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (CreateFolder)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Create folder error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -65,11 +70,15 @@ export async function listFolders(
       const data = await response.json();
       return data.files || [];
     } else {
-      console.error('List folders failed:', response.status, await response.text());
+      await addDebugLog(`[GoogleDrive] List folders failed: ${response.status}`, 'error');
       return [];
     }
-  } catch (error) {
-    console.error('フォルダ一覧取得エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (ListFolders)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] List folders error: ${error}`, 'error');
+    }
     return [];
   }
 }
@@ -92,11 +101,15 @@ export async function getFolder(
       if (data.trashed) return null;
       return { id: data.id, name: data.name };
     } else {
-      console.error('Get folder failed:', response.status);
+      await addDebugLog(`[GoogleDrive] Get folder failed: ${response.status}`, 'error');
       return null;
     }
-  } catch (error) {
-    console.error('フォルダ情報取得エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (GetFolder)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Get folder error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -118,8 +131,12 @@ export async function checkFolderExists(folderId: string, accessToken: string): 
     const data = await response.json();
     // trashedの場合も存在しないとみなす
     return !data.trashed;
-  } catch (error) {
-    console.error('[checkFolderExists] Error:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (CheckFolderExists)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] CheckFolderExists Error: ${error}`, 'error');
+    }
     return false;
   }
 }
@@ -147,8 +164,12 @@ export async function findOrCreateFolder(
 
     // 2. フォルダがなければ作成
     return await createFolder(folderName, accessToken);
-  } catch (error) {
-    console.error('フォルダ検索/作成エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (FindOrCreateFolder)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Find/Create folder error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -216,12 +237,15 @@ export async function uploadFile(
       console.log(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`);
       return data.id;
     } else {
-      const errorData = await response.json();
-      console.error('Upload file failed:', response.status, errorData);
+      await addDebugLog(`[GoogleDrive] Upload file failed: ${response.status}`, 'error');
       return null;
     }
-  } catch (error) {
-    console.error('ファイルアップロードエラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (UploadFile)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Upload file error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -249,7 +273,7 @@ export async function findFile(
     );
 
     if (!response.ok) {
-      console.error('ファイル検索エラー:', response.status);
+      await addDebugLog(`[GoogleDrive] Find file failed: ${response.status}`, 'error');
       return null;
     }
 
@@ -258,8 +282,12 @@ export async function findFile(
       return { id: data.files[0].id, name: data.files[0].name };
     }
     return null;
-  } catch (error) {
-    console.error('ファイル検索エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (FindFile)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Find file error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -277,13 +305,17 @@ export async function downloadFileContent(
     });
 
     if (!response.ok) {
-      console.error('ファイルダウンロードエラー:', response.status);
+      await addDebugLog(`[GoogleDrive] Download file failed: ${response.status}`, 'error');
       return null;
     }
 
     return await response.text();
-  } catch (error) {
-    console.error('ファイルダウンロードエラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (DownloadFileContent)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Download file error: ${error}`, 'error');
+    }
     return null;
   }
 }
@@ -354,12 +386,16 @@ export async function updateFile(
         return true;
       } else {
         const errorData = await response.json();
-        console.error('Update file failed:', response.status, errorData);
+        await addDebugLog(`[GoogleDrive] Update file failed: ${response.status}`, 'error');
         return false;
       }
     }
-  } catch (error) {
-    console.error('ファイル更新エラー:', error);
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleDrive] Network request failed (UpdateFile)', 'info');
+    } else {
+      await addDebugLog(`[GoogleDrive] Update file error: ${error}`, 'error');
+    }
     return false;
   }
 }
