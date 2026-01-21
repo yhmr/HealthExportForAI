@@ -113,6 +113,15 @@ export const translations = {
       lastSync: '最終バックグラウンド同期',
       never: '未実行',
       nextSync: '次回同期予定'
+    },
+    // 通知
+    notification: {
+      syncing: '同期中...',
+      syncingBody: 'ヘルスケアデータをクラウドに保存しています',
+      syncSuccess: '同期完了',
+      syncSuccessBody: 'データのバックアップが完了しました',
+      syncError: '同期エラー',
+      syncErrorBody: '同期中にエラーが発生しました'
     }
   },
   en: {
@@ -222,6 +231,15 @@ export const translations = {
       lastSync: 'Last Background Sync',
       never: 'Never',
       nextSync: 'Next Sync'
+    },
+    // Notifications
+    notification: {
+      syncing: 'Syncing...',
+      syncingBody: 'Uploading health data to cloud',
+      syncSuccess: 'Sync Complete',
+      syncSuccessBody: 'Data backup completed',
+      syncError: 'Sync Error',
+      syncErrorBody: 'An error occurred during sync'
     }
   }
 } as const;

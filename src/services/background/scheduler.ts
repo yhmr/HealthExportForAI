@@ -2,8 +2,12 @@
 // Expoのインフラ層（TaskManager, BackgroundFetch）とのインターフェース
 // 実際のロジックは task.ts に委譲する
 
+import notifee, { AndroidImportance } from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
+import { Platform } from 'react-native';
+import { Language, translations } from '../../i18n/translations';
 import { AutoSyncConfig } from '../../types/offline';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
@@ -11,17 +15,71 @@ import { executeSyncLogic } from './sync-operation';
 
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';
+const NOTIFICATION_CHANNEL_ID = 'background-sync';
+const LANGUAGE_KEY = 'app_language';
 
 addDebugLog('[Scheduler] Module loaded', 'info').catch(() => {});
+
+/**
+ * 現在の言語設定を取得
+ */
+async function getLanguage(): Promise<Language> {
+  try {
+    const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
+    return savedLanguage === 'ja' || savedLanguage === 'en' ? savedLanguage : 'ja';
+  } catch {
+    return 'ja';
+  }
+}
+
+/**
+ * 通知チャンネルを作成
+ */
+async function createChannel() {
+  await notifee.createChannel({
+    id: NOTIFICATION_CHANNEL_ID,
+    name: 'Background Sync',
+    importance: AndroidImportance.LOW // 音を出さない
+  });
+}
 
 /**
  * タスクの実装を定義
  */
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   await addDebugLog('[Scheduler] Background task triggered', 'info');
+
+  // 言語設定をロード
+  const language = await getLanguage();
+  const t = translations[language].notification;
+
+  // フォアグラウンドサービスとして実行するための通知ID
+  const notificationId = 'bg-sync-notification';
+
+  if (Platform.OS === 'android') {
+    try {
+      await createChannel();
+      await notifee.displayNotification({
+        id: notificationId,
+        title: t.syncing,
+        body: t.syncingBody,
+        android: {
+          channelId: NOTIFICATION_CHANNEL_ID,
+          asForegroundService: true, // これが重要：フォアグラウンドサービスとして昇格
+          color: '#4a90e2', // アプリのテーマカラーに合わせる
+          ongoing: true, // ユーザーが消せないようにする
+          progress: {
+            indeterminate: true
+          }
+        }
+      });
+      await addDebugLog('[Scheduler] Foreground service started', 'info');
+    } catch (e) {
+      await addDebugLog(`[Scheduler] Failed to start foreground service: ${e}`, 'error');
+    }
+  }
+
   try {
-    // ここで設定をロードしてDIを行う
-    // これにより executeSyncLogic は設定のロード方法を知る必要がなくなる
     const config = await loadBackgroundSyncConfig();
     const result = await executeSyncLogic(config);
 
@@ -30,11 +88,33 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
         `[Scheduler] Task success. NewData: ${result.hasNewData}, Queue: ${result.hasQueueProcessed}`,
         'success'
       );
+
+      // 成功通知に更新（サービス終了）
+      if (Platform.OS === 'android') {
+        await notifee.displayNotification({
+          id: notificationId,
+          title: t.syncSuccess,
+          body: t.syncSuccessBody,
+          android: {
+            channelId: NOTIFICATION_CHANNEL_ID,
+            // asForegroundService: false, // falseにするか、stopForegroundServiceを呼ぶ
+            progress: undefined,
+            timeoutAfter: 3000 // 3秒後に消える
+          }
+        });
+        // サービス停止
+        await notifee.stopForegroundService();
+      }
+
       return result.hasNewData || result.hasQueueProcessed
         ? BackgroundFetch.BackgroundFetchResult.NewData
         : BackgroundFetch.BackgroundFetchResult.NoData;
     } else {
       await addDebugLog('[Scheduler] Task logic returned false', 'error');
+
+      if (Platform.OS === 'android') {
+        await notifee.stopForegroundService();
+      }
       return BackgroundFetch.BackgroundFetchResult.Failed;
     }
   } catch (error) {
@@ -42,6 +122,20 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       `[Scheduler] Task exception: ${error instanceof Error ? error.message : String(error)}`,
       'error'
     );
+
+    if (Platform.OS === 'android') {
+      await notifee.displayNotification({
+        id: notificationId,
+        title: t.syncError,
+        body: t.syncErrorBody,
+        android: {
+          channelId: NOTIFICATION_CHANNEL_ID,
+          timeoutAfter: 5000
+        }
+      });
+      await notifee.stopForegroundService();
+    }
+
     return BackgroundFetch.BackgroundFetchResult.Failed;
   }
 });
