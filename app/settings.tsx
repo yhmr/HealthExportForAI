@@ -253,92 +253,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* 自動同期設定 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('autoSync', 'sectionTitle')}</Text>
-
-          {/* 自動同期ON/OFF */}
-          <View style={styles.settingRow}>
-            <View style={styles.settingLabelContainer}>
-              <Text style={styles.settingLabel}>{t('autoSync', 'enabled')}</Text>
-              <Text style={styles.settingDesc}>{t('autoSync', 'enabledDesc')}</Text>
-            </View>
-            <Switch
-              value={autoSyncConfig.enabled}
-              onValueChange={handleAutoSyncToggle}
-              trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-              thumbColor={autoSyncConfig.enabled ? '#6366f1' : '#9ca3af'}
-            />
-          </View>
-
-          {/* 同期間隔（有効時のみ表示） */}
-          {autoSyncConfig.enabled && (
-            <>
-              <TouchableOpacity
-                style={styles.settingRow}
-                onPress={() => setShowIntervalPicker(!showIntervalPicker)}
-              >
-                <Text style={styles.settingLabel}>{t('autoSync', 'interval')}</Text>
-                <Text style={styles.settingValue}>
-                  {getSyncIntervalLabel(autoSyncConfig.intervalMinutes)[language]} ▼
-                </Text>
-              </TouchableOpacity>
-
-              {/* 間隔選択（展開時） */}
-              {showIntervalPicker && (
-                <View style={styles.intervalPicker}>
-                  {SYNC_INTERVALS.map((interval) => (
-                    <TouchableOpacity
-                      key={interval}
-                      style={[
-                        styles.intervalOption,
-                        autoSyncConfig.intervalMinutes === interval && styles.intervalOptionActive
-                      ]}
-                      onPress={() => handleIntervalChange(interval)}
-                    >
-                      <Text
-                        style={[
-                          styles.intervalOptionText,
-                          autoSyncConfig.intervalMinutes === interval &&
-                            styles.intervalOptionTextActive
-                        ]}
-                      >
-                        {getSyncIntervalLabel(interval)[language]}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Wi-Fiのみ同期 */}
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
-                  <Text style={styles.settingLabel}>{t('autoSync', 'wifiOnly')}</Text>
-                  <Text style={styles.settingDesc}>{t('autoSync', 'wifiOnlyDesc')}</Text>
-                </View>
-                <Switch
-                  value={autoSyncConfig.wifiOnly}
-                  onValueChange={handleWifiOnlyToggle}
-                  trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                  thumbColor={autoSyncConfig.wifiOnly ? '#6366f1' : '#9ca3af'}
-                />
-              </View>
-
-              {/* 最終バックグラウンド同期 */}
-              <View style={styles.settingRow}>
-                <Text style={styles.settingLabel}>{t('autoSync', 'lastSync')}</Text>
-                <Text style={styles.settingValue}>
-                  {lastBackgroundSync
-                    ? new Date(lastBackgroundSync).toLocaleString(
-                        language === 'ja' ? 'ja-JP' : 'en-US'
-                      )
-                    : t('autoSync', 'never')}
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
-
         {/* デバッグログ（開発者用） */}
         <View style={[styles.section, styles.debugSection]}>
           <TouchableOpacity
@@ -493,6 +407,98 @@ export default function SettingsScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* 自動同期設定（実験的機能のため最下部に配置） */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('autoSync', 'sectionTitle')} (Beta)</Text>
+
+          {/* 自動同期ON/OFF */}
+          <View style={styles.settingRow}>
+            <View style={styles.settingLabelContainer}>
+              <Text style={styles.settingLabel}>{t('autoSync', 'enabled')}</Text>
+              <Text style={styles.settingDesc}>{t('autoSync', 'enabledDesc')}</Text>
+            </View>
+            <Switch
+              value={autoSyncConfig.enabled}
+              onValueChange={handleAutoSyncToggle}
+              trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
+              thumbColor={autoSyncConfig.enabled ? '#6366f1' : '#9ca3af'}
+            />
+          </View>
+
+          <Text style={{ color: '#f87171', fontSize: 12, marginTop: 8, marginBottom: 8 }}>
+            {language === 'ja'
+              ? '※OSの制約によるバックグラウンド処理のタイムアウト対策のため、同期はGoogle Sheetsのみに限定されます。動作は保証されないため、定期的にアプリを起動して同期することをお勧めします。'
+              : '* Because of OS restrictions and timeout issues, background sync is limited to Google Sheets only. Operation is not guaranteed, so we recommend opening the app periodically to sync.'}
+          </Text>
+
+          {/* 同期間隔（有効時のみ表示） */}
+          {autoSyncConfig.enabled && (
+            <>
+              <TouchableOpacity
+                style={styles.settingRow}
+                onPress={() => setShowIntervalPicker(!showIntervalPicker)}
+              >
+                <Text style={styles.settingLabel}>{t('autoSync', 'interval')}</Text>
+                <Text style={styles.settingValue}>
+                  {getSyncIntervalLabel(autoSyncConfig.intervalMinutes)[language]} ▼
+                </Text>
+              </TouchableOpacity>
+
+              {/* 間隔選択（展開時） */}
+              {showIntervalPicker && (
+                <View style={styles.intervalPicker}>
+                  {SYNC_INTERVALS.map((interval) => (
+                    <TouchableOpacity
+                      key={interval}
+                      style={[
+                        styles.intervalOption,
+                        autoSyncConfig.intervalMinutes === interval && styles.intervalOptionActive
+                      ]}
+                      onPress={() => handleIntervalChange(interval)}
+                    >
+                      <Text
+                        style={[
+                          styles.intervalOptionText,
+                          autoSyncConfig.intervalMinutes === interval &&
+                            styles.intervalOptionTextActive
+                        ]}
+                      >
+                        {getSyncIntervalLabel(interval)[language]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Wi-Fiのみ同期 */}
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <Text style={styles.settingLabel}>{t('autoSync', 'wifiOnly')}</Text>
+                  <Text style={styles.settingDesc}>{t('autoSync', 'wifiOnlyDesc')}</Text>
+                </View>
+                <Switch
+                  value={autoSyncConfig.wifiOnly}
+                  onValueChange={handleWifiOnlyToggle}
+                  trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
+                  thumbColor={autoSyncConfig.wifiOnly ? '#6366f1' : '#9ca3af'}
+                />
+              </View>
+
+              {/* 最終バックグラウンド同期 */}
+              <View style={styles.settingRow}>
+                <Text style={styles.settingLabel}>{t('autoSync', 'lastSync')}</Text>
+                <Text style={styles.settingValue}>
+                  {lastBackgroundSync
+                    ? new Date(lastBackgroundSync).toLocaleString(
+                        language === 'ja' ? 'ja-JP' : 'en-US'
+                      )
+                    : t('autoSync', 'never')}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -90,10 +90,10 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
           await addDebugLog('[SyncOperation] Data found, requesting export', 'info');
 
           // バックグラウンド同期用の設定を作成
-          // 必要に応じてここでフォーマットの上書きなどが可能
+          // タイムアウト対策のため、Google Sheetsのみに限定し、PDF出力は無効化する
           const exportConfig = await createDefaultExportConfig();
-          // 例: PDF出力を無効化する場合
-          // exportConfig.exportAsPdf = false;
+          exportConfig.formats = ['googleSheets'];
+          exportConfig.exportAsPdf = false;
 
           // Processorに処理を委譲（オンラインなら実行、オフラインならキュー）
           const exportSuccess = await handleExportRequest(healthData, dateRange, exportConfig);
