@@ -8,9 +8,7 @@ import type { HealthData } from '../../types/health';
 import { loadDriveConfig } from '../config/driveConfig';
 import { loadExportFormats, loadExportSheetAsPdf } from '../config/exportConfig';
 import { addDebugLog } from '../debugLogService';
-import { getNetworkStatus } from '../networkService';
-import { addToQueue, getQueue } from '../offline-queue/queue-storage';
-import { createSpreadsheetAdapter, createStorageAdapter } from '../storage/adapterFactory';
+import { addToQueue, getQueue } from '../export-queue/queue-storage';
 import type { SpreadsheetAdapter, StorageAdapter } from '../storage/interfaces';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
@@ -59,23 +57,6 @@ export interface ExportConfig {
 /**
  * データをオフラインキューに追加するヘルパー
  */
-async function addToQueueWithTags(healthData: HealthData, dateRange: Set<string>, error?: string) {
-  const selectedTags = Object.entries(healthData)
-    .filter(([_, data]) => Array.isArray(data) && data.length > 0)
-    .map(([tag]) => tag);
-
-  if (selectedTags.length > 0) {
-    await addToQueue({
-      healthData,
-      selectedTags,
-      syncDateRange: Array.from(dateRange),
-      lastError: error
-    });
-
-    const queue = await getQueue();
-    useOfflineStore.getState().setPendingCount(queue.length);
-  }
-}
 
 /**
  * 現在のユーザー設定からデフォルトのエクスポート設定を生成する
@@ -97,54 +78,41 @@ export async function createDefaultExportConfig(): Promise<ExportConfig> {
 
 /**
  * エクスポートリクエストを処理する（公開エントリーポイント）
- * オンラインなら即時実行し、失敗またはオフラインならキューに追加する
- * @param healthData エクスポート対象のヘルスデータ
- * @param dateRange 対象日付範囲
- * @returns 処理結果（成功: true, キュー追加: false）
+/**
+ * エクスポートリクエストをキューに追加する（永続化）
+ * これがエクスポート処理の主要なエントリーポイントとなる。
+ * 実際のエクスポートを実行するには、これの後に processQueue() を呼び出す必要がある。
  */
-export async function handleExportRequest(
+export async function addToQueueWithTags(
   healthData: HealthData,
   dateRange: Set<string>,
-  config?: ExportConfig
+  note?: string
 ): Promise<boolean> {
-  await addDebugLog('[ExportController] Handling export request...', 'info');
+  // Configからタグ設定を読み込みたいところだが、
+  // ここではシンプルに全てのタグを対象とするか、
+  // もしくはStoreから取得する必要がある。
+  // 一旦、HealthDataに含まれるキーを全て対象タグとする
+  const tags = Object.keys(healthData) as any[];
+
+  await addDebugLog('[ExportController] Adding request to export queue', 'info');
 
   try {
-    const networkStatus = await getNetworkStatus();
-    const isOnline = networkStatus === 'online';
+    const id = await addToQueue({
+      healthData,
+      selectedTags: tags,
+      syncDateRange: Array.from(dateRange),
+      note
+    });
 
-    if (isOnline) {
-      const storageAdapter = createStorageAdapter();
-      const spreadsheetAdapter = createSpreadsheetAdapter();
-
-      // 設定が渡されなかった場合はデフォルト設定をロード
-      const exportConfig = config || (await createDefaultExportConfig());
-
-      const result = await executeExport(
-        healthData,
-        storageAdapter,
-        spreadsheetAdapter,
-        exportConfig,
-        dateRange
-      );
-
-      if (result.success) {
-        await addDebugLog('[ExportController] Export executed successfully', 'success');
-        return true;
-      } else {
-        await addDebugLog(`[ExportController] Immediate export failed: ${result.error}`, 'error');
-        await addToQueueWithTags(healthData, dateRange, result.error);
-        return false;
-      }
-    } else {
-      await addDebugLog('[ExportController] Offline: queuing export request', 'info');
-      await addToQueueWithTags(healthData, dateRange, 'Network is offline');
-      return false;
+    if (id) {
+      // ストアの件数を更新
+      const count = (await getQueue()).length;
+      useOfflineStore.getState().setPendingCount(count);
+      return true;
     }
+    return false;
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    await addDebugLog(`[ExportController] Unexpected error: ${errorMsg}`, 'error');
-    await addToQueueWithTags(healthData, dateRange, errorMsg);
+    await addDebugLog(`[ExportController] Queue add failed: ${error}`, 'error');
     return false;
   }
 }

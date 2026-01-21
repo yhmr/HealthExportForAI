@@ -21,6 +21,8 @@ export interface PendingExport {
   retryCount: number;
   /** 最後に発生したエラーメッセージ */
   lastError?: string;
+  /** メモ（任意） */
+  note?: string;
 }
 
 /**

@@ -2,9 +2,9 @@
 // ネットワーク状態監視・キュー管理・自動同期を統合
 
 import { useCallback, useEffect, useRef } from 'react';
+import { processQueue } from '../services/export-queue/processor';
+import { addToQueue, getQueueCount } from '../services/export-queue/queue-storage';
 import { getNetworkStatus, subscribeToNetworkChanges } from '../services/networkService';
-import { processQueue } from '../services/offline-queue/processor';
-import { addToQueue, getQueueCount } from '../services/offline-queue/queue-storage';
 import type { DataTagKey } from '../stores/healthStore';
 import { useNetworkStore } from '../stores/networkStore';
 import { useOfflineStore } from '../stores/offlineStore';

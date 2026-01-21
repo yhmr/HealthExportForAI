@@ -5,7 +5,8 @@ import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
-import { handleExportRequest } from '../services/export/controller';
+import { processQueue } from '../services/export-queue/processor';
+import { addToQueueWithTags } from '../services/export/controller';
 import { configureGoogleSignIn } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
@@ -54,8 +55,7 @@ export function useGoogleDrive() {
 
   /**
    * データをエクスポート
-   * processorのhandleExportRequestに処理を委譲
-   * オンラインなら即時実行、オフラインならキューに追加
+   * まずキューに追加し（永続化）、オンラインなら即時処理を試みる
    * @param selectedTags エクスポートするデータタグのセット
    * @returns { success: boolean, queued?: boolean } 成功/キュー追加の結果
    */
@@ -79,23 +79,36 @@ export function useGoogleDrive() {
       setUploadError(null);
 
       try {
-        // processorに処理を委譲（オンラインなら実行、オフラインならキュー）
-        const success = await handleExportRequest(dataToExport, dateRange);
+        // 1. まずキューに追加（永続化）
+        const queued = await addToQueueWithTags(dataToExport, dateRange, 'Manual Export');
 
-        if (success) {
-          setLastUploadTime(getCurrentISOString());
-          await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
-          return { success: true };
-        } else {
-          // キューに追加された場合（オフラインまたは失敗）
-          const networkStatus = await getNetworkStatus();
-          if (networkStatus !== 'online') {
-            await addDebugLog('[useGoogleDrive] Offline: Added to queue', 'info');
-            return { success: true, queued: true };
-          } else {
-            setUploadError('エクスポートに失敗しました。後で再試行されます。');
+        if (!queued) {
+          setUploadError('キューへの追加に失敗しました');
+          return { success: false };
+        }
+
+        // 2. オンラインなら即時処理
+        const networkStatus = await getNetworkStatus();
+        if (networkStatus === 'online') {
+          await addDebugLog('[useGoogleDrive] Online: Processing queue immediately', 'info');
+          const result = await processQueue();
+
+          if (result.successCount > 0) {
+            setLastUploadTime(getCurrentISOString());
+            await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
+            return { success: true };
+          } else if (result.errors.length > 0) {
+            setUploadError(`エクスポート失敗: ${result.errors[0]}`);
             return { success: false };
+          } else {
+            // 成功0, エラー0 の場合は「処理すべきものがなかった」だが、
+            // addToQueueした直後なので通常はありえない。
+            // 他のプロセスが同時に処理した可能性がある。
+            return { success: true };
           }
+        } else {
+          await addDebugLog('[useGoogleDrive] Offline: Added to queue', 'info');
+          return { success: true, queued: true };
         }
       } catch (err) {
         setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');

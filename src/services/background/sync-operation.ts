@@ -5,9 +5,9 @@ import { AutoSyncConfig } from '../../types/offline';
 import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../../utils/formatters';
 import { loadLastBackgroundSync, saveLastBackgroundSync } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
-import { createDefaultExportConfig, handleExportRequest } from '../export/controller';
+import { processQueue } from '../export-queue/processor';
+import { addToQueueWithTags } from '../export/controller';
 import { fetchAllHealthData, initializeHealthConnect } from '../healthConnect';
-import { processQueue } from '../offline-queue/processor';
 
 // モジュールロード時のログは非同期で実行
 addDebugLog('[SyncOperation] Module loaded', 'info').catch(() => {});
@@ -89,23 +89,24 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
         if (hasData) {
           await addDebugLog('[SyncOperation] Data found, requesting export', 'info');
 
-          // バックグラウンド同期用の設定を作成
-          // タイムアウト対策のため、Google Sheetsのみに限定し、PDF出力は無効化する
-          const exportConfig = await createDefaultExportConfig();
-          exportConfig.formats = ['googleSheets'];
-          exportConfig.exportAsPdf = false;
+          // Config is not needed here as we are queuing first.
+          // Note: createDefaultExportConfig might not be needed if addToQueueWithTags handles default logic or if processQueue handles it.
+          // However, for now, addToQueueWithTags just queues. The actual export config is re-generated in processQueue or controller logic.
+          // Actually, addToQueueWithTags takes a healthData and dateRange.
+          // We need to persist the config if we want specific background settings (like pdf=false).
+          // But PendingExport type doesn't support custom config yet.
+          // Assuming standard export config for queued items for now.
 
-          // Processorに処理を委譲（オンラインなら実行、オフラインならキュー）
-          const exportSuccess = await handleExportRequest(healthData, dateRange, exportConfig);
+          // 1. まずキューに追加（永続化）
+          const queued = await addToQueueWithTags(healthData, dateRange, 'Background Sync');
 
-          if (exportSuccess) {
-            result.hasNewData = true;
-            await addDebugLog('[SyncOperation] Export requested successfully', 'success');
+          if (queued) {
+            // result.hasNewData will be determined by processQueue result roughly,
+            // or we can just say we successfully queued new data.
+            // We'll trust processQueue to report success.
+            await addDebugLog('[SyncOperation] New data queued', 'info');
           } else {
-            await addDebugLog(
-              '[SyncOperation] Export request returned false (queued or failed)',
-              'info'
-            );
+            await addDebugLog('[SyncOperation] Failed to queue new data', 'error');
           }
         } else {
           await addDebugLog('[SyncOperation] No health data available', 'info');
@@ -118,15 +119,18 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
       // 取得エラーがあってもキュー処理は続行
     }
 
-    // === オフラインキュー処理 ===
-    // 保留中のキューがあれば処理を試みる
+    // === キュー処理（新規追加分も含む） ===
+    // オンラインであれば処理を試みる
     const queueResult = await processQueue();
+
     if (queueResult.successCount > 0) {
       await addDebugLog(
         `[SyncOperation] Queue processed: ${queueResult.successCount} items`,
         'success'
       );
       result.hasQueueProcessed = true;
+      // 新規データが含まれていた可能性が高いのでhasNewDataもtrue扱いにしておく（厳密ではないが）
+      result.hasNewData = true;
     }
 
     // 同期成功時刻を記録

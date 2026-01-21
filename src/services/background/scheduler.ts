@@ -56,13 +56,41 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   // 通知ID
   const notificationId = 'bg-sync-notification';
 
-  // Android 12+ の制約により、バックグラウンドからフォアグラウンドサービスを開始することは困難なため、
-  // 進行中の通知 ("同期中...") は表示しない。
-  // OSによってタスクがサスペンドされた場合に通知が残り続ける問題を回避するため。
+  // Android 12+ の制約とOSサスペンド対策
+  // 1. 通常の通知として「同期中」を表示（foreground serviceではない）
+  // 2. timeoutAfterを設定し、OSによってプロセスが殺された場合でも通知が残らないようにする
+  if (Platform.OS === 'android') {
+    try {
+      await createChannel();
+      await notifee.displayNotification({
+        id: notificationId,
+        title: t.syncTitle, // "同期中..."
+        body: t.syncBody, // "データをエクスポートしています"
+        android: {
+          channelId: NOTIFICATION_CHANNEL_ID,
+          ongoing: true,
+          progress: { indeterminate: true },
+          timeoutAfter: 45000 // 45秒後にOSが強制削除（処理タイムアウトより長くする）
+        }
+      });
+    } catch (e) {
+      console.error('Start notification error:', e);
+    }
+  }
+
+  // 処理全体のタイムアウト（60秒）
+  const BACKGROUND_TIMEOUT_MS = 60000;
 
   try {
     const config = await loadBackgroundSyncConfig();
-    const result = await executeSyncLogic(config);
+
+    // タイムアウト付きで実行
+    const result = await Promise.race([
+      executeSyncLogic(config),
+      new Promise<any>((_, reject) =>
+        setTimeout(() => reject(new Error('Background sync timeout')), BACKGROUND_TIMEOUT_MS)
+      )
+    ]);
 
     if (result.success) {
       await addDebugLog(
@@ -134,9 +162,7 @@ export async function registerBackgroundSync(intervalMinutes: number): Promise<v
 
   try {
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-      minimumInterval: intervalMinutes * 60, // 秒に変換
-      stopOnTerminate: false, // Android: アプリ終了後も継続
-      startOnBoot: true // Android: 再起動後も継続
+      minimumInterval: intervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
   } catch (error) {

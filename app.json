@@ -64,6 +64,8 @@
           ]
         }
       ],
+      "expo-background-fetch",
+      "expo-task-manager",
       [
         "@sentry/react-native/expo",
         {
