@@ -23,6 +23,9 @@ const mockHealthData = {
   exercise: []
 };
 
+// Mock original dates (sync date range)
+const mockOriginalDates = new Set(['2025-01-01']);
+
 // Reset mocks before each test
 beforeEach(() => {
   vi.resetAllMocks();
@@ -35,7 +38,12 @@ describe('Sheets Export Service', () => {
     (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue('new-sheet-id');
     (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(true);
 
-    const result = await exportToSpreadsheet(mockHealthData, 'folder-123', mockSpreadsheetAdapter);
+    const result = await exportToSpreadsheet(
+      mockHealthData,
+      'folder-123',
+      mockSpreadsheetAdapter,
+      mockOriginalDates
+    );
 
     expect(result.success).toBe(true);
     expect(result.exportedSheets[0].spreadsheetId).toBe('new-sheet-id');
@@ -60,7 +68,12 @@ describe('Sheets Export Service', () => {
     });
     (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(true);
 
-    const result = await exportToSpreadsheet(mockHealthData, 'folder-123', mockSpreadsheetAdapter);
+    const result = await exportToSpreadsheet(
+      mockHealthData,
+      'folder-123',
+      mockSpreadsheetAdapter,
+      mockOriginalDates
+    );
 
     expect(result.success).toBe(true);
     expect(result.exportedSheets[0].spreadsheetId).toBe('existing-sheet-id');
@@ -81,7 +94,12 @@ describe('Sheets Export Service', () => {
     (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(null);
     (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(null); // Failure
 
-    const result = await exportToSpreadsheet(mockHealthData, 'folder-123', mockSpreadsheetAdapter);
+    const result = await exportToSpreadsheet(
+      mockHealthData,
+      'folder-123',
+      mockSpreadsheetAdapter,
+      mockOriginalDates
+    );
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('作成に失敗しました');
