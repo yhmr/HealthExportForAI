@@ -41,6 +41,19 @@ export interface ExportResults {
   error?: string;
 }
 
+/** エクスポート設定（Dependency Injection用） */
+export interface ExportConfig {
+  /** 出力するフォーマットのリスト */
+  formats: ExportFormat[];
+  /** スプレッドシートをPDFとしても出力するか */
+  exportAsPdf: boolean;
+  /** 出力先フォルダの情報（指定がない場合はデフォルトまたは新規作成） */
+  targetFolder?: {
+    id?: string;
+    name?: string;
+  };
+}
+
 // ===== エントリーポイント =====
 
 /**
@@ -65,6 +78,24 @@ async function addToQueueWithTags(healthData: HealthData, dateRange: Set<string>
 }
 
 /**
+ * 現在のユーザー設定からデフォルトのエクスポート設定を生成する
+ */
+export async function createDefaultExportConfig(): Promise<ExportConfig> {
+  const formats = await loadExportFormats();
+  const exportAsPdf = await loadExportSheetAsPdf();
+  const driveConfig = await loadDriveConfig();
+
+  return {
+    formats,
+    exportAsPdf,
+    targetFolder: {
+      id: driveConfig?.folderId,
+      name: driveConfig?.folderName
+    }
+  };
+}
+
+/**
  * エクスポートリクエストを処理する（公開エントリーポイント）
  * オンラインなら即時実行し、失敗またはオフラインならキューに追加する
  * @param healthData エクスポート対象のヘルスデータ
@@ -73,7 +104,8 @@ async function addToQueueWithTags(healthData: HealthData, dateRange: Set<string>
  */
 export async function handleExportRequest(
   healthData: HealthData,
-  dateRange: Set<string>
+  dateRange: Set<string>,
+  config?: ExportConfig
 ): Promise<boolean> {
   await addDebugLog('[ExportController] Handling export request...', 'info');
 
@@ -85,7 +117,16 @@ export async function handleExportRequest(
       const storageAdapter = createStorageAdapter();
       const spreadsheetAdapter = createSpreadsheetAdapter();
 
-      const result = await executeExport(healthData, storageAdapter, spreadsheetAdapter, dateRange);
+      // 設定が渡されなかった場合はデフォルト設定をロード
+      const exportConfig = config || (await createDefaultExportConfig());
+
+      const result = await executeExport(
+        healthData,
+        storageAdapter,
+        spreadsheetAdapter,
+        exportConfig,
+        dateRange
+      );
 
       if (result.success) {
         await addDebugLog('[ExportController] Export executed successfully', 'success');
@@ -145,27 +186,24 @@ async function prepareContext(
  * @param healthData エクスポートするデータ
  * @param storageAdapter ストレージアダプター
  * @param spreadsheetAdapter スプレッドシートアダプター
+ * @param config エクスポート設定（必須）
  * @param originalDates フィルタリング前の元データの全日付（空行を維持するため）
  */
 export async function executeExport(
   healthData: HealthData,
   storageAdapter: StorageAdapter,
   spreadsheetAdapter: SpreadsheetAdapter,
-  originalDates?: Set<string>
+  config: ExportConfig,
+  originalDates: Set<string>
 ): Promise<ExportResults> {
   const results: FormatResult[] = [];
 
   try {
-    // 設定を読み込み
-    const formats = await loadExportFormats();
-    const exportAsPdf = await loadExportSheetAsPdf();
-    const driveConfig = await loadDriveConfig();
-
     // エクスポートコンテキストを準備
     const context = await prepareContext(
       storageAdapter,
-      driveConfig?.folderId,
-      driveConfig?.folderName
+      config.targetFolder?.id,
+      config.targetFolder?.name
     );
 
     if (!context) {
@@ -177,7 +215,7 @@ export async function executeExport(
     }
 
     // Google Sheetsへのエクスポート
-    if (formats.includes('googleSheets')) {
+    if (config.formats.includes('googleSheets')) {
       const result = await exportToSpreadsheet(
         healthData,
         context.folderId,
@@ -195,7 +233,7 @@ export async function executeExport(
         }
 
         // PDFオプションが有効な場合
-        if (exportAsPdf && result.exportedSheets.length > 0) {
+        if (config.exportAsPdf && result.exportedSheets.length > 0) {
           for (const sheet of result.exportedSheets) {
             const pdfResult = await exportSpreadsheetAsPDF(
               sheet.spreadsheetId,
@@ -218,7 +256,7 @@ export async function executeExport(
     }
 
     // CSVエクスポート
-    if (formats.includes('csv')) {
+    if (config.formats.includes('csv')) {
       const result = await exportToCSV(healthData, context.folderId, storageAdapter);
       results.push({
         format: 'csv',
@@ -229,7 +267,7 @@ export async function executeExport(
     }
 
     // JSONエクスポート
-    if (formats.includes('json')) {
+    if (config.formats.includes('json')) {
       const result = await exportToJSON(healthData, context.folderId, storageAdapter);
       results.push({
         format: 'json',

@@ -16,7 +16,7 @@ export async function exportToSpreadsheet(
   healthData: HealthData,
   folderId: string | undefined,
   spreadsheetAdapter: SpreadsheetAdapter,
-  originalDates?: Set<string>
+  originalDates: Set<string>
 ): Promise<{
   success: boolean;
   exportedSheets: { year: number; spreadsheetId: string }[];
@@ -31,7 +31,7 @@ export async function exportToSpreadsheet(
       ...healthData.steps.map((d) => d.date),
       ...healthData.weight.map((d) => d.date),
       ...healthData.sleep.map((d) => d.date),
-      ...(originalDates ? Array.from(originalDates) : [])
+      ...Array.from(originalDates)
     ];
 
     if (allDates.length === 0) {
@@ -78,9 +78,9 @@ export async function exportToSpreadsheet(
       }
 
       // データを行形式に変換（originalDatesから年に該当する日付を抜出）
-      const yearOriginalDates = originalDates
-        ? new Set([...originalDates].filter((d) => new Date(d).getFullYear() === year))
-        : undefined;
+      const yearOriginalDates = new Set(
+        [...originalDates].filter((d) => new Date(d).getFullYear() === year)
+      );
       const { headers: newHeaders, rows: newRowsMap } = formatHealthDataToRows(
         yearData,
         existingHeaders,

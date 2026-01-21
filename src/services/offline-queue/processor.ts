@@ -6,7 +6,7 @@ import { filterHealthDataByTags } from '../../stores/healthStore';
 import { useOfflineStore } from '../../stores/offlineStore';
 import type { PendingExport } from '../../types/offline';
 import { addDebugLog } from '../debugLogService';
-import { executeExport } from '../export/controller';
+import { createDefaultExportConfig, executeExport } from '../export/controller';
 import { getNetworkStatus } from '../networkService';
 import { createSpreadsheetAdapter, createStorageAdapter } from '../storage/adapterFactory';
 import {
@@ -48,16 +48,42 @@ async function processSingleEntry(entry: PendingExport): Promise<boolean> {
     const storageAdapter = createStorageAdapter();
     const spreadsheetAdapter = createSpreadsheetAdapter();
 
+    // リトライ時はデフォルト設定を使用（キュー保存時の設定があればそれを使うべきだが、現状は保存していないため）
+    const exportConfig = await createDefaultExportConfig();
+
     const selectedTags = new Set(entry.selectedTags as DataTagKey[]);
     const dataToExport = filterHealthDataByTags(entry.healthData, selectedTags);
 
-    const syncDateRange = entry.syncDateRange ? new Set(entry.syncDateRange) : undefined;
+    // 同期期間が指定されていない場合は、データに含まれる全日付を収集する
+    // これにより、executeExportの必須引数originalDatesを満たす
+    let syncDateRangeSet: Set<string>;
+
+    if (entry.syncDateRange) {
+      syncDateRangeSet = new Set(entry.syncDateRange);
+    } else {
+      // 全データから日付を収集
+      const allDates = new Set<string>();
+      const collectDates = (items: { date: string }[]) =>
+        items.forEach((i) => allDates.add(i.date));
+
+      collectDates(entry.healthData.steps);
+      collectDates(entry.healthData.weight);
+      collectDates(entry.healthData.bodyFat);
+      collectDates(entry.healthData.totalCaloriesBurned);
+      collectDates(entry.healthData.basalMetabolicRate);
+      collectDates(entry.healthData.sleep);
+      collectDates(entry.healthData.exercise);
+      collectDates(entry.healthData.nutrition);
+
+      syncDateRangeSet = allDates;
+    }
 
     const result = await executeExport(
       dataToExport,
       storageAdapter,
       spreadsheetAdapter,
-      syncDateRange
+      exportConfig,
+      syncDateRangeSet
     );
 
     if (result.success) {

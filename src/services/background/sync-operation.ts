@@ -8,7 +8,7 @@ import {
   saveLastBackgroundSync
 } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
-import { handleExportRequest } from '../export/controller';
+import { createDefaultExportConfig, handleExportRequest } from '../export/controller';
 import { fetchAllHealthData, initializeHealthConnect } from '../healthConnect';
 import { processQueue } from '../offline-queue/processor';
 
@@ -92,8 +92,15 @@ export async function executeSyncLogic(): Promise<SyncExecutionResult> {
 
         if (hasData) {
           await addDebugLog('[SyncOperation] Data found, requesting export', 'info');
+
+          // バックグラウンド同期用の設定を作成
+          // 必要に応じてここでフォーマットの上書きなどが可能
+          const exportConfig = await createDefaultExportConfig();
+          // 例: PDF出力を無効化する場合
+          // exportConfig.exportAsPdf = false;
+
           // Processorに処理を委譲（オンラインなら実行、オフラインならキュー）
-          const exportSuccess = await handleExportRequest(healthData, dateRange);
+          const exportSuccess = await handleExportRequest(healthData, dateRange, exportConfig);
 
           if (exportSuccess) {
             result.hasNewData = true;
