@@ -2,6 +2,7 @@
 // ヘルスデータをGoogle Spreadsheetsにエクスポート
 
 import type { HealthData } from '../../types/health';
+import { addDebugLog } from '../debugLogService';
 import type { SpreadsheetAdapter } from '../storage/interfaces';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
@@ -103,7 +104,7 @@ export async function exportToSpreadsheet(
         if (newHeaders.length > existingHeaders.length) {
           const updateResult = await spreadsheetAdapter.updateHeaders(spreadsheetId, newHeaders);
           if (!updateResult) {
-            console.error('ヘッダー更新に失敗しました');
+            await addDebugLog('ヘッダー更新に失敗しました', 'error');
           }
         }
       }
@@ -149,7 +150,7 @@ export async function exportToSpreadsheet(
       if (allRows.length > 0) {
         const success = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
         if (!success) {
-          console.error('データ書き込みに失敗しました');
+          await addDebugLog('データ書き込みに失敗しました', 'error');
         }
       }
 
@@ -158,11 +159,12 @@ export async function exportToSpreadsheet(
 
     return { success: true, exportedSheets, folderId };
   } catch (error) {
-    console.error('スプレッドシートエクスポートエラー:', error);
+    const errorMsg = error instanceof Error ? error.message : '不明なエラー';
+    await addDebugLog(`スプレッドシートエクスポートエラー: ${errorMsg}`, 'error');
     return {
       success: false,
       exportedSheets: [],
-      error: error instanceof Error ? error.message : '不明なエラー'
+      error: errorMsg
     };
   }
 }
