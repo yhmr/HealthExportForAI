@@ -141,6 +141,30 @@ function getExerciseTypeName(typeId: number): string {
 }
 
 /**
+ * 日付ごとに最新のレコードを集計するヘルパー
+ */
+function aggregateByLatestPerDay<TRecord, TData>(
+  records: TRecord[],
+  getTime: (record: TRecord) => string,
+  transform: (record: TRecord, date: string) => TData & { time?: string }
+): TData[] {
+  const aggregation: Record<string, TData & { time?: string }> = {};
+
+  for (const record of records) {
+    const time = getTime(record);
+    const date = formatDate(time);
+
+    // 同じ日付のデータがあれば、より新しい時刻のものを採用
+    if (!aggregation[date] || new Date(time) > new Date(aggregation[date].time || '')) {
+      aggregation[date] = transform(record, date);
+    }
+  }
+
+  // 日付順にソートしてタイムスタンプ情報を除外して返す
+  return Object.values(aggregation).sort((a, b) => (a as any).date.localeCompare((b as any).date));
+}
+
+/**
  * 歩数データを取得（日次で集計、Health Connectの重複除去を使用）
  * ロジック:
  * 1. aggregateGroupByPeriodを使用して日ごとの集計データを取得
@@ -148,10 +172,6 @@ function getExerciseTypeName(typeId: number): string {
  */
 export async function fetchStepsData(startTime: Date, endTime: Date): Promise<StepsData[]> {
   try {
-    console.log(
-      `[HealthConnect] 歩数データを取得開始: ${startTime.toISOString()} - ${endTime.toISOString()}`
-    );
-
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
       recordType: 'Steps',
@@ -188,7 +208,6 @@ export async function fetchStepsData(startTime: Date, endTime: Date): Promise<St
  */
 export async function fetchWeightData(startTime: Date, endTime: Date): Promise<WeightData[]> {
   try {
-    console.log(`[HealthConnect] 体重データを取得開始`);
     const result = await readRecords('Weight', {
       timeRangeFilter: {
         operator: 'between',
@@ -197,23 +216,16 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
       }
     });
 
-    const aggregation: DailyAggregation<WeightData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      // 既存のデータがない、または今回のレコードの方が時刻が新しい場合に更新
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-        aggregation[date] = {
-          date,
-          value: record.weight.inKilograms,
-          unit: 'kg' as const,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        value: record.weight.inKilograms,
+        unit: 'kg',
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch Weight Error: ${error}`, 'error');
     return [];
@@ -228,7 +240,6 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
  */
 export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<BodyFatData[]> {
   try {
-    console.log(`[HealthConnect] 体脂肪データを取得開始`);
     const result = await readRecords('BodyFat', {
       timeRangeFilter: {
         operator: 'between',
@@ -237,22 +248,15 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
       }
     });
 
-    const aggregation: DailyAggregation<BodyFatData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      // 最新のデータを採用
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-        aggregation[date] = {
-          date,
-          percentage: record.percentage,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        percentage: record.percentage,
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch BodyFat Error: ${error}`, 'error');
     return [];
@@ -270,8 +274,6 @@ export async function fetchTotalCaloriesData(
   endTime: Date
 ): Promise<CaloriesData[]> {
   try {
-    console.log(`[HealthConnect] 消費カロリーデータを取得開始`);
-
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
       recordType: 'TotalCaloriesBurned',
@@ -311,7 +313,6 @@ export async function fetchBasalMetabolicRateData(
   endTime: Date
 ): Promise<BasalMetabolicRateData[]> {
   try {
-    console.log(`[HealthConnect] 基礎代謝データを取得開始`);
     const result = await readRecords('BasalMetabolicRate', {
       timeRangeFilter: {
         operator: 'between',
@@ -320,23 +321,16 @@ export async function fetchBasalMetabolicRateData(
       }
     });
 
-    const aggregation: DailyAggregation<BasalMetabolicRateData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time || '')) {
-        // record.time が存在しない場合もあるかもしれないが、通常はあるはず
-        aggregation[date] = {
-          date,
-          value: record.basalMetabolicRate.inKilocaloriesPerDay,
-          unit: 'kcal/day' as const,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        value: record.basalMetabolicRate.inKilocaloriesPerDay,
+        unit: 'kcal/day',
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch BMR Error: ${error}`, 'error');
     return [];
@@ -352,7 +346,6 @@ export async function fetchBasalMetabolicRateData(
  */
 export async function fetchSleepData(startTime: Date, endTime: Date): Promise<SleepData[]> {
   try {
-    console.log(`[HealthConnect] 睡眠データを取得開始`);
     const result = await readRecords('SleepSession', {
       timeRangeFilter: {
         operator: 'between',
@@ -428,7 +421,6 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
  */
 export async function fetchExerciseData(startTime: Date, endTime: Date): Promise<ExerciseData[]> {
   try {
-    console.log(`[HealthConnect] エクササイズデータを取得開始`);
     const result = await readRecords('ExerciseSession', {
       timeRangeFilter: {
         operator: 'between',
@@ -482,7 +474,6 @@ export async function fetchExerciseData(startTime: Date, endTime: Date): Promise
  */
 export async function fetchNutritionData(startTime: Date, endTime: Date): Promise<NutritionData[]> {
   try {
-    console.log(`[HealthConnect] 栄養データを取得開始`);
     const result = await readRecords('Nutrition', {
       timeRangeFilter: {
         operator: 'between',

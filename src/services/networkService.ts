@@ -1,6 +1,7 @@
 // ネットワーク状態監視サービス
 
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { addDebugLog } from './debugLogService';
 
 /** ネットワーク状態の種類 */
 export type NetworkStatus = 'online' | 'offline' | 'unknown';
@@ -26,7 +27,7 @@ export async function getNetworkStatus(): Promise<NetworkStatus> {
     const state = await NetInfo.fetch();
     return toNetworkStatus(state);
   } catch (error) {
-    console.error('[NetworkService] Failed to get network status:', error);
+    await addDebugLog(`[NetworkService] Failed to get network status: ${error}`, 'error');
     return 'unknown';
   }
 }
@@ -37,9 +38,9 @@ export async function getNetworkStatus(): Promise<NetworkStatus> {
  * @returns 購読解除関数
  */
 export function subscribeToNetworkChanges(callback: (status: NetworkStatus) => void): () => void {
-  const unsubscribe = NetInfo.addEventListener((state) => {
+  const unsubscribe = NetInfo.addEventListener(async (state) => {
     const status = toNetworkStatus(state);
-    console.log(`[NetworkService] Network status changed: ${status}`);
+    await addDebugLog(`[NetworkService] Network status changed: ${status}`, 'info');
     callback(status);
   });
 
@@ -57,7 +58,7 @@ export async function isInternetReachable(): Promise<boolean> {
     // isInternetReachableがnullの場合はisConnectedで判断
     return state.isInternetReachable ?? state.isConnected ?? false;
   } catch (error) {
-    console.error('[NetworkService] Failed to check internet reachability:', error);
+    await addDebugLog(`[NetworkService] Failed to check internet reachability: ${error}`, 'error');
     return false;
   }
 }

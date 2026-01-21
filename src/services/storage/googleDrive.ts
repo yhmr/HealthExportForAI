@@ -234,7 +234,7 @@ export async function uploadFile(
 
     if (response.ok) {
       const data = await response.json();
-      console.log(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`);
+      await addDebugLog(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`, 'success');
       return data.id;
     } else {
       await addDebugLog(`[GoogleDrive] Upload file failed: ${response.status}`, 'error');
@@ -360,11 +360,14 @@ export async function updateFile(
       });
 
       if (response.ok) {
-        console.log(`[GoogleDrive] File updated (Base64): ${fileId}`);
+        await addDebugLog(`[GoogleDrive] File updated (Base64): ${fileId}`, 'success');
         return true;
       } else {
         const errorData = await response.json();
-        console.error('Update file (Base64) failed:', response.status, errorData);
+        await addDebugLog(
+          `[GoogleDrive] Update file (Base64) failed: ${response.status} ${JSON.stringify(errorData)}`,
+          'error'
+        );
         return false;
       }
     } else {
@@ -382,7 +385,7 @@ export async function updateFile(
       });
 
       if (response.ok) {
-        console.log(`[GoogleDrive] File updated: ${fileId}`);
+        await addDebugLog(`[GoogleDrive] File updated: ${fileId}`, 'success');
         return true;
       } else {
         const errorData = await response.json();

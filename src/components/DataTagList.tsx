@@ -3,7 +3,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
-import { type DataTagKey, ALL_DATA_TAGS, DATA_TAG_INFO } from '../stores/healthStore';
+import { type DataTagKey, ALL_DATA_TAGS, DATA_TAG_ICONS } from '../stores/healthStore';
 import type { HealthData } from '../types/health';
 
 interface DataTagListProps {
@@ -35,7 +35,7 @@ export function DataTagList({ healthData, selectedTags, onToggleTag }: DataTagLi
       <Text style={styles.title}>{t('dataTagList', 'title')}</Text>
       <View style={styles.tagList}>
         {ALL_DATA_TAGS.map((tag) => {
-          const info = DATA_TAG_INFO[tag];
+          const icon = DATA_TAG_ICONS[tag];
           const count = getDataCount(tag);
           const isSelected = selectedTags.has(tag);
           const hasData = count > 0;
@@ -57,7 +57,7 @@ export function DataTagList({ healthData, selectedTags, onToggleTag }: DataTagLi
               </View>
 
               {/* アイコンとラベル */}
-              <Text style={styles.icon}>{info.icon}</Text>
+              <Text style={styles.icon}>{icon}</Text>
               <Text style={[styles.label, !hasData && styles.labelNoData]}>{getTagLabel(tag)}</Text>
 
               {/* 件数バッジ */}

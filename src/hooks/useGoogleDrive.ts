@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
+import { addDebugLog } from '../services/debugLogService';
 import { handleExportRequest } from '../services/export/controller';
 import { configureGoogleSignIn } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
@@ -83,13 +84,13 @@ export function useGoogleDrive() {
 
         if (success) {
           setLastUploadTime(getCurrentISOString());
-          console.log('[useGoogleDrive] Export completed successfully');
+          await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
           return { success: true };
         } else {
           // キューに追加された場合（オフラインまたは失敗）
           const networkStatus = await getNetworkStatus();
           if (networkStatus !== 'online') {
-            console.log('[useGoogleDrive] Offline: Added to queue');
+            await addDebugLog('[useGoogleDrive] Offline: Added to queue', 'info');
             return { success: true, queued: true };
           } else {
             setUploadError('エクスポートに失敗しました。後で再試行されます。');

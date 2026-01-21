@@ -572,11 +572,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 12
   },
-  subHint: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 12
-  },
+
   label: {
     fontSize: 14,
     color: '#a0a0b0',
@@ -634,19 +630,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12
   },
-  saveButton: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 32
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600'
-  },
+
   readOnlyInput: {
     backgroundColor: '#161622',
     color: '#9ca3af'

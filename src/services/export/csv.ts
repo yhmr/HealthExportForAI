@@ -3,6 +3,7 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
+import { addDebugLog } from '../debugLogService';
 import type { StorageAdapter } from '../storage/interfaces';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
@@ -155,7 +156,7 @@ export async function exportToCSV(
       if (existingFile) {
         const success = await storageAdapter.updateFile(existingFile.id, csvContent, 'text/csv');
         if (success) {
-          console.log(`[CSV Export] Updated: ${fileName}`);
+          await addDebugLog(`[CSV Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
           return { success: false, error: 'CSVファイルの更新に失敗しました' };
@@ -163,7 +164,7 @@ export async function exportToCSV(
       } else {
         const fileId = await storageAdapter.uploadFile(csvContent, fileName, 'text/csv', folderId);
         if (fileId) {
-          console.log(`[CSV Export] Created: ${fileName}`);
+          await addDebugLog(`[CSV Export] Created: ${fileName}`, 'success');
           lastFileId = fileId;
         } else {
           return { success: false, error: 'CSVファイルのアップロードに失敗しました' };
@@ -173,7 +174,7 @@ export async function exportToCSV(
 
     return { success: true, fileId: lastFileId };
   } catch (error) {
-    console.error('[CSV Export] Error:', error);
+    await addDebugLog(`[CSV Export] Error: ${error}`, 'error');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'CSVエクスポートに失敗しました'

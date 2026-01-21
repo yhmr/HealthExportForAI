@@ -16,16 +16,16 @@ export const ALL_DATA_TAGS: DataTagKey[] = [
   'nutrition'
 ];
 
-// タグ表示情報
-export const DATA_TAG_INFO: Record<DataTagKey, { label: string; icon: string }> = {
-  steps: { label: '歩数', icon: '👟' },
-  weight: { label: '体重', icon: '⚖️' },
-  bodyFat: { label: '体脂肪率', icon: '📊' },
-  totalCaloriesBurned: { label: '消費カロリー', icon: '🔥' },
-  basalMetabolicRate: { label: '基礎代謝', icon: '💪' },
-  sleep: { label: '睡眠', icon: '😴' },
-  exercise: { label: '運動', icon: '🏃' },
-  nutrition: { label: '栄養', icon: '🥗' }
+// データタグのアイコン（ラベルはi18nのdataTypesを使用）
+export const DATA_TAG_ICONS: Record<DataTagKey, string> = {
+  steps: '👟',
+  weight: '⚖️',
+  bodyFat: '📊',
+  totalCaloriesBurned: '🔥',
+  basalMetabolicRate: '💪',
+  sleep: '😴',
+  exercise: '🏃',
+  nutrition: '🥗'
 };
 
 interface HealthStore {

@@ -98,7 +98,7 @@ export default function HomeScreen() {
         }
       ]);
     }
-  }, [error, uploadError, clearUploadError]);
+  }, [error, uploadError, clearUploadError, t]);
 
   // 期間変更ハンドラ
   const handlePeriodChange = async (days: number) => {
