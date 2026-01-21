@@ -1,10 +1,11 @@
 // Google Drive/Sheets カスタムフック（認証統合版）
 
 import { useCallback, useState } from 'react';
-import { type DriveConfig } from '../config/driveConfig';
+import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { handleExportRequest } from '../services/export/controller';
+import { configureGoogleSignIn } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
 import { getCurrentISOString } from '../utils/formatters';
@@ -15,23 +16,22 @@ export function useGoogleDrive() {
   const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
   const [driveConfig, setDriveConfigState] = useState<DriveConfig | null>(null);
 
-  // AuthContextから認証状態を取得（一元管理）
-  const {
-    isAuthenticated,
-    currentUser,
-    authError,
-    signIn: authSignIn,
-    signOut: authSignOut
-  } = useAuth();
+  // 認証状態はAuthContextから取得
+  const { isAuthenticated, currentUser, authError, signIn, signOut } = useAuth();
 
   const { healthData } = useHealthStore();
 
   /**
    * Drive設定を読み込み
+   * 認証状態はAuthContextで管理されるため、ここではDrive設定のみ読み込む
    */
   const loadConfig = useCallback(async () => {
     const config = await loadDriveConfig();
     setDriveConfigState(config);
+
+    // Google Sign-Inを設定（埋め込みIDを使用）
+    configureGoogleSignIn(WEB_CLIENT_ID);
+
     return config;
   }, []);
 
@@ -44,26 +44,10 @@ export function useGoogleDrive() {
   }, []);
 
   /**
-   * Googleアカウントでサインイン
-   * AuthContextに委譲
-   */
-  const handleSignIn = useCallback(async () => {
-    return authSignIn();
-  }, [authSignIn]);
-
-  /**
-   * サインアウト
-   * AuthContextに委譲
-   */
-  const handleSignOut = useCallback(async () => {
-    await authSignOut();
-  }, [authSignOut]);
-
-  /**
    * 認証済みかチェック
    */
   const isConfigValid = useCallback(() => {
-    // AuthContextの状態を参照
+    // 認証済みであればOK
     return isAuthenticated;
   }, [isAuthenticated]);
 
@@ -144,8 +128,8 @@ export function useGoogleDrive() {
     saveConfig,
     isConfigValid,
     exportAndUpload,
-    signIn: handleSignIn,
-    signOut: handleSignOut,
+    signIn,
+    signOut,
     clearUploadError
   };
 }
