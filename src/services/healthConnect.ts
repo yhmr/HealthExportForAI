@@ -22,6 +22,8 @@ import type {
 import { formatDate } from '../utils/formatters';
 import { addDebugLog } from './debugLogService';
 
+import { aggregateByLatestPerDay } from '../utils/healthAggregation';
+
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [
   { accessType: 'read', recordType: 'Steps' },
@@ -138,30 +140,6 @@ const exerciseTypeIdToName: { [key: number]: string } = Object.entries(ExerciseT
  */
 function getExerciseTypeName(typeId: number): string {
   return exerciseTypeIdToName[typeId] || `Unknown (${typeId})`;
-}
-
-/**
- * 日付ごとに最新のレコードを集計するヘルパー
- */
-function aggregateByLatestPerDay<TRecord, TData>(
-  records: TRecord[],
-  getTime: (record: TRecord) => string,
-  transform: (record: TRecord, date: string) => TData & { time?: string }
-): TData[] {
-  const aggregation: Record<string, TData & { time?: string }> = {};
-
-  for (const record of records) {
-    const time = getTime(record);
-    const date = formatDate(time);
-
-    // 同じ日付のデータがあれば、より新しい時刻のものを採用
-    if (!aggregation[date] || new Date(time) > new Date(aggregation[date].time || '')) {
-      aggregation[date] = transform(record, date);
-    }
-  }
-
-  // 日付順にソートしてタイムスタンプ情報を除外して返す
-  return Object.values(aggregation).sort((a, b) => (a as any).date.localeCompare((b as any).date));
 }
 
 /**
