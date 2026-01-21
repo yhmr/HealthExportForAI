@@ -28,16 +28,32 @@ export default Sentry.wrap(function RootLayout() {
   useOfflineSync();
 
   // バックグラウンド同期タスクを設定に基づいて初期化
+  // タスクキル後の再起動時はネイティブモジュールが未初期化の場合があるため、
+  // 遅延とリトライを追加
   useEffect(() => {
-    const initBackgroundTask = async () => {
+    const initBackgroundTask = async (retryCount = 0) => {
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY_MS = 1000;
+
       try {
         const config = await loadBackgroundSyncConfig();
         await syncBackgroundTask(config);
       } catch (error) {
         console.error('[RootLayout] Failed to sync background task:', error);
+
+        // リトライ
+        if (retryCount < MAX_RETRIES) {
+          console.log(
+            `[RootLayout] Retrying in ${RETRY_DELAY_MS}ms... (${retryCount + 1}/${MAX_RETRIES})`
+          );
+          setTimeout(() => initBackgroundTask(retryCount + 1), RETRY_DELAY_MS);
+        }
       }
     };
-    initBackgroundTask();
+
+    // 初期化を少し遅延させる（ネイティブモジュール初期化待ち）
+    const timer = setTimeout(() => initBackgroundTask(), 500);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
