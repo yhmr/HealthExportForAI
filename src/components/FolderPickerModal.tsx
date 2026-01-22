@@ -45,10 +45,11 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      loadFolders(currentFolder.id);
+      const rootId = 'root';
+      loadFolders(rootId);
       // 初期フォルダが指定されていれば、そこまでのパスを構築するロジックが必要だが
       // APIの制限で「親を辿る」のが難しいため、一旦ルートから開始する仕様とする
-      setCurrentPath([{ id: 'root', name: 'マイドライブ' }]);
+      setCurrentPath([{ id: rootId, name: 'マイドライブ' }]);
     }
   }, [visible]);
 

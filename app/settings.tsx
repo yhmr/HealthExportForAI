@@ -48,7 +48,7 @@ import { LicenseModal } from '../src/components/LicenseModal';
 
 // Types
 import type { ExportFormat } from '../src/config/driveConfig';
-import type { AutoSyncConfig, SyncInterval } from '../src/types/offline';
+import type { AutoSyncConfig, SyncInterval } from '../src/types/exportTypes';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -148,7 +148,7 @@ export default function SettingsScreen() {
     if (authError) {
       Alert.alert(t('settings', 'authError'), authError);
     }
-  }, [authError]);
+  }, [authError, t]);
 
   // サインインハンドラ
   const handleSignIn = async () => {
