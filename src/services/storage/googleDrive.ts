@@ -37,7 +37,6 @@ export async function createFolder(
       const data = await createResponse.json();
       return data.id;
     } else {
-      const errorData = await createResponse.json();
       await addDebugLog(`[GoogleDrive] Create folder failed: ${createResponse.status}`, 'error');
       return null;
     }
@@ -363,7 +362,11 @@ export async function updateFile(
         await addDebugLog(`[GoogleDrive] File updated (Base64): ${fileId}`, 'success');
         return true;
       } else {
-        const errorData = await response.json();
+        // The errorData variable is used for logging, so it's not "unused".
+        // The instruction implies to remove it if purely debug, but it's actively used.
+        // However, the provided snippet changes the log message and adds a catch.
+        // Applying the provided snippet's logic for error handling.
+        const errorData = await response.json().catch(() => ({}));
         await addDebugLog(
           `[GoogleDrive] Update file (Base64) failed: ${response.status} ${JSON.stringify(errorData)}`,
           'error'
@@ -388,7 +391,6 @@ export async function updateFile(
         await addDebugLog(`[GoogleDrive] File updated: ${fileId}`, 'success');
         return true;
       } else {
-        const errorData = await response.json();
         await addDebugLog(`[GoogleDrive] Update file failed: ${response.status}`, 'error');
         return false;
       }

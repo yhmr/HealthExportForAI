@@ -1,6 +1,19 @@
-// オフラインキュー用の型定義
-
+// エクスポート機能に関連する型定義
+import type { ExportFormat } from '../config/driveConfig';
 import type { HealthData } from './health';
+
+/** エクスポート設定（永続化・Dependency Injection用） */
+export interface ExportConfig {
+  /** 出力するフォーマットのリスト */
+  formats: ExportFormat[];
+  /** スプレッドシートをPDFとしても出力するか */
+  exportAsPdf: boolean;
+  /** 出力先フォルダの情報（指定がない場合はデフォルトまたは新規作成） */
+  targetFolder?: {
+    id?: string;
+    name?: string;
+  };
+}
 
 /**
  * 同期待ちのエクスポートエントリ
@@ -21,8 +34,8 @@ export interface PendingExport {
   retryCount: number;
   /** 最後に発生したエラーメッセージ */
   lastError?: string;
-  /** メモ（任意） */
-  note?: string;
+  /** エクスポート設定（永続化された設定） */
+  exportConfig?: ExportConfig;
 }
 
 /**

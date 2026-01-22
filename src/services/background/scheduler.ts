@@ -8,7 +8,7 @@ import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 import { Language, translations } from '../../i18n/translations';
-import { AutoSyncConfig } from '../../types/offline';
+import { AutoSyncConfig } from '../../types/exportTypes';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
 import { executeSyncLogic } from './sync-operation';

@@ -5,8 +5,7 @@ import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
-import { processQueue } from '../services/export-queue/processor';
-import { addToQueueWithTags } from '../services/export/controller';
+import { addToExportQueue, processExportQueue } from '../services/export/service';
 import { configureGoogleSignIn } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
@@ -80,7 +79,8 @@ export function useGoogleDrive() {
 
       try {
         // 1. まずキューに追加（永続化）
-        const queued = await addToQueueWithTags(dataToExport, dateRange, 'Manual Export');
+        // 手動実行時はその時点の設定(Default)を使用するためconfig引数は省略
+        const queued = await addToExportQueue(dataToExport, dateRange);
 
         if (!queued) {
           setUploadError('キューへの追加に失敗しました');
@@ -91,7 +91,7 @@ export function useGoogleDrive() {
         const networkStatus = await getNetworkStatus();
         if (networkStatus === 'online') {
           await addDebugLog('[useGoogleDrive] Online: Processing queue immediately', 'info');
-          const result = await processQueue();
+          const result = await processExportQueue();
 
           if (result.successCount > 0) {
             setLastUploadTime(getCurrentISOString());

@@ -62,7 +62,7 @@ export async function checkHealthConnectAvailability(): Promise<{
       available: status === SdkAvailabilityStatus.SDK_AVAILABLE,
       status
     };
-  } catch (error) {
+  } catch {
     return {
       available: false,
       status: SdkAvailabilityStatus.SDK_UNAVAILABLE

@@ -1,7 +1,7 @@
 // オフラインキュー状態のZustandストア
 
 import { create } from 'zustand';
-import { getQueueCount } from '../services/export-queue/queue-storage';
+import { getQueue } from '../services/export/queue-storage';
 
 /**
  * オフラインストアのインターフェース
@@ -59,8 +59,8 @@ export const useOfflineStore = create<OfflineStore>((set) => ({
 
   refreshPendingCount: async () => {
     try {
-      const count = await getQueueCount();
-      set({ pendingCount: count });
+      const queue = await getQueue();
+      set({ pendingCount: queue.length });
     } catch (error) {
       console.error('[OfflineStore] Failed to refresh pending count:', error);
     }

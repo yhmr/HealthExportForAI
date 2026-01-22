@@ -1,33 +1,43 @@
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as debugLogService from '../../../src/services/debugLogService';
-import * as queueStorage from '../../../src/services/export-queue/queue-storage';
-import { addToQueueWithTags } from '../../../src/services/export/controller';
+import * as queueStorage from '../../../src/services/export/queue-storage';
+import { addToExportQueue } from '../../../src/services/export/service';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
 
 // モックの設定
-vi.mock('../../../src/services/export-queue/queue-storage');
-vi.mock('../../../src/services/debugLogService');
+vi.mock('../../../src/services/export/queue-storage', () => ({
+  addToQueue: vi.fn(),
+  getQueue: vi.fn(),
+  removeFromQueue: vi.fn(),
+  incrementRetry: vi.fn(),
+  hasExceededMaxRetries: vi.fn(),
+  MAX_RETRY_COUNT: 3
+}));
 
-describe('ExportController', () => {
+vi.mock('../../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
+}));
+
+describe('ExportService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useOfflineStore.setState({ pendingCount: 0 });
   });
 
-  describe('addToQueueWithTags', () => {
+  describe('addToExportQueue', () => {
     it('should add item to queue and update store count', async () => {
       // Arrange
       const mockHealthData: any = { steps: [1, 2, 3] }; // 簡易的なデータ
       const mockDateRange = new Set(['2023-01-01']);
 
-      const mockAddToQueue = queueStorage.addToQueue as unknown as Mock;
+      const mockAddToQueue = queueStorage.addToQueue as any;
       mockAddToQueue.mockResolvedValue('new-id');
 
-      const mockGetQueue = queueStorage.getQueue as unknown as Mock;
+      const mockGetQueue = queueStorage.getQueue as any;
       mockGetQueue.mockResolvedValue(['item1']); // 1件ある状態を模擬
 
       // Act
-      const result = await addToQueueWithTags(mockHealthData, mockDateRange);
+      const result = await addToExportQueue(mockHealthData, mockDateRange);
 
       // Assert
       expect(result).toBe(true);
@@ -46,11 +56,11 @@ describe('ExportController', () => {
       const mockHealthData: any = {};
       const mockDateRange = new Set<string>();
 
-      const mockAddToQueue = queueStorage.addToQueue as unknown as Mock;
+      const mockAddToQueue = queueStorage.addToQueue as any;
       mockAddToQueue.mockRejectedValue(new Error('Queue Error'));
 
       // Act
-      const result = await addToQueueWithTags(mockHealthData, mockDateRange);
+      const result = await addToExportQueue(mockHealthData, mockDateRange);
 
       // Assert
       expect(result).toBe(false);
