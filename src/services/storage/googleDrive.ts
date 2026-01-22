@@ -1,6 +1,7 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
 import { addDebugLog } from '../debugLogService';
+import { escapeDriveQuery } from './driveUtils';
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名
@@ -149,7 +150,9 @@ export async function findOrCreateFolder(
 ): Promise<string | null> {
   try {
     // 1. フォルダを検索
-    const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
+    // 名前をエスケープ
+    const safeFolderName = escapeDriveQuery(folderName);
+    const query = `mimeType='application/vnd.google-apps.folder' and name='${safeFolderName}' and trashed=false`;
     const searchResponse = await fetch(`${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -259,7 +262,8 @@ export async function findFile(
   folderId?: string
 ): Promise<{ id: string; name: string } | null> {
   try {
-    let query = `mimeType='${mimeType}' and name='${fileName}' and trashed=false`;
+    const safeFileName = escapeDriveQuery(fileName);
+    let query = `mimeType='${mimeType}' and name='${safeFileName}' and trashed=false`;
     if (folderId) {
       query += ` and '${folderId}' in parents`;
     }

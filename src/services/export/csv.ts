@@ -142,10 +142,12 @@ export async function exportToCSV(
       for (const date of sortedDates) {
         const row = existingRowMap.get(date)!;
         const csvRow = row.map((cell) => {
-          if (typeof cell === 'string' && cell.includes(',')) {
-            return `"${cell.replace(/"/g, '""')}"`;
+          const stringCell = cell === null || cell === undefined ? '' : String(cell);
+          // カンマ、ダブルクォート、改行が含まれる場合はクォートする
+          if (/[",\n\r]/.test(stringCell)) {
+            return `"${stringCell.replace(/"/g, '""')}"`;
           }
-          return cell;
+          return stringCell;
         });
         csvLines.push(csvRow.join(','));
       }

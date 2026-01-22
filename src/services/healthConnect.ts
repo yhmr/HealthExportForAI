@@ -76,10 +76,35 @@ export async function checkHealthConnectAvailability(): Promise<{
 export async function requestHealthPermissions(): Promise<boolean> {
   try {
     // 1. Health Connect のデータ読み取り権限をリクエスト
-    const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
+    const grantedPermissions = await requestPermission(REQUIRED_PERMISSIONS as any);
 
-    // すべての権限が付与されたかチェック (Health Connectの権限)
-    return permissions.length > 0;
+    // 2. 要求した権限がすべて許可されたかチェック
+    // REQUIRED_PERMISSIONS の各項目が grantedPermissions に含まれているか確認
+    const allGranted = REQUIRED_PERMISSIONS.every((required) =>
+      grantedPermissions.some(
+        (granted) =>
+          granted.accessType === required.accessType && granted.recordType === required.recordType
+      )
+    );
+
+    if (!allGranted) {
+      // 不足している権限を特定してログ出力
+      const missingPermissions = REQUIRED_PERMISSIONS.filter(
+        (required) =>
+          !grantedPermissions.some(
+            (granted) =>
+              granted.accessType === required.accessType &&
+              granted.recordType === required.recordType
+          )
+      );
+      await addDebugLog(
+        `[HealthConnect] Permissions missing: ${JSON.stringify(missingPermissions)}`,
+        'error'
+      );
+      return false;
+    }
+
+    return true;
   } catch (error) {
     await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
     return false;

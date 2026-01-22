@@ -1,7 +1,9 @@
 // Google Sheets サービス
 // スプレッドシートのCRUD操作に特化
 
+import { Base64 } from 'js-base64';
 import { addDebugLog } from '../debugLogService';
+import { escapeDriveQuery } from './driveUtils';
 const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
@@ -13,7 +15,8 @@ export async function findSpreadsheet(
   accessToken: string,
   folderId?: string
 ): Promise<string | null> {
-  let query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${fileName}' and trashed=false`;
+  const safeFileName = escapeDriveQuery(fileName);
+  let query = `mimeType='application/vnd.google-apps.spreadsheet' and name='${safeFileName}' and trashed=false`;
 
   if (folderId) {
     query += ` and '${folderId}' in parents`;
@@ -277,14 +280,8 @@ export async function fetchPDF(spreadsheetId: string, accessToken: string): Prom
     }
 
     const arrayBuffer = await response.arrayBuffer();
-
-    // ArrayBuffer to Base64
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+    // Base64 変換 (js-base64 Util)
+    return Base64.fromUint8Array(new Uint8Array(arrayBuffer));
   } catch (error: any) {
     if (error?.message === 'Network request failed') {
       await addDebugLog('[GoogleSheets] Network request failed (FetchPDF)', 'info');
