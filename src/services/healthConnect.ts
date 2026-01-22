@@ -22,6 +22,8 @@ import type {
 import { formatDate } from '../utils/formatters';
 import { addDebugLog } from './debugLogService';
 
+import { aggregateByLatestPerDay } from '../utils/healthAggregation';
+
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [
   { accessType: 'read', recordType: 'Steps' },
@@ -60,7 +62,7 @@ export async function checkHealthConnectAvailability(): Promise<{
       available: status === SdkAvailabilityStatus.SDK_AVAILABLE,
       status
     };
-  } catch (error) {
+  } catch {
     return {
       available: false,
       status: SdkAvailabilityStatus.SDK_UNAVAILABLE
@@ -74,10 +76,35 @@ export async function checkHealthConnectAvailability(): Promise<{
 export async function requestHealthPermissions(): Promise<boolean> {
   try {
     // 1. Health Connect のデータ読み取り権限をリクエスト
-    const permissions = await requestPermission(REQUIRED_PERMISSIONS as any);
+    const grantedPermissions = await requestPermission(REQUIRED_PERMISSIONS as any);
 
-    // すべての権限が付与されたかチェック (Health Connectの権限)
-    return permissions.length > 0;
+    // 2. 要求した権限がすべて許可されたかチェック
+    // REQUIRED_PERMISSIONS の各項目が grantedPermissions に含まれているか確認
+    const allGranted = REQUIRED_PERMISSIONS.every((required) =>
+      grantedPermissions.some(
+        (granted) =>
+          granted.accessType === required.accessType && granted.recordType === required.recordType
+      )
+    );
+
+    if (!allGranted) {
+      // 不足している権限を特定してログ出力
+      const missingPermissions = REQUIRED_PERMISSIONS.filter(
+        (required) =>
+          !grantedPermissions.some(
+            (granted) =>
+              granted.accessType === required.accessType &&
+              granted.recordType === required.recordType
+          )
+      );
+      await addDebugLog(
+        `[HealthConnect] Permissions missing: ${JSON.stringify(missingPermissions)}`,
+        'error'
+      );
+      return false;
+    }
+
+    return true;
   } catch (error) {
     await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
     return false;
@@ -148,10 +175,6 @@ function getExerciseTypeName(typeId: number): string {
  */
 export async function fetchStepsData(startTime: Date, endTime: Date): Promise<StepsData[]> {
   try {
-    console.log(
-      `[HealthConnect] 歩数データを取得開始: ${startTime.toISOString()} - ${endTime.toISOString()}`
-    );
-
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
       recordType: 'Steps',
@@ -188,7 +211,6 @@ export async function fetchStepsData(startTime: Date, endTime: Date): Promise<St
  */
 export async function fetchWeightData(startTime: Date, endTime: Date): Promise<WeightData[]> {
   try {
-    console.log(`[HealthConnect] 体重データを取得開始`);
     const result = await readRecords('Weight', {
       timeRangeFilter: {
         operator: 'between',
@@ -197,23 +219,16 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
       }
     });
 
-    const aggregation: DailyAggregation<WeightData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      // 既存のデータがない、または今回のレコードの方が時刻が新しい場合に更新
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-        aggregation[date] = {
-          date,
-          value: record.weight.inKilograms,
-          unit: 'kg' as const,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        value: record.weight.inKilograms,
+        unit: 'kg',
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch Weight Error: ${error}`, 'error');
     return [];
@@ -228,7 +243,6 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
  */
 export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<BodyFatData[]> {
   try {
-    console.log(`[HealthConnect] 体脂肪データを取得開始`);
     const result = await readRecords('BodyFat', {
       timeRangeFilter: {
         operator: 'between',
@@ -237,22 +251,15 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
       }
     });
 
-    const aggregation: DailyAggregation<BodyFatData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      // 最新のデータを採用
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time)) {
-        aggregation[date] = {
-          date,
-          percentage: record.percentage,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        percentage: record.percentage,
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch BodyFat Error: ${error}`, 'error');
     return [];
@@ -270,8 +277,6 @@ export async function fetchTotalCaloriesData(
   endTime: Date
 ): Promise<CaloriesData[]> {
   try {
-    console.log(`[HealthConnect] 消費カロリーデータを取得開始`);
-
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
       recordType: 'TotalCaloriesBurned',
@@ -311,7 +316,6 @@ export async function fetchBasalMetabolicRateData(
   endTime: Date
 ): Promise<BasalMetabolicRateData[]> {
   try {
-    console.log(`[HealthConnect] 基礎代謝データを取得開始`);
     const result = await readRecords('BasalMetabolicRate', {
       timeRangeFilter: {
         operator: 'between',
@@ -320,23 +324,16 @@ export async function fetchBasalMetabolicRateData(
       }
     });
 
-    const aggregation: DailyAggregation<BasalMetabolicRateData> = {};
-
-    for (const record of result.records) {
-      const date = formatDate(record.time);
-
-      if (!aggregation[date] || new Date(record.time) > new Date(aggregation[date].time || '')) {
-        // record.time が存在しない場合もあるかもしれないが、通常はあるはず
-        aggregation[date] = {
-          date,
-          value: record.basalMetabolicRate.inKilocaloriesPerDay,
-          unit: 'kcal/day' as const,
-          time: record.time
-        };
-      }
-    }
-
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return aggregateByLatestPerDay(
+      result.records,
+      (record) => record.time,
+      (record, date) => ({
+        date,
+        value: record.basalMetabolicRate.inKilocaloriesPerDay,
+        unit: 'kcal/day',
+        time: record.time
+      })
+    );
   } catch (error) {
     await addDebugLog(`[HealthConnect] Fetch BMR Error: ${error}`, 'error');
     return [];
@@ -352,7 +349,6 @@ export async function fetchBasalMetabolicRateData(
  */
 export async function fetchSleepData(startTime: Date, endTime: Date): Promise<SleepData[]> {
   try {
-    console.log(`[HealthConnect] 睡眠データを取得開始`);
     const result = await readRecords('SleepSession', {
       timeRangeFilter: {
         operator: 'between',
@@ -428,7 +424,6 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
  */
 export async function fetchExerciseData(startTime: Date, endTime: Date): Promise<ExerciseData[]> {
   try {
-    console.log(`[HealthConnect] エクササイズデータを取得開始`);
     const result = await readRecords('ExerciseSession', {
       timeRangeFilter: {
         operator: 'between',
@@ -482,7 +477,6 @@ export async function fetchExerciseData(startTime: Date, endTime: Date): Promise
  */
 export async function fetchNutritionData(startTime: Date, endTime: Date): Promise<NutritionData[]> {
   try {
-    console.log(`[HealthConnect] 栄養データを取得開始`);
     const result = await readRecords('Nutrition', {
       timeRangeFilter: {
         operator: 'between',

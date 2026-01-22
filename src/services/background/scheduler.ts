@@ -8,7 +8,7 @@ import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 import { Language, translations } from '../../i18n/translations';
-import { AutoSyncConfig } from '../../types/offline';
+import { AutoSyncConfig } from '../../types/exportTypes';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
 import { executeSyncLogic } from './sync-operation';
@@ -53,63 +53,44 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   const language = await getLanguage();
   const t = translations[language].notification;
 
-  // フォアグラウンドサービスとして実行するための通知ID
+  // 通知ID
   const notificationId = 'bg-sync-notification';
 
+  // Android 12+ の制約とOSサスペンド対策
+  // 1. 通常の通知として「同期中」を表示（foreground serviceではない）
+  // 2. timeoutAfterを設定し、OSによってプロセスが殺された場合でも通知が残らないようにする
   if (Platform.OS === 'android') {
     try {
       await createChannel();
-      // まずフォアグラウンドサービスとしての起動を試みる
       await notifee.displayNotification({
         id: notificationId,
-        title: t.syncing,
-        body: t.syncingBody,
+        title: t.syncTitle, // "同期中..."
+        body: t.syncBody, // "データをエクスポートしています"
         android: {
           channelId: NOTIFICATION_CHANNEL_ID,
-          asForegroundService: true, // Android 12以降ではバックグラウンドからの起動が制限される場合がある
-          color: '#4a90e2',
           ongoing: true,
-          progress: {
-            indeterminate: true
-          }
+          progress: { indeterminate: true },
+          timeoutAfter: 45000 // 45秒後にOSが強制削除（処理タイムアウトより長くする）
         }
       });
-      await addDebugLog('[Scheduler] Foreground service started', 'info');
-    } catch (e: any) {
-      // Android 12+の制約で失敗した場合は、通常の通知として表示を試みる（フォールバック）
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      await addDebugLog(
-        `[Scheduler] Foreground service blocked (${errorMessage}), falling back to normal notification`,
-        'info'
-      );
-
-      try {
-        await notifee.displayNotification({
-          id: notificationId,
-          title: t.syncing,
-          body: t.syncingBody,
-          android: {
-            channelId: NOTIFICATION_CHANNEL_ID,
-            asForegroundService: false, // 通常の通知
-            color: '#4a90e2',
-            ongoing: true, // 処理中は消せないようにする
-            progress: {
-              indeterminate: true
-            }
-          }
-        });
-      } catch (fallbackError) {
-        await addDebugLog(
-          `[Scheduler] Failed to display fallback notification: ${fallbackError}`,
-          'error'
-        );
-      }
+    } catch (e) {
+      console.error('Start notification error:', e);
     }
   }
 
+  // 処理全体のタイムアウト（60秒）
+  const BACKGROUND_TIMEOUT_MS = 60000;
+
   try {
     const config = await loadBackgroundSyncConfig();
-    const result = await executeSyncLogic(config);
+
+    // タイムアウト付きで実行
+    const result = await Promise.race([
+      executeSyncLogic(config),
+      new Promise<any>((_, reject) =>
+        setTimeout(() => reject(new Error('Background sync timeout')), BACKGROUND_TIMEOUT_MS)
+      )
+    ]);
 
     if (result.success) {
       await addDebugLog(
@@ -117,21 +98,24 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
         'success'
       );
 
-      // 成功通知に更新（サービス終了）
-      if (Platform.OS === 'android') {
-        await notifee.displayNotification({
-          id: notificationId,
-          title: t.syncSuccess,
-          body: t.syncSuccessBody,
-          android: {
-            channelId: NOTIFICATION_CHANNEL_ID,
-            // asForegroundService: false, // falseにするか、stopForegroundServiceを呼ぶ
-            progress: undefined,
-            timeoutAfter: 3000 // 3秒後に消える
+      // 新しいデータがあった、またはキュー処理が行われた場合のみ完了通知を表示
+      if (result.hasNewData || result.hasQueueProcessed) {
+        if (Platform.OS === 'android') {
+          try {
+            await createChannel();
+            await notifee.displayNotification({
+              id: notificationId,
+              title: t.syncSuccess,
+              body: t.syncSuccessBody,
+              android: {
+                channelId: NOTIFICATION_CHANNEL_ID,
+                timeoutAfter: 5000 // 5秒後に消える
+              }
+            });
+          } catch (notifError) {
+            console.error('Success notification error:', notifError);
           }
-        });
-        // サービス停止
-        await notifee.stopForegroundService();
+        }
       }
 
       return result.hasNewData || result.hasQueueProcessed
@@ -139,10 +123,6 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
         : BackgroundFetch.BackgroundFetchResult.NoData;
     } else {
       await addDebugLog('[Scheduler] Task logic returned false', 'error');
-
-      if (Platform.OS === 'android') {
-        await notifee.stopForegroundService();
-      }
       return BackgroundFetch.BackgroundFetchResult.Failed;
     }
   } catch (error) {
@@ -151,17 +131,22 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
       'error'
     );
 
+    // エラー時のみ通知を表示
     if (Platform.OS === 'android') {
-      await notifee.displayNotification({
-        id: notificationId,
-        title: t.syncError,
-        body: t.syncErrorBody,
-        android: {
-          channelId: NOTIFICATION_CHANNEL_ID,
-          timeoutAfter: 5000
-        }
-      });
-      await notifee.stopForegroundService();
+      try {
+        await createChannel();
+        await notifee.displayNotification({
+          id: notificationId,
+          title: t.syncError,
+          body: t.syncErrorBody,
+          android: {
+            channelId: NOTIFICATION_CHANNEL_ID,
+            timeoutAfter: 5000
+          }
+        });
+      } catch (notifError) {
+        console.error('Error notification error:', notifError);
+      }
     }
 
     return BackgroundFetch.BackgroundFetchResult.Failed;
@@ -177,9 +162,7 @@ export async function registerBackgroundSync(intervalMinutes: number): Promise<v
 
   try {
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-      minimumInterval: intervalMinutes * 60, // 秒に変換
-      stopOnTerminate: false, // Android: アプリ終了後も継続
-      startOnBoot: true // Android: 再起動後も継続
+      minimumInterval: intervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
   } catch (error) {

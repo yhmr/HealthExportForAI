@@ -1,13 +1,17 @@
 // バックグラウンド同期実行ロジック
 // スケジューラから呼び出され、データ取得とエクスポート処理の開始を担当する
 
-import { AutoSyncConfig } from '../../types/offline';
+import { AutoSyncConfig, ExportConfig } from '../../types/exportTypes';
 import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../../utils/formatters';
 import { loadLastBackgroundSync, saveLastBackgroundSync } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
-import { createDefaultExportConfig, handleExportRequest } from '../export/controller';
+import {
+  addToExportQueue,
+  BACKGROUND_EXECUTION_TIMEOUT_MS,
+  createDefaultExportConfig,
+  processExportQueue
+} from '../export/service';
 import { fetchAllHealthData, initializeHealthConnect } from '../healthConnect';
-import { processQueue } from '../offline-queue/processor';
 
 // モジュールロード時のログは非同期で実行
 addDebugLog('[SyncOperation] Module loaded', 'info').catch(() => {});
@@ -89,23 +93,24 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
         if (hasData) {
           await addDebugLog('[SyncOperation] Data found, requesting export', 'info');
 
-          // バックグラウンド同期用の設定を作成
-          // タイムアウト対策のため、Google Sheetsのみに限定し、PDF出力は無効化する
-          const exportConfig = await createDefaultExportConfig();
-          exportConfig.formats = ['googleSheets'];
-          exportConfig.exportAsPdf = false;
+          // バックグラウンド実行用のConfigを作成（PDF出力は無効化）
+          // ユーザー設定に関わらず、バックグラウンドでは重い処理（PDF）をスキップする
+          const defaultConfig = await createDefaultExportConfig();
+          const backgroundConfig: ExportConfig = {
+            ...defaultConfig,
+            formats: ['googleSheets'], // バックグラウンドではSheetsのみ更新
+            exportAsPdf: false // PDFは強制無効化
+          };
 
-          // Processorに処理を委譲（オンラインなら実行、オフラインならキュー）
-          const exportSuccess = await handleExportRequest(healthData, dateRange, exportConfig);
+          // キューに追加（永続化）
+          const queued = await addToExportQueue(healthData, dateRange, backgroundConfig);
 
-          if (exportSuccess) {
-            result.hasNewData = true;
-            await addDebugLog('[SyncOperation] Export requested successfully', 'success');
+          if (queued) {
+            await addDebugLog('[SyncOperation] Data queued for export', 'info');
+            // ここでの即時実行は削除し、関数の最後でまとめて実行する
           } else {
-            await addDebugLog(
-              '[SyncOperation] Export request returned false (queued or failed)',
-              'info'
-            );
+            await addDebugLog('[SyncOperation] Failed to queue data', 'error');
+            result.success = false;
           }
         } else {
           await addDebugLog('[SyncOperation] No health data available', 'info');
@@ -118,15 +123,19 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
       // 取得エラーがあってもキュー処理は続行
     }
 
-    // === オフラインキュー処理 ===
-    // 保留中のキューがあれば処理を試みる
-    const queueResult = await processQueue();
+    // === キュー処理（新規追加分も含む） ===
+    // オンラインであれば処理を試みる
+    // ★バックグラウンド用タイムアウト(25s)を指定
+    const queueResult = await processExportQueue(BACKGROUND_EXECUTION_TIMEOUT_MS);
+
     if (queueResult.successCount > 0) {
       await addDebugLog(
         `[SyncOperation] Queue processed: ${queueResult.successCount} items`,
         'success'
       );
       result.hasQueueProcessed = true;
+      // 新規データが含まれていた可能性が高いのでhasNewDataもtrue扱いにしておく（厳密ではないが）
+      result.hasNewData = true;
     }
 
     // 同期成功時刻を記録

@@ -3,6 +3,7 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
+import { addDebugLog } from '../debugLogService';
 import type { StorageAdapter } from '../storage/interfaces';
 import type { ExportResult } from './csv';
 import { getExportFileName } from './utils';
@@ -151,7 +152,10 @@ export async function exportToJSON(
               });
             }
           } catch {
-            console.warn('[JSON Export] Failed to parse existing file, starting fresh');
+            await addDebugLog(
+              '[JSON Export] Failed to parse existing file, starting fresh',
+              'info'
+            );
           }
         }
       }
@@ -194,7 +198,7 @@ export async function exportToJSON(
           'application/json'
         );
         if (success) {
-          console.log(`[JSON Export] Updated: ${fileName}`);
+          await addDebugLog(`[JSON Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
           return { success: false, error: 'JSONファイルの更新に失敗しました' };
@@ -207,7 +211,7 @@ export async function exportToJSON(
           folderId
         );
         if (fileId) {
-          console.log(`[JSON Export] Created: ${fileName}`);
+          await addDebugLog(`[JSON Export] Created: ${fileName}`, 'success');
           lastFileId = fileId;
         } else {
           return { success: false, error: 'JSONファイルのアップロードに失敗しました' };
@@ -217,7 +221,7 @@ export async function exportToJSON(
 
     return { success: true, fileId: lastFileId };
   } catch (error) {
-    console.error('[JSON Export] Error:', error);
+    await addDebugLog(`[JSON Export] Error: ${error}`, 'error');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'JSONエクスポートに失敗しました'

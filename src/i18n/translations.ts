@@ -118,8 +118,8 @@ export const translations = {
     },
     // 通知
     notification: {
-      syncing: '同期中...',
-      syncingBody: 'ヘルスケアデータをクラウドに保存しています',
+      syncTitle: '同期中...',
+      syncBody: 'ヘルスケアデータをクラウドに保存しています',
       syncSuccess: '同期完了',
       syncSuccessBody: 'データのバックアップが完了しました',
       syncError: '同期エラー',
@@ -238,8 +238,8 @@ export const translations = {
     },
     // Notifications
     notification: {
-      syncing: 'Syncing...',
-      syncingBody: 'Uploading health data to cloud',
+      syncTitle: 'Syncing...',
+      syncBody: 'Uploading health data to cloud',
       syncSuccess: 'Sync Complete',
       syncSuccessBody: 'Data backup completed',
       syncError: 'Sync Error',

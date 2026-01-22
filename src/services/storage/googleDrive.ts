@@ -1,6 +1,7 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
 import { addDebugLog } from '../debugLogService';
+import { escapeDriveQuery } from './driveUtils';
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
 // 自動作成するフォルダ名
@@ -37,7 +38,6 @@ export async function createFolder(
       const data = await createResponse.json();
       return data.id;
     } else {
-      const errorData = await createResponse.json();
       await addDebugLog(`[GoogleDrive] Create folder failed: ${createResponse.status}`, 'error');
       return null;
     }
@@ -150,7 +150,9 @@ export async function findOrCreateFolder(
 ): Promise<string | null> {
   try {
     // 1. フォルダを検索
-    const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
+    // 名前をエスケープ
+    const safeFolderName = escapeDriveQuery(folderName);
+    const query = `mimeType='application/vnd.google-apps.folder' and name='${safeFolderName}' and trashed=false`;
     const searchResponse = await fetch(`${GOOGLE_DRIVE_API_URL}?q=${encodeURIComponent(query)}`, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -234,7 +236,7 @@ export async function uploadFile(
 
     if (response.ok) {
       const data = await response.json();
-      console.log(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`);
+      await addDebugLog(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`, 'success');
       return data.id;
     } else {
       await addDebugLog(`[GoogleDrive] Upload file failed: ${response.status}`, 'error');
@@ -260,7 +262,8 @@ export async function findFile(
   folderId?: string
 ): Promise<{ id: string; name: string } | null> {
   try {
-    let query = `mimeType='${mimeType}' and name='${fileName}' and trashed=false`;
+    const safeFileName = escapeDriveQuery(fileName);
+    let query = `mimeType='${mimeType}' and name='${safeFileName}' and trashed=false`;
     if (folderId) {
       query += ` and '${folderId}' in parents`;
     }
@@ -360,11 +363,18 @@ export async function updateFile(
       });
 
       if (response.ok) {
-        console.log(`[GoogleDrive] File updated (Base64): ${fileId}`);
+        await addDebugLog(`[GoogleDrive] File updated (Base64): ${fileId}`, 'success');
         return true;
       } else {
-        const errorData = await response.json();
-        console.error('Update file (Base64) failed:', response.status, errorData);
+        // The errorData variable is used for logging, so it's not "unused".
+        // The instruction implies to remove it if purely debug, but it's actively used.
+        // However, the provided snippet changes the log message and adds a catch.
+        // Applying the provided snippet's logic for error handling.
+        const errorData = await response.json().catch(() => ({}));
+        await addDebugLog(
+          `[GoogleDrive] Update file (Base64) failed: ${response.status} ${JSON.stringify(errorData)}`,
+          'error'
+        );
         return false;
       }
     } else {
@@ -382,10 +392,9 @@ export async function updateFile(
       });
 
       if (response.ok) {
-        console.log(`[GoogleDrive] File updated: ${fileId}`);
+        await addDebugLog(`[GoogleDrive] File updated: ${fileId}`, 'success');
         return true;
       } else {
-        const errorData = await response.json();
         await addDebugLog(`[GoogleDrive] Update file failed: ${response.status}`, 'error');
         return false;
       }

@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
 import type { StorageAdapter } from '../../../src/services/storage/interfaces';
 
+// Mock debugLogService to prevent AsyncStorage usage
+vi.mock('../../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
+}));
+
 // Mock StorageAdapter
 const mockStorageAdapter = {
   findFile: vi.fn(),
@@ -85,27 +90,17 @@ describe('JSON Export Service', () => {
     const jsonContent = JSON.parse(updateCall[1]);
 
     expect(jsonContent.year).toBe(2025);
-    // Should contain 2025-01-01 updated to 5000
-    // 2024 data should effectively be ignored or kept?
-    // Logic says: "for (const year of years) { ... loaded existing records ... for newRecordsMap ... merge }"
-    // And "existingRecordsMap.set(record.date, record)".
-    // Wait, logic filters new data by year, but loads ALL existing records from file.
-    // If file is Health_Data_2025.json, it should generally only contain 2025 data.
-    // But if it contained 2024 data, it would be preserved unless filtered out.
-    // Let's verify if implementation filters existing data by year.
-    // Looking at json.ts:
-    // existingData.records.forEach... existingRecordsMap.set(...)
-    // Then newRecordsMap loop: if (new Date(date).getFullYear() === year) { existingRecordsMap.set(...) }
-    // So existing 2024 data would be preserved in the map and written back to 2025 file.
 
-    // However, in this test case, we are testing the MERGE of 2025-01-01.
+    // 2025-01-01 のデータが 1000 -> 5000 に更新されていることを確認
     const record = jsonContent.records.find((r: any) => r.date === '2025-01-01');
     expect(record).toBeDefined();
-    expect(record.steps).toBe(5000); // Updated value
+    expect(record.steps).toBe(5000);
 
-    // And verify 2024 data is preserved (if it was in the file, even if incorrect for the file name)
+    // 同じファイルに含まれていた2024年のデータが保持されていることを確認
+    // (データが誤って消えていないかの回帰テスト)
     const record2024 = jsonContent.records.find((r: any) => r.date === '2024-12-31');
     expect(record2024).toBeDefined();
+    expect(record2024.steps).toBe(2000);
   });
 
   it('should handle invalid existing JSON gracefuly', async () => {

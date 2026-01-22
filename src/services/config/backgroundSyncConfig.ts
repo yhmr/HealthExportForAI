@@ -1,11 +1,11 @@
 // バックグラウンド同期設定サービス
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/offline';
+import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/exportTypes';
 
 // ===== UI用のヘルパー関数と定数 =====
 
-import type { SyncInterval } from '../../types/offline';
+import type { SyncInterval } from '../../types/exportTypes';
 
 const STORAGE_KEYS = {
   BACKGROUND_SYNC_CONFIG: '@background_sync_config',

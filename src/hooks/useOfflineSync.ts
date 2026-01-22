@@ -1,58 +1,72 @@
 // オフライン同期カスタムフック
 // ネットワーク状態監視・キュー管理・自動同期を統合
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { addDebugLog } from '../services/debugLogService';
+import { addToQueue, getQueue } from '../services/export/queue-storage';
+import { processExportQueue } from '../services/export/service';
 import { getNetworkStatus, subscribeToNetworkChanges } from '../services/networkService';
-import { processQueue } from '../services/offline-queue/processor';
-import { addToQueue, getQueueCount } from '../services/offline-queue/queue-storage';
 import type { DataTagKey } from '../stores/healthStore';
-import { useNetworkStore } from '../stores/networkStore';
 import { useOfflineStore } from '../stores/offlineStore';
 import type { HealthData } from '../types/health';
 
 /**
- * オフライン同期機能を提供するカスタムフック
- * - アプリ起動時にネットワーク状態とキュー件数を初期化
- * - ネットワーク状態変化を監視
- * - オンライン復帰時に自動同期
- * - オフラインキューへのデータ追加
+ * オフライン同期フック
+ * アプリの起動時やオンライン復帰時にキューを処理する
  */
-export function useOfflineSync() {
-  const isOnline = useNetworkStore((state) => state.isOnline);
-  const setOnline = useNetworkStore((state) => state.setOnline);
-
-  const pendingCount = useOfflineStore((state) => state.pendingCount);
-  const isProcessing = useOfflineStore((state) => state.isProcessing);
-  const lastError = useOfflineStore((state) => state.lastError);
+export const useOfflineSync = () => {
   const setPendingCount = useOfflineStore((state) => state.setPendingCount);
+  const isProcessing = useOfflineStore((state) => state.isProcessing);
   const setProcessing = useOfflineStore((state) => state.setProcessing);
+  const lastError = useOfflineStore((state) => state.lastError);
   const setError = useOfflineStore((state) => state.setError);
+  const pendingCount = useOfflineStore((state) => state.pendingCount);
 
-  // 初期化済みフラグ（重複初期化を防止）
+  const [isOnline, setOnline] = useState(true);
   const isInitialized = useRef(false);
 
   /**
-   * キューを処理
+   * 現在のキュー件数を更新
+   */
+  const updatePendingCount = useCallback(async () => {
+    try {
+      const queue = await getQueue();
+      setPendingCount(queue.length);
+      return queue.length;
+    } catch {
+      return 0;
+    }
+  }, [setPendingCount]);
+
+  /**
+   * キューを即時処理
+   * （オンライン時のみ）
    */
   const processQueueNow = useCallback(async () => {
-    if (useOfflineStore.getState().isProcessing) return;
+    const currentStatus = await getNetworkStatus();
+    if (currentStatus !== 'online') {
+      await addDebugLog('[OfflineSync] Offline, skipping process', 'info');
+      return;
+    }
 
-    setProcessing(true);
-    setError(null);
+    if (isProcessing) {
+      await addDebugLog('[OfflineSync] Already processing', 'info');
+      return;
+    }
 
     try {
-      const result = await processQueue();
-      if (result.errors.length > 0) {
-        setError(result.errors.join('; '));
-      }
-      const count = await getQueueCount();
-      setPendingCount(count);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unknown error');
+      setProcessing(true);
+      setError(null);
+      await processExportQueue(); // デフォルトタイムアウト(5分)で実行
+      await updatePendingCount();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      setError(msg);
+      await addDebugLog(`[OfflineSync] Process error: ${msg}`, 'error');
     } finally {
       setProcessing(false);
     }
-  }, [setProcessing, setError, setPendingCount]);
+  }, [isProcessing, setProcessing, setError, updatePendingCount]);
 
   /**
    * 初期化とネットワーク監視
@@ -65,8 +79,7 @@ export function useOfflineSync() {
       const status = await getNetworkStatus();
       setOnline(status === 'online');
 
-      const count = await getQueueCount();
-      setPendingCount(count);
+      const count = await updatePendingCount();
 
       // オンラインで未同期データがあれば自動同期
       if (status === 'online' && count > 0) {
@@ -83,15 +96,15 @@ export function useOfflineSync() {
 
       // オンライン復帰時に自動同期
       if (online) {
-        const count = await getQueueCount();
-        if (count > 0) {
+        const queue = await getQueue();
+        if (queue.length > 0) {
           processQueueNow();
         }
       }
     });
 
     return unsubscribe;
-  }, [setOnline, setPendingCount, processQueueNow]);
+  }, [setOnline, updatePendingCount, processQueueNow]);
 
   /**
    * オフラインキューにデータを追加
@@ -101,17 +114,16 @@ export function useOfflineSync() {
       healthData: HealthData,
       selectedTags: Set<DataTagKey>,
       syncDateRange: Set<string> | null
-    ): Promise<string> => {
+    ): Promise<string | null> => {
       const id = await addToQueue({
         healthData,
         selectedTags: Array.from(selectedTags),
         syncDateRange: syncDateRange ? Array.from(syncDateRange) : null
       });
-      const count = await getQueueCount();
-      setPendingCount(count);
+      await updatePendingCount();
       return id;
     },
-    [setPendingCount]
+    [updatePendingCount]
   );
 
   return {
@@ -122,4 +134,4 @@ export function useOfflineSync() {
     addToOfflineQueue,
     processQueueNow
   };
-}
+};
