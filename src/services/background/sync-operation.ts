@@ -1,7 +1,7 @@
 // バックグラウンド同期実行ロジック
 // スケジューラから呼び出され、データ取得とエクスポート処理の開始を担当する
 
-import { AutoSyncConfig } from '../../types/exportTypes';
+import { AutoSyncConfig, ExportConfig } from '../../types/exportTypes';
 import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../../utils/formatters';
 import { loadLastBackgroundSync, saveLastBackgroundSync } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
@@ -96,9 +96,10 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
           // バックグラウンド実行用のConfigを作成（PDF出力は無効化）
           // ユーザー設定に関わらず、バックグラウンドでは重い処理（PDF）をスキップする
           const defaultConfig = await createDefaultExportConfig();
-          const backgroundConfig = {
+          const backgroundConfig: ExportConfig = {
             ...defaultConfig,
-            exportAsPdf: false // 強制無効化
+            formats: ['googleSheets'], // バックグラウンドではSheetsのみ更新
+            exportAsPdf: false // PDFは強制無効化
           };
 
           // キューに追加（永続化）
