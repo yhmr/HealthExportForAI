@@ -69,7 +69,7 @@ export default function OnboardingScreen() {
       if (success) {
         handleNext(); // 自動で次へ
       }
-    } catch (error) {
+    } catch {
       Alert.alert(t('common', 'error'), 'Sign in failed');
     } finally {
       setHasAttemptedAuth(true);
@@ -83,7 +83,7 @@ export default function OnboardingScreen() {
       if (granted) {
         handleNext(); // 自動で次へ
       }
-    } catch (error) {
+    } catch {
       Alert.alert(t('common', 'error'), 'Permission request failed');
     } finally {
       setHasAttemptedPermissions(true);

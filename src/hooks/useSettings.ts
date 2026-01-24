@@ -103,7 +103,7 @@ export function useSettings() {
     return () => {
       mounted = false;
     };
-  }, [loadConfig]);
+  }, [loadConfig, resolveAndSaveFolder]);
 
   // アクション: サインイン
   const handleSignIn = async () => {

@@ -23,15 +23,8 @@ import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const {
-    driveConfig,
-    isConfigLoaded: driveConfigLoaded,
-    isUploading,
-    uploadError,
-    loadConfig,
-    exportAndUpload,
-    clearUploadError
-  } = useGoogleDrive();
+  const { driveConfig, isUploading, uploadError, loadConfig, exportAndUpload, clearUploadError } =
+    useGoogleDrive();
 
   const {
     isInitialized,
@@ -47,7 +40,7 @@ export default function HomeScreen() {
   } = useHealthConnect();
 
   // 認証状態
-  const { isAuthenticated, isInitialized: isAuthInitialized } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // ストアから選択状態とアクションを取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
