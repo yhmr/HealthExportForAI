@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Image,
   Linking,
   Modal,
   ScrollView,
@@ -25,6 +26,7 @@ interface AboutModalProps {
   debugLogs: DebugLogEntry[];
   onRefreshLogs: () => void;
   onClearLogs: () => void;
+  onEnableDebug?: () => void;
 }
 
 export function AboutModal({
@@ -33,7 +35,8 @@ export function AboutModal({
   onLicensePress,
   debugLogs,
   onRefreshLogs,
-  onClearLogs
+  onClearLogs,
+  onEnableDebug
 }: AboutModalProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -47,6 +50,7 @@ export function AboutModal({
     setTapCount(newCount);
     if (newCount >= 10) {
       setShowDebug(true);
+      onEnableDebug?.();
     }
   };
 
@@ -61,9 +65,11 @@ export function AboutModal({
         <View style={styles.modalContent}>
           {/* Header Area */}
           <View style={styles.headerArea}>
-            <View style={styles.iconPlaceholder}>
-              <Text style={styles.iconText}>H</Text>
-            </View>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.appIcon}
+              resizeMode="contain"
+            />
             <Text style={styles.appName}>Health Export For AI</Text>
             <TouchableWithoutFeedback onPress={handleVersionPress}>
               <View style={styles.versionBadge}>
@@ -223,24 +229,11 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: 'bold',
       lineHeight: 20
     },
-    iconPlaceholder: {
-      width: 64,
-      height: 64,
-      borderRadius: 16,
-      backgroundColor: colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 16,
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 4
-    },
-    iconText: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      color: '#ffffff'
+    appIcon: {
+      width: 120,
+      height: 120,
+      borderRadius: 30,
+      marginBottom: 16
     },
     appName: {
       fontSize: 22,

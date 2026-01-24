@@ -13,6 +13,7 @@ interface AutoSyncSectionProps {
   onToggleEnabled: (enabled: boolean) => void;
   onChangeInterval: (interval: SyncInterval) => void;
   onToggleWifiOnly: (wifiOnly: boolean) => void;
+  isDebugMode?: boolean;
 }
 
 export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
@@ -20,7 +21,8 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
   lastSyncTime,
   onToggleEnabled,
   onChangeInterval,
-  onToggleWifiOnly
+  onToggleWifiOnly,
+  isDebugMode = false
 }) => {
   const { t, language } = useLanguage();
   const { colors } = useTheme();
@@ -28,8 +30,20 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
 
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
 
+  // 表示する間隔オプションをフィルタリング
+  // isDebugModeがtrueの場合は5分(5)を表示
+  // それ以外は 12時間(720) 以上を表示
+  const visibleIntervals = SYNC_INTERVALS.filter((interval) => {
+    if (isDebugMode && interval === 5) return true;
+    return interval >= 720;
+  });
+
   return (
-    <SettingsSection title={`${t('autoSync', 'sectionTitle')} (Beta)`}>
+    <SettingsSection title={t('autoSync', 'sectionTitle')}>
+      <View style={styles.noteContainer}>
+        <Text style={styles.noteText}>{t('autoSync', 'note')}</Text>
+      </View>
+
       <SettingsItem
         label={t('autoSync', 'enabled')}
         description={t('autoSync', 'enabledDesc')}
@@ -55,7 +69,7 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
 
           {showIntervalPicker && (
             <View style={styles.intervalContainer}>
-              {SYNC_INTERVALS.map((interval) => (
+              {visibleIntervals.map((interval) => (
                 <TouchableOpacity
                   key={interval}
                   style={[
@@ -140,5 +154,15 @@ const createStyles = (colors: any) =>
     intervalTextActive: {
       color: colors.primary,
       fontWeight: '600'
+    },
+    noteContainer: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      marginBottom: 8
+    },
+    noteText: {
+      fontSize: 12,
+      color: colors.textTertiary,
+      lineHeight: 16
     }
   });

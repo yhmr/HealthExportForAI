@@ -82,15 +82,16 @@ export default function SettingsScreen() {
           onSetLanguage={actions.setLanguage}
         />
 
+        <AboutSection onOpenAbout={() => setAboutModalVisible(true)} />
+
         <AutoSyncSection
           config={state.autoSyncConfig}
           lastSyncTime={state.lastBackgroundSync}
           onToggleEnabled={actions.toggleAutoSync}
           onChangeInterval={actions.changeSyncInterval}
           onToggleWifiOnly={actions.toggleWifiOnly}
+          isDebugMode={state.isDebugOpen}
         />
-
-        <AboutSection onOpenAbout={() => setAboutModalVisible(true)} />
       </ScrollView>
 
       {/* Modals */}
@@ -111,6 +112,7 @@ export default function SettingsScreen() {
         debugLogs={state.debugLogs}
         onRefreshLogs={actions.refreshLogs}
         onClearLogs={actions.clearLogs}
+        onEnableDebug={() => actions.setIsDebugOpen(true)}
       />
       <LicenseModal visible={isLicenseModalVisible} onClose={() => setLicenseModalVisible(false)} />
     </SafeAreaView>

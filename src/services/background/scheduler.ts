@@ -157,26 +157,79 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
  * バックグラウンド同期タスクを登録
  * @param intervalMinutes 同期間隔（分）
  */
-export async function registerBackgroundSync(intervalMinutes: number): Promise<void> {
-  await addDebugLog(`[Scheduler] Registering task (interval: ${intervalMinutes}min)`, 'info');
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+/**
+ * バックグラウンド同期タスクを登録
+ * @param intervalMinutes 同期間隔（分）
+ * @param retryCount 現在のリトライ回数（内部用）
+ */
+export async function registerBackgroundSync(
+  intervalMinutes: number,
+  retryCount = 0
+): Promise<void> {
+  if (retryCount === 0) {
+    await addDebugLog(`[Scheduler] Registering task (interval: ${intervalMinutes}min)`, 'info');
+  } else {
+    console.warn(`[Scheduler] Retry registering task (${retryCount}/${MAX_RETRIES})...`);
+  }
 
   try {
+    // コンテキストチェックも兼ねてステータスを取得
+    const status = await BackgroundFetch.getStatusAsync();
+    if (
+      status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
+      status === BackgroundFetch.BackgroundFetchStatus.Denied
+    ) {
+      await addDebugLog(
+        `[Scheduler] Background fetch is restricted or denied. Status: ${status}`,
+        'warn'
+      );
+      return;
+    }
+
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
       minimumInterval: intervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
   } catch (error) {
-    await addDebugLog(`[Scheduler] Failed to register task: ${error}`, 'error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (retryCount < MAX_RETRIES) {
+      console.warn(
+        `[Scheduler] Failed to register task: ${errorMessage}. Retrying in ${RETRY_DELAY_MS}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      return registerBackgroundSync(intervalMinutes, retryCount + 1);
+    }
+
+    await addDebugLog(
+      `[Scheduler] Failed to register task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
+      'warn'
+    );
   }
 }
 
 /**
  * バックグラウンド同期タスクを解除
  */
-export async function unregisterBackgroundSync(): Promise<void> {
-  await addDebugLog('[Scheduler] Unregistering task', 'info');
+/**
+ * バックグラウンド同期タスクを解除
+ * @param retryCount 現在のリトライ回数（内部用）
+ */
+export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
+  if (retryCount === 0) {
+    await addDebugLog('[Scheduler] Unregistering task', 'info');
+  } else {
+    console.warn(`[Scheduler] Retry unregistering task (${retryCount}/${MAX_RETRIES})...`);
+  }
 
   try {
+    // コンテキストが有効か確認するためにステータス取得を試みる
+    // (ここで落ちる場合はContextが無効な可能性が高いためリトライへ回す)
+    await BackgroundFetch.getStatusAsync();
+
     const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_SYNC_TASK);
     if (isRegistered) {
       await BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
@@ -185,7 +238,20 @@ export async function unregisterBackgroundSync(): Promise<void> {
       await addDebugLog('[Scheduler] Task was not registered', 'info');
     }
   } catch (error) {
-    await addDebugLog(`[Scheduler] Failed to unregister task: ${error}`, 'error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (retryCount < MAX_RETRIES) {
+      console.warn(
+        `[Scheduler] Failed to unregister task: ${errorMessage}. Retrying in ${RETRY_DELAY_MS}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      return unregisterBackgroundSync(retryCount + 1);
+    }
+
+    await addDebugLog(
+      `[Scheduler] Failed to unregister task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
+      'warn'
+    );
   }
 }
 
