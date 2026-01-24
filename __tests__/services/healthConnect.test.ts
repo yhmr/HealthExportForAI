@@ -196,7 +196,7 @@ describe('Health Connect Service', () => {
       expect(result).toBe(false);
       expect(DebugLogService.addDebugLog).toHaveBeenCalledWith(
         expect.stringContaining('[HealthConnect] Permissions missing'),
-        'error'
+        'warn'
       );
     });
 

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FlatList, Linking, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import licensesData from '../config/licenses.json';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeColors } from '../theme/types';
 
 interface LicenseModalProps {
   visible: boolean;
@@ -32,6 +34,9 @@ const parsedLicenses: LicenseEntry[] = Object.entries(licensesData).map(
 );
 
 export function LicenseModal({ visible, onClose }: LicenseModalProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const renderItem = ({ item }: { item: LicenseEntry }) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemHeader}>
@@ -70,73 +75,74 @@ export function LicenseModal({ visible, onClose }: LicenseModalProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    padding: 20
-  },
-  modalContent: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    maxHeight: '80%',
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#2e2e3e'
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e'
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff'
-  },
-  closeButton: {
-    padding: 8
-  },
-  closeButtonText: {
-    color: '#a0a0b0',
-    fontSize: 18
-  },
-  listContent: {
-    padding: 16
-  },
-  itemContainer: {
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e'
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff'
-  },
-  itemVersion: {
-    fontSize: 12,
-    color: '#a0a0b0'
-  },
-  itemLicense: {
-    fontSize: 14,
-    color: '#10b981',
-    marginBottom: 4
-  },
-  linkText: {
-    fontSize: 12,
-    color: '#4285f4',
-    textDecorationLine: 'underline'
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      padding: 20
+    },
+    modalContent: {
+      backgroundColor: colors.surface, // Changed from #1a1a2e
+      borderRadius: 12,
+      maxHeight: '80%',
+      width: '100%',
+      borderWidth: 1,
+      borderColor: colors.border // Changed from #2e2e3e
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border // Changed from #2e2e3e
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text // Changed from #ffffff
+    },
+    closeButton: {
+      padding: 8
+    },
+    closeButtonText: {
+      color: colors.textSecondary, // Changed from #a0a0b0
+      fontSize: 18
+    },
+    listContent: {
+      padding: 16
+    },
+    itemContainer: {
+      marginBottom: 16,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border // Changed from #2e2e3e
+    },
+    itemHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4
+    },
+    itemName: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text // Changed from #ffffff
+    },
+    itemVersion: {
+      fontSize: 12,
+      color: colors.textSecondary // Changed from #a0a0b0
+    },
+    itemLicense: {
+      fontSize: 14,
+      color: '#10b981', // Kept green for license type
+      marginBottom: 4
+    },
+    linkText: {
+      fontSize: 12,
+      color: colors.info, // Changed from #4285f4
+      textDecorationLine: 'underline'
+    }
+  });

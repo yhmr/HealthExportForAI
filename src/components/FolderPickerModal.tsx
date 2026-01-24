@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,8 +10,10 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
 import { getAccessToken } from '../services/googleAuth';
 import { createFolder, listFolders } from '../services/storage/googleDrive';
+import { ThemeColors } from '../theme/types';
 
 interface Folder {
   id: string;
@@ -40,6 +42,8 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const currentFolder = currentPath[currentPath.length - 1];
 
@@ -136,7 +140,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
           {/* フォルダ一覧 */}
           {isLoading && !folders.length ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#6366f1" />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <FlatList
@@ -169,7 +173,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
                   value={newFolderName}
                   onChangeText={setNewFolderName}
                   placeholder="新しいフォルダ名"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={colors.textSecondary}
                   autoFocus
                 />
                 <View style={styles.createFolderActions}>
@@ -210,140 +214,142 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end'
-  },
-  modalContent: {
-    backgroundColor: '#1a1a2e',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: '80%',
-    paddingBottom: 20
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e'
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold'
-  },
-  closeButton: {
-    padding: 8
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 18
-  },
-  pathContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#232336'
-  },
-  backButton: {
-    paddingRight: 10
-  },
-  backButtonText: {
-    color: '#6366f1',
-    fontWeight: 'bold'
-  },
-  pathText: {
-    color: '#e5e7eb',
-    fontSize: 14,
-    flex: 1
-  },
-  list: {
-    flex: 1
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  folderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e'
-  },
-  folderIcon: {
-    fontSize: 20,
-    marginRight: 12
-  },
-  folderName: {
-    color: '#fff',
-    fontSize: 16,
-    flex: 1
-  },
-  arrowIcon: {
-    color: '#6b7280',
-    fontSize: 20
-  },
-  emptyContainer: {
-    padding: 32,
-    alignItems: 'center'
-  },
-  emptyText: {
-    color: '#6b7280'
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#2e2e3e'
-  },
-  footerActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12
-  },
-  createFolderContainer: {
-    gap: 12
-  },
-  createFolderActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12
-  },
-  input: {
-    backgroundColor: '#1e1e2e',
-    borderRadius: 8,
-    padding: 12,
-    color: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#2e2e3e'
-  },
-  button: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  newFolderButton: {
-    backgroundColor: '#374151'
-  },
-  selectButton: {
-    backgroundColor: '#6366f1'
-  },
-  createButton: {
-    backgroundColor: '#10b981'
-  },
-  cancelButton: {
-    backgroundColor: '#ef4444'
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end'
+    },
+    modalContent: {
+      backgroundColor: colors.surface, // Changed from #1a1a2e
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      height: '80%',
+      paddingBottom: 20
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border // Changed from #2e2e3e
+    },
+    headerTitle: {
+      color: colors.text, // Changed from #fff
+      fontSize: 18,
+      fontWeight: 'bold'
+    },
+    closeButton: {
+      padding: 8
+    },
+    closeButtonText: {
+      color: colors.text, // Changed from #fff
+      fontSize: 18
+    },
+    pathContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      backgroundColor: colors.surfaceHighlight // Changed from #232336
+    },
+    backButton: {
+      paddingRight: 10
+    },
+    backButtonText: {
+      color: colors.primary, // Changed from #6366f1
+      fontWeight: 'bold'
+    },
+    pathText: {
+      color: colors.textSecondary, // Changed from #e5e7eb
+      fontSize: 14,
+      flex: 1
+    },
+    list: {
+      flex: 1
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    folderItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border // Changed from #2e2e3e
+    },
+    folderIcon: {
+      fontSize: 20,
+      marginRight: 12,
+      color: colors.text // Added base color
+    },
+    folderName: {
+      color: colors.text, // Changed from #fff
+      fontSize: 16,
+      flex: 1
+    },
+    arrowIcon: {
+      color: colors.textTertiary, // Changed from #6b7280
+      fontSize: 20
+    },
+    emptyContainer: {
+      padding: 32,
+      alignItems: 'center'
+    },
+    emptyText: {
+      color: colors.textTertiary // Changed from #6b7280
+    },
+    footer: {
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border // Changed from #2e2e3e
+    },
+    footerActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 12
+    },
+    createFolderContainer: {
+      gap: 12
+    },
+    createFolderActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 12
+    },
+    input: {
+      backgroundColor: colors.surfaceVariant, // Changed from #1e1e2e
+      borderRadius: 8,
+      padding: 12,
+      color: colors.text, // Changed from #ffffff
+      borderWidth: 1,
+      borderColor: colors.border // Changed from #2e2e3e
+    },
+    button: {
+      flex: 1,
+      padding: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    newFolderButton: {
+      backgroundColor: colors.surfaceVariant // Changed from #374151
+    },
+    selectButton: {
+      backgroundColor: colors.primary // Changed from #6366f1
+    },
+    createButton: {
+      backgroundColor: '#10b981' // Kept fixed green for create action
+    },
+    cancelButton: {
+      backgroundColor: colors.error // Changed from #ef4444
+    },
+    buttonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 14
+    }
+  });

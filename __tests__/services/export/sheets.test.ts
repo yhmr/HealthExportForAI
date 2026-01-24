@@ -31,6 +31,11 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
+// Mock DebugLogService
+vi.mock('../../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
+}));
+
 describe('Sheets Export Service', () => {
   it('should create a new spreadsheet if it does not exist', async () => {
     // Setup: Spreadsheet does not exist

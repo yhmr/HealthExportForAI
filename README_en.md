@@ -1,8 +1,8 @@
 # Health Export For AI
 
-Running on Android, built with React Native + Expo. Reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
-
 [日本語 (Japanese)](./README.md)
+
+Running on Android, built with React Native + Expo. Reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
 
 ## Features
 
@@ -13,14 +13,27 @@ Running on Android, built with React Native + Expo. Reads health data from Healt
   - **JSON**: Structured data optimized for AI input
 - **Health Connect Integration**: Reads 8 types of health data
   - Steps, Weight, Body Fat, Calories Burned, Basal Metabolic Rate (BMR), Sleep, Exercise, Nutrition
+- **Background Sync**: Automatically exports data periodically even when the app is closed
+- **Offline Support**: Queues sync tasks when offline and processes them when connectivity is restored
+- **Multi-language Support**: Supports English and Japanese (auto-detects system language)
 - **Data Display**: Simple dashboard to check the latest health data
 - **Google Drive Export**: One-tap backup to the cloud
+
+## Tech Stack
+
+- **Framework**: React Native, Expo (SDK 52+)
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **Testing**: Vitest
+- **Error Monitoring**: Sentry
+- **CI**: GitHub Actions
 
 ## Requirements
 
 - Node.js 18 or higher
-- Android 14 or higher (API 34+)
-- Device (or emulator) with Health Connect app installed
+- Android 9 (API 28) or higher
+  - Recommended: Android 14 (API 34) or higher (Health Connect is built-in)
+- Health Connect app (for Android 13 and below)
 
 ## Setup
 
@@ -30,7 +43,7 @@ Running on Android, built with React Native + Expo. Reads health data from Healt
 # Install dependencies
 npm install
 
-# Prebuild for Android build
+# Prebuild for Android build (Required for Native Modules)
 npx expo prebuild --platform android
 ```
 
@@ -59,11 +72,17 @@ npm run android
 ## Development Commands
 
 ```bash
-# Run tests
+# Run tests (Vitest)
 npm run test
 
 # Run tests once
 npm run test:run
+
+# Run Linter (ESLint)
+npm run lint
+
+# Run Formatter (Prettier)
+npm run format
 ```
 
 ## Project Structure
@@ -71,13 +90,14 @@ npm run test:run
 ```
 ├── app/                    # Expo Router pages
 ├── src/
-72: │   ├── components/         # UI components
-73: │   ├── hooks/              # Custom hooks
-74: │   ├── stores/             # Zustand stores
-75: │   ├── services/           # Business logic (Export, Drive, Health)
-76: │   ├── types/              # Type definitions
-77: │   ├── utils/              # Utilities
-78: │   └── config/             # Configuration
+│   ├── components/         # UI components
+│   ├── hooks/              # Custom hooks (useOfflineSync, useDriveAuth, etc.)
+│   ├── stores/             # Zustand stores (Settings, Sync)
+│   ├── services/           # Business logic (HealthConnect, Drive, Export, BackgroundSync)
+│   ├── i18n/               # Internationalization
+│   ├── types/              # Type definitions
+│   ├── utils/              # Utilities
+│   └── config/             # Configuration
 ├── __tests__/              # Vitest tests
 └── app.json                # Expo configuration
 ```

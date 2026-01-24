@@ -1,8 +1,10 @@
 // 期間選択コンポーネント
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeColors } from '../theme/types';
 
 // プリセット選択肢の値
 const PERIOD_PRESET_VALUES = [1, 3, 7, 30, 90, 180, 365, -1] as const;
@@ -25,6 +27,8 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
   const [isCustom, setIsCustom] = useState(false);
   const [customValue, setCustomValue] = useState('');
   const { t } = useLanguage();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // プリセットのラベルを取得
   const getPresetLabel = (days: number): string => {
@@ -98,7 +102,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
               onChangeText={handleCustomChange}
               keyboardType="number-pad"
               placeholder={t('periodPicker', 'placeholder')}
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.textTertiary}
               maxLength={4}
             />
             <Text style={styles.customInputSuffix}>
@@ -151,95 +155,96 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 16,
-    marginBottom: 16
-  },
-  label: {
-    color: '#9ca3af',
-    fontSize: 14,
-    marginBottom: 8
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
-  },
-  dropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1f2937',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#374151'
-  },
-  dropdownText: {
-    color: '#e5e7eb',
-    fontSize: 14,
-    marginRight: 8
-  },
-  dropdownArrow: {
-    color: '#6b7280',
-    fontSize: 10
-  },
-  customInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1f2937',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3b82f6',
-    paddingHorizontal: 12
-  },
-  customInput: {
-    color: '#ffffff',
-    fontSize: 14,
-    paddingVertical: 10,
-    minWidth: 60,
-    textAlign: 'center'
-  },
-  customInputSuffix: {
-    color: '#9ca3af',
-    fontSize: 14
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalContent: {
-    backgroundColor: '#1f2937',
-    borderRadius: 16,
-    padding: 16,
-    minWidth: 200,
-    maxWidth: '80%'
-  },
-  modalTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    textAlign: 'center'
-  },
-  modalOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8
-  },
-  modalOptionSelected: {
-    backgroundColor: '#3b82f6'
-  },
-  modalOptionText: {
-    color: '#e5e7eb',
-    fontSize: 14,
-    textAlign: 'center'
-  },
-  modalOptionTextSelected: {
-    color: '#ffffff',
-    fontWeight: '600'
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginHorizontal: 16,
+      marginBottom: 16
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      marginBottom: 8
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12
+    },
+    dropdown: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceVariant, // Changed from #1f2937
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border
+    },
+    dropdownText: {
+      color: colors.text,
+      fontSize: 14,
+      marginRight: 8
+    },
+    dropdownArrow: {
+      color: colors.textTertiary,
+      fontSize: 10
+    },
+    customInputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceVariant, // Changed from #1f2937
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.info, // Changed from #3b82f6 to info color (usually blue)
+      paddingHorizontal: 12
+    },
+    customInput: {
+      color: colors.text,
+      fontSize: 14,
+      paddingVertical: 10,
+      minWidth: 60,
+      textAlign: 'center'
+    },
+    customInputSuffix: {
+      color: colors.textSecondary,
+      fontSize: 14
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    modalContent: {
+      backgroundColor: colors.surface, // Changed from #1f2937
+      borderRadius: 16,
+      padding: 16,
+      minWidth: 200,
+      maxWidth: '80%'
+    },
+    modalTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 12,
+      textAlign: 'center'
+    },
+    modalOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8
+    },
+    modalOptionSelected: {
+      backgroundColor: colors.primary // Changed from #3b82f6
+    },
+    modalOptionText: {
+      color: colors.text, // Changed from #e5e7eb
+      fontSize: 14,
+      textAlign: 'center'
+    },
+    modalOptionTextSelected: {
+      color: '#ffffff',
+      fontWeight: '600'
+    }
+  });

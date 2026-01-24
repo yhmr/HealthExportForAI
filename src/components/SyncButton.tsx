@@ -1,7 +1,9 @@
 // 同期ボタンコンポーネント
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeColors } from '../theme/types';
 
 interface SyncButtonProps {
   onPress: () => void;
@@ -18,6 +20,9 @@ export function SyncButton({
   icon,
   variant = 'primary'
 }: SyncButtonProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const buttonStyle = variant === 'primary' ? styles.primaryButton : styles.secondaryButton;
   const textStyle = variant === 'primary' ? styles.primaryText : styles.secondaryText;
 
@@ -29,7 +34,7 @@ export function SyncButton({
       activeOpacity={0.7}
     >
       {isLoading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : '#6366f1'} />
+        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : colors.primary} />
       ) : (
         <>
           {icon && <Text style={styles.icon}>{icon}</Text>}
@@ -40,40 +45,43 @@ export function SyncButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginVertical: 8,
-    marginHorizontal: 16
-  },
-  primaryButton: {
-    backgroundColor: '#6366f1'
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#6366f1'
-  },
-  disabled: {
-    opacity: 0.6
-  },
-  icon: {
-    fontSize: 20,
-    marginRight: 8
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  primaryText: {
-    color: '#ffffff'
-  },
-  secondaryText: {
-    color: '#6366f1'
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      marginVertical: 8,
+      marginHorizontal: 16
+    },
+    primaryButton: {
+      backgroundColor: colors.primary
+    },
+    secondaryButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      borderColor: colors.primary
+    },
+    disabled: {
+      opacity: 0.6
+    },
+    icon: {
+      fontSize: 20,
+      marginRight: 8,
+      color: colors.text // Added base color though overridden by specific style usually? No text style overrides icon color strictly unless applied.
+      // Wait, primary button icon/label usually white.
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: '600'
+    },
+    primaryText: {
+      color: '#ffffff' // Always white for primary button
+    },
+    secondaryText: {
+      color: colors.primary
+    }
+  });

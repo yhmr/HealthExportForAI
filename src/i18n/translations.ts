@@ -11,13 +11,11 @@ export const translations = {
       cancel: 'キャンセル',
       ok: 'OK',
       error: 'エラー',
-      success: '成功',
-      later: '後で'
+      success: '成功'
     },
     // ホーム画面
     home: {
       title: 'Health Export For AI',
-      healthConnectUnavailable: 'Health Connectが利用できません',
       syncButton: 'データを取得',
       lastSync: '最終取得:',
       emptyState1: '「データを取得」ボタンを押して',
@@ -49,9 +47,19 @@ export const translations = {
       formatCsvDesc: 'カンマ区切りファイル（他ツール連携）',
       formatJson: 'JSON',
       formatJsonDesc: '構造化データ（AI連携向け）',
+      // 表示設定
+      sectionDisplay: '表示設定',
+      theme: 'テーマ',
+      themeLight: 'ライト',
+      themeDark: 'ダーク',
+      themeSystem: 'システム',
       // アプリ情報
       sectionAppInfo: 'アプリ情報',
+      about: 'About App',
       licenses: 'サードパーティライセンス',
+      // ホームステータス
+      statusReady: '準備完了',
+      statusSetupRequired: '設定が必要です',
       // 言語
       sectionLanguage: '言語',
       languageJa: '日本語',
@@ -63,14 +71,6 @@ export const translations = {
       goBackAnyway: 'このまま戻る',
       permissionRequired: '権限が必要です',
       notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
-    },
-    // 認証モーダル
-    authModal: {
-      title: 'Googleアカウントを連携',
-      description:
-        '健康データをGoogle Driveにエクスポートするには、\nGoogleアカウントとの連携が必要です。',
-      signIn: 'Googleでサインイン',
-      skip: '後で'
     },
     // データタグ
     dataTagList: {
@@ -124,6 +124,32 @@ export const translations = {
       syncSuccessBody: 'データのバックアップが完了しました',
       syncError: '同期エラー',
       syncErrorBody: '同期中にエラーが発生しました'
+    },
+    // オンボーディング
+    onboarding: {
+      welcomeTitle: 'Health Export For AIへようこそ',
+      welcomeDesc:
+        'Health ConnectのデータをGoogle Driveに自動エクスポート。\n数ステップでセットアップしましょう。',
+      getStarted: 'はじめる',
+      signInTitle: 'サインイン',
+      signInDesc: 'Googleアカウントと連携してバックアップを有効にします。',
+      signInButton: 'Googleでサインイン',
+      signedInAs: 'サインイン中: {{email}}',
+      healthTitle: 'Health Connect',
+      healthDesc: 'データ読み取り権限を許可してください。',
+      grantPermissions: '権限を許可',
+      permissionsGranted: '権限許可済み',
+      folderTitle: '保存先フォルダ',
+      folderDesc: 'Google Drive内の保存先を選択してください。',
+      currentFolder: '現在のフォルダ:',
+      changeFolder: 'フォルダを変更',
+      completedTitle: '準備完了！',
+      completedDesc: 'ヘルスケアデータのエクスポートを開始できます。',
+      goToDashboard: 'ダッシュボードへ',
+      next: '次へ',
+      authRequired: 'Google Driveへファイルを保存するため、Googleアカウント連携が必須です。',
+      permissionRequired: 'データの取得にはHealth Connectの権限が必須です。',
+      exitApp: 'アプリを終了'
     }
   },
   en: {
@@ -133,13 +159,11 @@ export const translations = {
       cancel: 'Cancel',
       ok: 'OK',
       error: 'Error',
-      success: 'Success',
-      later: 'Later'
+      success: 'Success'
     },
     // Home screen
     home: {
       title: 'Health Export For AI',
-      healthConnectUnavailable: 'Health Connect is unavailable',
       syncButton: 'Fetch Data',
       lastSync: 'Last sync:',
       emptyState1: 'Press "Fetch Data" to',
@@ -171,8 +195,15 @@ export const translations = {
       formatCsvDesc: 'Comma-separated file (for other tools)',
       formatJson: 'JSON',
       formatJsonDesc: 'Structured data (for AI integration)',
+      // Display Settings
+      sectionDisplay: 'Display',
+      theme: 'Theme',
+      themeLight: 'Light',
+      themeDark: 'Dark',
+      themeSystem: 'System',
       // App info
       sectionAppInfo: 'App Info',
+      about: 'About App',
       licenses: 'Third-party Licenses',
       // Language
       sectionLanguage: 'Language',
@@ -184,13 +215,6 @@ export const translations = {
       goBackAnyway: 'Go Back Anyway',
       permissionRequired: 'Permission Required',
       notificationPermissionDesc: 'Notification permission is required to run background sync.'
-    },
-    // Auth modal
-    authModal: {
-      title: 'Link Google Account',
-      description: 'To export health data to Google Drive,\nyou need to link your Google account.',
-      signIn: 'Sign in with Google',
-      skip: 'Later'
     },
     // Data tag list
     dataTagList: {
@@ -244,6 +268,32 @@ export const translations = {
       syncSuccessBody: 'Data backup completed',
       syncError: 'Sync Error',
       syncErrorBody: 'An error occurred during sync'
+    },
+    // Onboarding
+    onboarding: {
+      welcomeTitle: 'Welcome to Health Export',
+      welcomeDesc:
+        "Export your Health Connect data to Google Drive automatically.\nLet's get you set up in a few simple steps.",
+      getStarted: 'Get Started',
+      signInTitle: 'Sign In',
+      signInDesc: 'Connect your Google account to enable Drive backups.',
+      signInButton: 'Sign In with Google',
+      signedInAs: 'Signed in as {{email}}',
+      healthTitle: 'Health Connect',
+      healthDesc: 'Allow access to read your health data for export.',
+      grantPermissions: 'Grant Permissions',
+      permissionsGranted: 'Permissions granted',
+      folderTitle: 'Destination Folder',
+      folderDesc: 'Choose where to save your health data in Google Drive.',
+      currentFolder: 'Current Folder:',
+      changeFolder: 'Change Folder',
+      completedTitle: 'All Set!',
+      completedDesc: 'You are ready to start exporting your health data.',
+      goToDashboard: 'Go to Dashboard',
+      next: 'Next',
+      authRequired: 'Linking your Google account is required to save files to Google Drive.',
+      permissionRequired: 'Health Connect permissions are required to retrieve data.',
+      exitApp: 'Exit App'
     }
   }
 } as const;
