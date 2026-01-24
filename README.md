@@ -13,14 +13,27 @@ React Native + Expo で構築された Android 専用アプリケーション。
   - **JSON**: AI への入力に最適化された構造化データ
 - **Health Connect 連携**: 8種類のヘルスデータを読み取り
   - 歩数、体重、体脂肪、消費カロリー、基礎代謝、睡眠、運動、栄養
+- **バックグラウンド同期**: アプリを閉じていても定期的にデータを自動エクスポート
+- **オフラインサポート**: ネットワーク接続がない場合は待機し、接続復帰時に自動で同期
+- **多言語対応**: 日本語と英語に対応（端末の言語設定に自動追従）
 - **データ表示**: シンプルなダッシュボードで最新の健康データを確認
 - **Google Drive エクスポート**: ワンタップでクラウドにバックアップ
+
+## 技術スタック
+
+- **Framework**: React Native, Expo (SDK 52+)
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **Testing**: Vitest
+- **Error Monitoring**: Sentry
+- **CI**: GitHub Actions
 
 ## 必要要件
 
 - Node.js 18 以上
-- Android 14 以上（API 34+）
-- Health Connect アプリがインストールされた端末（またはエミュレータ）
+- Android 9 (API 28) 以上
+  - 推奨: Android 14 (API 34) 以上（Health Connect が標準搭載のため）
+- Health Connect アプリ（Android 13以下の場合）
 
 ## セットアップ
 
@@ -30,7 +43,7 @@ React Native + Expo で構築された Android 専用アプリケーション。
 # 依存関係をインストール
 npm install
 
-# Android ビルド用に prebuild
+# Android ビルド用に prebuild (Native Moduleを含むため必須)
 npx expo prebuild --platform android
 ```
 
@@ -59,11 +72,17 @@ npm run android
 ## 開発コマンド
 
 ```bash
-# テストを実行
+# テストを実行 (Vitest)
 npm run test
 
 # テストを一度だけ実行
 npm run test:run
+
+# Linter (ESLint) を実行
+npm run lint
+
+# Formatter (Prettier) を実行
+npm run format
 ```
 
 ## プロジェクト構成
@@ -72,9 +91,10 @@ npm run test:run
 ├── app/                    # Expo Router ページ
 ├── src/
 │   ├── components/         # UI コンポーネント
-│   ├── hooks/              # カスタムフック
-│   ├── stores/             # Zustand ストア
-│   ├── services/           # ビジネスロジック (Export, Drive, Health)
+│   ├── hooks/              # カスタムフック (useOfflineSync, useDriveAuth など)
+│   ├── stores/             # Zustand ストア (Settings, Sync利用)
+│   ├── services/           # ビジネスロジック (HealthConnect, Drive, Export, BackgroundSync)
+│   ├── i18n/               # 多言語定義
 │   ├── types/              # 型定義
 │   ├── utils/              # ユーティリティ
 │   └── config/             # 設定
