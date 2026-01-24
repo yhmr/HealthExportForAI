@@ -106,7 +106,7 @@ export const translations = {
     },
     // 自動同期設定
     autoSync: {
-      sectionTitle: '自動同期',
+      sectionTitle: '自動同期 (Experimental)',
       enabled: '自動同期',
       enabledDesc: 'バックグラウンドで定期的に同期',
       interval: '同期間隔',
@@ -114,7 +114,8 @@ export const translations = {
       wifiOnlyDesc: 'モバイルデータ通信時は同期しない',
       lastSync: '最終バックグラウンド同期',
       never: '未実行',
-      nextSync: '次回同期予定'
+      nextSync: '次回同期予定',
+      note: '※OSの制限により、正確な間隔での実行は保証されません。充電中やWi-Fi接続時に実行される傾向があります。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。'
     },
     // 通知
     notification: {
@@ -250,7 +251,7 @@ export const translations = {
     },
     // Auto sync settings
     autoSync: {
-      sectionTitle: 'Auto Sync',
+      sectionTitle: 'Auto Sync (Experimental)',
       enabled: 'Auto Sync',
       enabledDesc: 'Sync periodically in background',
       interval: 'Sync Interval',
@@ -258,7 +259,8 @@ export const translations = {
       wifiOnlyDesc: 'Do not sync on mobile data',
       lastSync: 'Last Background Sync',
       never: 'Never',
-      nextSync: 'Next Sync'
+      nextSync: 'Next Sync',
+      note: '*Execution at exact intervals is not guaranteed due to OS restrictions. It tends to run when charging or on Wi-Fi.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.'
     },
     // Notifications
     notification: {

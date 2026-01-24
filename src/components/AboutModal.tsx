@@ -26,6 +26,7 @@ interface AboutModalProps {
   debugLogs: DebugLogEntry[];
   onRefreshLogs: () => void;
   onClearLogs: () => void;
+  onEnableDebug?: () => void;
 }
 
 export function AboutModal({
@@ -34,7 +35,8 @@ export function AboutModal({
   onLicensePress,
   debugLogs,
   onRefreshLogs,
-  onClearLogs
+  onClearLogs,
+  onEnableDebug
 }: AboutModalProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -48,6 +50,7 @@ export function AboutModal({
     setTapCount(newCount);
     if (newCount >= 10) {
       setShowDebug(true);
+      onEnableDebug?.();
     }
   };
 
