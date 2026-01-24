@@ -4,21 +4,6 @@
 
 Running on Android, built with React Native + Expo. Reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
 
-## Features
-
-- **Versatile Export Formats**:
-  - **Google Sheets**: Spreadsheet format optimized for analysis
-  - **PDF**: Document format suitable for sharing and viewing
-  - **CSV**: For integration with other data analysis tools
-  - **JSON**: Structured data optimized for AI input
-- **Health Connect Integration**: Reads 8 types of health data
-  - Steps, Weight, Body Fat, Calories Burned, Basal Metabolic Rate (BMR), Sleep, Exercise, Nutrition
-- **Background Sync**: Automatically exports data periodically even when the app is closed
-- **Offline Support**: Queues sync tasks when offline and processes them when connectivity is restored
-- **Multi-language Support**: Supports English and Japanese (auto-detects system language)
-- **Data Display**: Simple dashboard to check the latest health data
-- **Google Drive Export**: One-tap backup to the cloud
-
 ## Tech Stack
 
 - **Framework**: React Native, Expo (SDK 52+)
