@@ -55,6 +55,7 @@ export const translations = {
       themeSystem: 'システム',
       // アプリ情報
       sectionAppInfo: 'アプリ情報',
+      about: 'About App',
       licenses: 'サードパーティライセンス',
       // ホームステータス
       statusReady: '準備完了',
@@ -202,6 +203,7 @@ export const translations = {
       themeSystem: 'System',
       // App info
       sectionAppInfo: 'App Info',
+      about: 'About App',
       licenses: 'Third-party Licenses',
       // Language
       sectionLanguage: 'Language',
