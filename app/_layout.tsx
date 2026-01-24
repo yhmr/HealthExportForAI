@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AuthProvider } from '../src/contexts/AuthContext';
 import { LanguageProvider } from '../src/contexts/LanguageContext';
+import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { useOfflineSync } from '../src/hooks/useOfflineSync';
 
 // バックグラウンドタスクをグローバルスコープで定義
@@ -22,6 +23,28 @@ Sentry.init({
   replaysOnErrorSampleRate: 1,
   integrations: [Sentry.mobileReplayIntegration()]
 });
+
+function RootLayoutContent() {
+  const { colors, activeThemeMode } = useTheme();
+
+  return (
+    <AuthProvider>
+      <StatusBar
+        style={activeThemeMode === 'dark' ? 'light' : 'dark'}
+        backgroundColor={colors.background}
+      />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background }
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="settings" />
+      </Stack>
+    </AuthProvider>
+  );
+}
 
 export default Sentry.wrap(function RootLayout() {
   // オフライン同期の初期化・ネットワーク監視を開始
@@ -58,18 +81,9 @@ export default Sentry.wrap(function RootLayout() {
 
   return (
     <LanguageProvider>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#0f0f1a' }
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="settings" />
-        </Stack>
-      </AuthProvider>
+      <ThemeProvider>
+        <RootLayoutContent />
+      </ThemeProvider>
     </LanguageProvider>
   );
 });

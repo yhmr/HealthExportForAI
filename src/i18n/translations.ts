@@ -47,6 +47,12 @@ export const translations = {
       formatCsvDesc: 'カンマ区切りファイル（他ツール連携）',
       formatJson: 'JSON',
       formatJsonDesc: '構造化データ（AI連携向け）',
+      // 表示設定
+      sectionDisplay: '表示設定',
+      theme: 'テーマ',
+      themeLight: 'ライト',
+      themeDark: 'ダーク',
+      themeSystem: 'システム',
       // アプリ情報
       sectionAppInfo: 'アプリ情報',
       licenses: 'サードパーティライセンス',
@@ -188,6 +194,12 @@ export const translations = {
       formatCsvDesc: 'Comma-separated file (for other tools)',
       formatJson: 'JSON',
       formatJsonDesc: 'Structured data (for AI integration)',
+      // Display Settings
+      sectionDisplay: 'Display',
+      theme: 'Theme',
+      themeLight: 'Light',
+      themeDark: 'Dark',
+      themeSystem: 'System',
       // App info
       sectionAppInfo: 'App Info',
       licenses: 'Third-party Licenses',

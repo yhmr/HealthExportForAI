@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { ThemeColors } from '../../theme/types';
 
 interface SettingsItemProps {
   icon?: string;
@@ -22,6 +24,8 @@ export function SettingsItem({
   destructive = false,
   disabled = false
 }: SettingsItemProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const Container = onPress ? TouchableOpacity : View;
 
   return (
@@ -47,55 +51,57 @@ export function SettingsItem({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e',
-    minHeight: 56
-  },
-  disabled: {
-    opacity: 0.5
-  },
-  leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 16
-  },
-  icon: {
-    fontSize: 20,
-    marginRight: 12,
-    width: 24,
-    textAlign: 'center'
-  },
-  textContainer: {
-    flex: 1
-  },
-  label: {
-    fontSize: 16,
-    color: '#ffffff',
-    fontWeight: '500'
-  },
-  destructiveText: {
-    color: '#ef4444'
-  },
-  description: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 2
-  },
-  rightContent: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  value: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginRight: 8
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      minHeight: 56
+    },
+    disabled: {
+      opacity: 0.5
+    },
+    leftContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      marginRight: 16
+    },
+    icon: {
+      fontSize: 20,
+      marginRight: 12,
+      width: 24,
+      textAlign: 'center',
+      color: colors.text
+    },
+    textContainer: {
+      flex: 1
+    },
+    label: {
+      fontSize: 16,
+      color: colors.text,
+      fontWeight: '500'
+    },
+    destructiveText: {
+      color: colors.error
+    },
+    description: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2
+    },
+    rightContent: {
+      flexDirection: 'row',
+      alignItems: 'center'
+    },
+    value: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginRight: 8
+    }
+  });

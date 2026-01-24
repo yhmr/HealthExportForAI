@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { ThemeColors } from '../../theme/types';
 
 interface StatusCardProps {
   lastSyncTime: string | null;
@@ -18,6 +20,9 @@ export function StatusCard({
   t,
   language
 }: StatusCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const isReady = isHealthConnectConnected && isDriveConnected;
   const statusColor = isReady ? '#10b981' : '#f59e0b';
   const statusText = isReady ? t('home', 'statusReady') : t('home', 'statusSetupRequired');
@@ -69,62 +74,63 @@ export function StatusCard({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#1e1e2e',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8
-  },
-  statusText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  badge: {
-    backgroundColor: '#6366f130',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8
-  },
-  badgeText: {
-    color: '#6366f1',
-    fontSize: 10,
-    fontWeight: '600'
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16
-  },
-  gridItem: {
-    minWidth: '45%',
-    flex: 1
-  },
-  label: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginBottom: 4
-  },
-  value: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500'
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 24
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center'
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 8
+    },
+    statusText: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: 'bold'
+    },
+    badge: {
+      backgroundColor: colors.primaryLight,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      borderRadius: 8
+    },
+    badgeText: {
+      color: colors.primary,
+      fontSize: 10,
+      fontWeight: '600'
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 16
+    },
+    gridItem: {
+      minWidth: '45%',
+      flex: 1
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginBottom: 4
+    },
+    value: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500'
+    }
+  });

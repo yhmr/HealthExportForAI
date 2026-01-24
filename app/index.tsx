@@ -12,12 +12,14 @@ import { DEFAULT_PERIOD_DAYS, PeriodPicker } from '../src/components/PeriodPicke
 import { SyncButton } from '../src/components/SyncButton';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
 import { useHealthStore } from '../src/stores/healthStore';
+import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -54,8 +56,10 @@ export default function HomeScreen() {
   const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
 
-  // 翻訳
+  // 翻訳 & テーマ
   const { t, language } = useLanguage();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // 初期化 & 画面フォーカス時に設定再読み込み
   useFocusEffect(
@@ -228,45 +232,46 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f1a'
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16
-  },
-  scrollContent: {
-    paddingBottom: 32,
-    paddingTop: 16
-  },
-  actionGrid: {
-    marginBottom: 16
-  },
-  actionItem: {
-    marginBottom: 8
-  },
-  syncButtons: {
-    gap: 12,
-    marginBottom: 24
-  },
-  dataSection: {
-    marginTop: 8
-  },
-  sectionTitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginBottom: 8,
-    fontWeight: '600',
-    textTransform: 'uppercase'
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 24
-  },
-  emptyText: {
-    color: '#6b7280',
-    fontSize: 14
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 16
+    },
+    scrollContent: {
+      paddingBottom: 32,
+      paddingTop: 16
+    },
+    actionGrid: {
+      marginBottom: 16
+    },
+    actionItem: {
+      marginBottom: 8
+    },
+    syncButtons: {
+      gap: 12,
+      marginBottom: 24
+    },
+    dataSection: {
+      marginTop: 8
+    },
+    sectionTitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 8,
+      fontWeight: '600',
+      textTransform: 'uppercase'
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 24
+    },
+    emptyText: {
+      color: colors.textTertiary,
+      fontSize: 14
+    }
+  });

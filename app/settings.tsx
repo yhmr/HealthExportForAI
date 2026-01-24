@@ -11,11 +11,15 @@ import { SettingsSection } from '../src/components/Settings/SettingsSection';
 import { SYNC_INTERVALS, getSyncIntervalLabel } from '../src/services/config/backgroundSyncConfig';
 
 // Hooks
+import { useTheme } from '../src/contexts/ThemeContext';
 import { useSettings } from '../src/hooks/useSettings';
+import { ThemeColors } from '../src/theme/types';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { state, actions, t } = useSettings();
+  const { colors, themeMode, setThemeMode } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // UI State (Modals)
   const [isPickerVisible, setPickerVisible] = useState(false);
@@ -91,8 +95,12 @@ export default function SettingsScreen() {
               <Switch
                 value={state.exportFormats.includes('googleSheets')}
                 onValueChange={() => actions.toggleExportFormat('googleSheets')}
-                trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                thumbColor={state.exportFormats.includes('googleSheets') ? '#6366f1' : '#9ca3af'}
+                trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                thumbColor={
+                  state.exportFormats.includes('googleSheets')
+                    ? colors.primary
+                    : colors.textSecondary
+                }
               />
             }
           />
@@ -106,8 +114,8 @@ export default function SettingsScreen() {
                 <Switch
                   value={state.exportSheetAsPdf}
                   onValueChange={actions.togglePdfOption}
-                  trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                  thumbColor={state.exportSheetAsPdf ? '#6366f1' : '#9ca3af'}
+                  trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                  thumbColor={state.exportSheetAsPdf ? colors.primary : colors.textSecondary}
                 />
               }
             />
@@ -121,8 +129,10 @@ export default function SettingsScreen() {
               <Switch
                 value={state.exportFormats.includes('csv')}
                 onValueChange={() => actions.toggleExportFormat('csv')}
-                trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                thumbColor={state.exportFormats.includes('csv') ? '#6366f1' : '#9ca3af'}
+                trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                thumbColor={
+                  state.exportFormats.includes('csv') ? colors.primary : colors.textSecondary
+                }
               />
             }
           />
@@ -135,9 +145,33 @@ export default function SettingsScreen() {
               <Switch
                 value={state.exportFormats.includes('json')}
                 onValueChange={() => actions.toggleExportFormat('json')}
-                trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                thumbColor={state.exportFormats.includes('json') ? '#6366f1' : '#9ca3af'}
+                trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                thumbColor={
+                  state.exportFormats.includes('json') ? colors.primary : colors.textSecondary
+                }
               />
+            }
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings', 'sectionDisplay')}>
+          <SettingsItem
+            label={t('settings', 'theme')}
+            icon="🌓"
+            rightElement={
+              <View style={styles.languageToggle}>
+                {(['light', 'dark', 'system'] as const).map((mode) => (
+                  <TouchableOpacity
+                    key={mode}
+                    style={[styles.langBtn, themeMode === mode && styles.langBtnActive]}
+                    onPress={() => setThemeMode(mode)}
+                  >
+                    <Text style={[styles.langText, themeMode === mode && styles.langTextActive]}>
+                      {t('settings', `theme${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             }
           />
         </SettingsSection>
@@ -204,8 +238,10 @@ export default function SettingsScreen() {
                   <Switch
                     value={state.autoSyncConfig.wifiOnly}
                     onValueChange={actions.toggleWifiOnly}
-                    trackColor={{ false: '#3e3e4e', true: '#6366f180' }}
-                    thumbColor={state.autoSyncConfig.wifiOnly ? '#6366f1' : '#9ca3af'}
+                    trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
+                    thumbColor={
+                      state.autoSyncConfig.wifiOnly ? colors.primary : colors.textSecondary
+                    }
                   />
                 }
               />
@@ -322,146 +358,147 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f1a'
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#1a1a2e'
-  },
-  headerButton: {
-    padding: 4
-  },
-  headerButtonText: {
-    color: '#6366f1',
-    fontSize: 16
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff'
-  },
-  headerPlaceholder: {
-    width: 50
-  },
-  content: {
-    flex: 1,
-    padding: 16
-  },
-  intervalContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    padding: 16,
-    backgroundColor: '#161622',
-    marginHorizontal: 16,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12
-  },
-  intervalOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3e3e4e',
-    backgroundColor: '#2e2e3e'
-  },
-  intervalOptionActive: {
-    borderColor: '#6366f1',
-    backgroundColor: '#6366f120'
-  },
-  intervalText: {
-    color: '#9ca3af',
-    fontSize: 13
-  },
-  intervalTextActive: {
-    color: '#6366f1',
-    fontWeight: '600'
-  },
-  languageToggle: {
-    flexDirection: 'row',
-    backgroundColor: '#2e2e3e',
-    borderRadius: 8,
-    padding: 2
-  },
-  langBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 6
-  },
-  langBtnActive: {
-    backgroundColor: '#6366f1'
-  },
-  langText: {
-    color: '#9ca3af',
-    fontSize: 12,
-    fontWeight: '600'
-  },
-  langTextActive: {
-    color: '#ffffff'
-  },
-  debugToggle: {
-    color: '#6b7280',
-    fontSize: 12
-  },
-  debugContent: {
-    backgroundColor: '#161622',
-    padding: 12
-  },
-  debugControls: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginBottom: 8
-  },
-  debugBtn: {
-    backgroundColor: '#2e2e3e',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4
-  },
-  debugBtnDestructive: {
-    backgroundColor: '#451a1a'
-  },
-  debugBtnText: {
-    color: '#fff',
-    fontSize: 12
-  },
-  debugEmpty: {
-    color: '#6b7280',
-    fontSize: 12,
-    textAlign: 'center',
-    padding: 8
-  },
-  logEntry: {
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2e2e3e'
-  },
-  logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 2
-  },
-  logTime: {
-    color: '#6b7280',
-    fontSize: 10,
-    fontFamily: 'monospace'
-  },
-  logType: {
-    fontSize: 10,
-    fontWeight: 'bold'
-  },
-  logError: { color: '#f87171' },
-  logInfo: { color: '#60a5fa' },
-  logMsg: {
-    color: '#d1d5db',
-    fontSize: 11,
-    fontFamily: 'monospace'
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      backgroundColor: colors.headerBackground
+    },
+    headerButton: {
+      padding: 4
+    },
+    headerButtonText: {
+      color: colors.primary,
+      fontSize: 16
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text
+    },
+    headerPlaceholder: {
+      width: 50
+    },
+    content: {
+      flex: 1,
+      padding: 16
+    },
+    intervalContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      padding: 16,
+      backgroundColor: colors.surfaceHighlight, // Changed from #161622
+      marginHorizontal: 16,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12
+    },
+    intervalOption: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceVariant
+    },
+    intervalOptionActive: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryLight
+    },
+    intervalText: {
+      color: colors.textSecondary,
+      fontSize: 13
+    },
+    intervalTextActive: {
+      color: colors.primary,
+      fontWeight: '600'
+    },
+    languageToggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: 8,
+      padding: 2
+    },
+    langBtn: {
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      borderRadius: 6
+    },
+    langBtnActive: {
+      backgroundColor: colors.primary
+    },
+    langText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '600'
+    },
+    langTextActive: {
+      color: '#ffffff' // Always white when active
+    },
+    debugToggle: {
+      color: colors.textTertiary,
+      fontSize: 12
+    },
+    debugContent: {
+      backgroundColor: colors.surfaceHighlight,
+      padding: 12
+    },
+    debugControls: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 8,
+      marginBottom: 8
+    },
+    debugBtn: {
+      backgroundColor: colors.debugButton,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 4
+    },
+    debugBtnDestructive: {
+      backgroundColor: colors.destructiveButton
+    },
+    debugBtnText: {
+      color: colors.text,
+      fontSize: 12
+    },
+    debugEmpty: {
+      color: colors.textTertiary,
+      fontSize: 12,
+      textAlign: 'center',
+      padding: 8
+    },
+    logEntry: {
+      paddingVertical: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border
+    },
+    logHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 2
+    },
+    logTime: {
+      color: colors.textTertiary,
+      fontSize: 10,
+      fontFamily: 'monospace'
+    },
+    logType: {
+      fontSize: 10,
+      fontWeight: 'bold'
+    },
+    logError: { color: colors.error },
+    logInfo: { color: colors.info },
+    logMsg: {
+      color: colors.textSecondary,
+      fontSize: 11,
+      fontFamily: 'monospace'
+    }
+  });
