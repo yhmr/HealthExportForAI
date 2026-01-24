@@ -27,6 +27,11 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
+// Mock DebugLogService
+vi.mock('../../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
+}));
+
 describe('CSV Export Service', () => {
   it('should create a new CSV file if it does not exist', async () => {
     // Setup: File does not exist, upload succeeds
