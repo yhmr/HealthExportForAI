@@ -1,8 +1,32 @@
-# Health Export For AI
+<div align="center">
+  <img src="assets/icon.png" width="120" alt="Health Export For AI Logo" />
+  <h1>Health Export For AI</h1>
+  <p>
+    <strong>Export Health Connect data for AI analysis</strong>
+  </p>
+  <p>
+    <a href="./README.md">日本語 (Japanese)</a>
+  </p>
+</div>
 
-[日本語 (Japanese)](./README.md)
+<div align="center">
+
+![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?style=flat-square)
+![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square)
+
+</div>
 
 Running on Android, built with React Native + Expo. Reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
+
+## Features
+
+- 🏃 **Health Connect Integration**: Aggregates vital data like steps, heart rate, sleep, etc.
+- 📂 **Cloud Sync**: Automatic backup to a specified Google Drive folder
+- 📄 **Multi-Format**: Supports CSV/JSON for AI analysis, and PDF/Sheets for readability
+- 🤖 **AI Ready**: Optimized output structure for LLMs (e.g., NotebookLM)
+- 🔋 **Background Sync(Experimental)**: Supports scheduled automatic synchronization
 
 ## Tech Stack
 

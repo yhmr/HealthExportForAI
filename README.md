@@ -1,8 +1,32 @@
-# Health Export For AI
+<div align="center">
+  <img src="assets/icon.png" width="120" alt="Health Export For AI Logo" />
+  <h1>Health Export For AI</h1>
+  <p>
+    <strong>Health Connect データを AI 分析のためにエクスポート</strong>
+  </p>
+  <p>
+    <a href="./README_en.md">Examples with NotebookLM (English)</a>
+  </p>
+</div>
 
-[English](./README_en.md)
+<div align="center">
+
+![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?style=flat-square)
+![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square)
+
+</div>
 
 React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、柔軟な形式（Google Sheets, PDF, CSV, JSON）で Google Drive にエクスポートして NotebookLM 等の AI ツールで分析できるようにします。
+
+## 特徴
+
+- 🏃 **Health Connect 集約**: 歩数、心拍数、睡眠などのバイタルデータを一元的に取得
+- 📂 **クラウド同期**: 指定した Google Drive フォルダへバックアップ
+- 📄 **マルチフォーマット**: AI分析に適した CSV/JSON や、可読性の高い PDF/Sheets に対応
+- 🤖 **AI Ready**: LLM (NotebookLM等) に食わせやすいデータ構造で出力
+- 🔋 **バックグラウンド実行（Experimental）**: 定期的な自動同期をサポート
 
 ## 技術スタック
 
