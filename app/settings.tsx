@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Components
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
+
+import { AboutModal } from '../src/components/AboutModal'; // Updated
 import { LicenseModal } from '../src/components/LicenseModal';
 import { SettingsItem } from '../src/components/Settings/SettingsItem';
 import { SettingsSection } from '../src/components/Settings/SettingsSection';
@@ -23,7 +25,9 @@ export default function SettingsScreen() {
 
   // UI State (Modals)
   const [isPickerVisible, setPickerVisible] = useState(false);
+
   const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
+  const [isAboutModalVisible, setAboutModalVisible] = useState(false); // Updated
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
 
   // Back Handler
@@ -174,6 +178,31 @@ export default function SettingsScreen() {
               </View>
             }
           />
+
+          <SettingsItem
+            label={t('settings', 'sectionLanguage')}
+            icon="🌐"
+            rightElement={
+              <View style={styles.languageToggle}>
+                <TouchableOpacity
+                  style={[styles.langBtn, state.language === 'ja' && styles.langBtnActive]}
+                  onPress={() => actions.setLanguage('ja')}
+                >
+                  <Text style={[styles.langText, state.language === 'ja' && styles.langTextActive]}>
+                    JA
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.langBtn, state.language === 'en' && styles.langBtnActive]}
+                  onPress={() => actions.setLanguage('en')}
+                >
+                  <Text style={[styles.langText, state.language === 'en' && styles.langTextActive]}>
+                    EN
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            }
+          />
         </SettingsSection>
 
         {/* Auto Sync Section (Beta) */}
@@ -264,81 +293,10 @@ export default function SettingsScreen() {
         {/* Other Section */}
         <SettingsSection title={t('settings', 'sectionAppInfo')}>
           <SettingsItem
-            label={t('settings', 'sectionLanguage')}
-            icon="🌐"
-            rightElement={
-              <View style={styles.languageToggle}>
-                <TouchableOpacity
-                  style={[styles.langBtn, state.language === 'ja' && styles.langBtnActive]}
-                  onPress={() => actions.setLanguage('ja')}
-                >
-                  <Text style={[styles.langText, state.language === 'ja' && styles.langTextActive]}>
-                    JA
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.langBtn, state.language === 'en' && styles.langBtnActive]}
-                  onPress={() => actions.setLanguage('en')}
-                >
-                  <Text style={[styles.langText, state.language === 'en' && styles.langTextActive]}>
-                    EN
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            }
+            label={t('settings', 'about')}
+            icon="ℹ️"
+            onPress={() => setAboutModalVisible(true)}
           />
-          <SettingsItem
-            label={t('settings', 'licenses')}
-            icon="📜"
-            onPress={() => setLicenseModalVisible(true)}
-          />
-        </SettingsSection>
-
-        {/* Debug Section */}
-        <SettingsSection title="Debug">
-          <SettingsItem
-            label="Debug Logs"
-            icon="🛠️"
-            rightElement={<Text style={styles.debugToggle}>{state.isDebugOpen ? '▲' : '▼'}</Text>}
-            onPress={() => actions.setIsDebugOpen(!state.isDebugOpen)}
-          />
-          {state.isDebugOpen && (
-            <View style={styles.debugContent}>
-              <View style={styles.debugControls}>
-                <TouchableOpacity onPress={actions.refreshLogs} style={styles.debugBtn}>
-                  <Text style={styles.debugBtnText}>Refresh</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={actions.clearLogs}
-                  style={[styles.debugBtn, styles.debugBtnDestructive]}
-                >
-                  <Text style={styles.debugBtnText}>Clear</Text>
-                </TouchableOpacity>
-              </View>
-              {state.debugLogs.length === 0 ? (
-                <Text style={styles.debugEmpty}>No logs available</Text>
-              ) : (
-                state.debugLogs.map((log, index) => (
-                  <View key={index} style={styles.logEntry}>
-                    <View style={styles.logHeader}>
-                      <Text style={styles.logTime}>
-                        {new Date(log.timestamp).toLocaleTimeString()}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.logType,
-                          log.type === 'error' ? styles.logError : styles.logInfo
-                        ]}
-                      >
-                        {log.type}
-                      </Text>
-                    </View>
-                    <Text style={styles.logMsg}>{log.message}</Text>
-                  </View>
-                ))
-              )}
-            </View>
-          )}
         </SettingsSection>
       </ScrollView>
 
@@ -352,6 +310,14 @@ export default function SettingsScreen() {
           await actions.updateFolder(id, name);
           setPickerVisible(false);
         }}
+      />
+      <AboutModal
+        visible={isAboutModalVisible}
+        onClose={() => setAboutModalVisible(false)}
+        onLicensePress={() => setLicenseModalVisible(true)}
+        debugLogs={state.debugLogs}
+        onRefreshLogs={actions.refreshLogs}
+        onClearLogs={actions.clearLogs}
       />
       <LicenseModal visible={isLicenseModalVisible} onClose={() => setLicenseModalVisible(false)} />
     </SafeAreaView>
@@ -441,64 +407,5 @@ const createStyles = (colors: ThemeColors) =>
     },
     langTextActive: {
       color: '#ffffff' // Always white when active
-    },
-    debugToggle: {
-      color: colors.textTertiary,
-      fontSize: 12
-    },
-    debugContent: {
-      backgroundColor: colors.surfaceHighlight,
-      padding: 12
-    },
-    debugControls: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: 8,
-      marginBottom: 8
-    },
-    debugBtn: {
-      backgroundColor: colors.debugButton,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 4
-    },
-    debugBtnDestructive: {
-      backgroundColor: colors.destructiveButton
-    },
-    debugBtnText: {
-      color: colors.text,
-      fontSize: 12
-    },
-    debugEmpty: {
-      color: colors.textTertiary,
-      fontSize: 12,
-      textAlign: 'center',
-      padding: 8
-    },
-    logEntry: {
-      paddingVertical: 4,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border
-    },
-    logHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 2
-    },
-    logTime: {
-      color: colors.textTertiary,
-      fontSize: 10,
-      fontFamily: 'monospace'
-    },
-    logType: {
-      fontSize: 10,
-      fontWeight: 'bold'
-    },
-    logError: { color: colors.error },
-    logInfo: { color: colors.info },
-    logMsg: {
-      color: colors.textSecondary,
-      fontSize: 11,
-      fontFamily: 'monospace'
     }
   });

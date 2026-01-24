@@ -3,7 +3,7 @@ import { ThemeColors } from './types';
 export const darkColors: ThemeColors = {
   background: '#0f0f1a',
   surface: '#1a1a2e',
-  surfaceHighlight: '#161622',
+  surfaceHighlight: '#232336', // Slightly lighter than surface
   surfaceVariant: '#2e2e3e',
   primary: '#6366f1',
   primaryLight: '#6366f120', // Opacity 20%
@@ -18,7 +18,7 @@ export const darkColors: ThemeColors = {
 
   // Specifics matching existing logic
   headerBackground: '#1a1a2e',
-  cardBackground: '#161622',
+  cardBackground: '#232336', // Aligned with surfaceHighlight (Lighter than surface)
   switchTrackFalse: '#3e3e4e',
   switchTrackTrue: '#6366f180'
 };

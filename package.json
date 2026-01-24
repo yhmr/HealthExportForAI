@@ -1,6 +1,7 @@
 {
   "name": "health-export-for-ai",
   "version": "1.0.0",
+  "author": "yhmr",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
