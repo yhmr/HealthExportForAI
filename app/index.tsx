@@ -1,12 +1,12 @@
 // ホーム画面
 
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthCheckModal } from '../src/components/AuthCheckModal';
 import { DataTagList } from '../src/components/DataTagList';
 import { Header } from '../src/components/Header';
+import { StatusCard } from '../src/components/Home/StatusCard';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
 import { DEFAULT_PERIOD_DAYS, PeriodPicker } from '../src/components/PeriodPicker';
 import { SyncButton } from '../src/components/SyncButton';
@@ -14,11 +14,23 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/config/exportConfig';
+import { checkHealthPermissions } from '../src/services/healthConnect';
 import { useHealthStore } from '../src/stores/healthStore';
-import { formatDateTime } from '../src/utils/formatters';
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const {
+    driveConfig,
+    isConfigLoaded: driveConfigLoaded,
+    isUploading,
+    uploadError,
+    loadConfig,
+    exportAndUpload,
+    clearUploadError
+  } = useGoogleDrive();
+
   const {
     isInitialized,
     isAvailable,
@@ -32,58 +44,77 @@ export default function HomeScreen() {
     syncData
   } = useHealthConnect();
 
-  const { isUploading, uploadError, loadConfig, exportAndUpload, clearUploadError } =
-    useGoogleDrive();
-
   // 認証状態
-  const { isAuthenticated, isInitialized: isAuthInitialized, signIn: authSignIn } = useAuth();
-
-  // 認証チェックモーダルの表示状態
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { isAuthenticated, isInitialized: isAuthInitialized } = useAuth();
 
   // ストアから選択状態とアクションを取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
 
   // 取得期間
   const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
 
   // 翻訳
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // 初期化 & 画面フォーカス時に設定再読み込み
   useFocusEffect(
     useCallback(() => {
+      let isMounted = true;
+
       const setup = async () => {
-        // Initializeは初回のみで良いが、Configは毎回最新にする
-        if (!isInitialized) {
-          await initialize();
-        }
-        await loadConfig();
-        // 保存された期間を読み込み
+        console.log('[HomeScreen] Setup started');
+
+        // 並列で初期化と設定読み込みを実行
+        // initialize() は成否(boolean)を、loadConfig() は設定オブジェクト(DriveConfig | null)を返す
+        const [initResult, configResult] = await Promise.all([
+          !isInitialized ? initialize() : Promise.resolve(true),
+          loadConfig()
+        ]);
+
+        if (!isMounted) return;
+
+        // Health Connectの権限状態を直接チェック（State更新待ちを防ぐため）
+        // initializeが成功している場合のみチェックを行う
+        const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
+
+        // UI設定の読み込み
         const savedDays = await loadExportPeriodDays();
         setPeriodDays(savedDays);
+        const bgConfig = await loadBackgroundSyncConfig();
+        setAutoSyncEnabled(bgConfig.enabled);
+
+        console.log('[HomeScreen] Setup completed');
+
+        // オンボーディング判定
+        // 以下のいずれかの場合はオンボーディングへ誘導
+        // 1. 未認証
+        // 2. Health Connect初期化成功済みだが権限がない
+        // 3. Drive設定がない
+
+        const needsOnboarding =
+          !isAuthenticated || (initResult && !currentHealthPermissions) || !configResult;
+
+        console.log('[HomeScreen] Check Onboarding:', {
+          isAuthenticated,
+          initResult,
+          currentHealthPermissions,
+          hasConfig: !!configResult,
+          needsOnboarding
+        });
+
+        if (needsOnboarding) {
+          router.replace('/onboarding');
+        }
       };
+
       setup();
-    }, [initialize, loadConfig, isInitialized])
+
+      return () => {
+        isMounted = false;
+      };
+    }, [initialize, loadConfig, isInitialized, isAuthenticated, router])
   );
-
-  // 認証状態が初期化された後、未認証ならモーダルを表示
-  useEffect(() => {
-    if (isAuthInitialized && !isAuthenticated) {
-      setShowAuthModal(true);
-    }
-  }, [isAuthInitialized, isAuthenticated]);
-
-  // モーダルからのサインイン処理
-  const handleAuthModalSignIn = async () => {
-    setIsSigningIn(true);
-    const success = await authSignIn();
-    setIsSigningIn(false);
-    if (success) {
-      setShowAuthModal(false);
-    }
-  };
 
   // エラー表示
   useEffect(() => {
@@ -123,11 +154,9 @@ export default function HomeScreen() {
 
   // エクスポートハンドラ
   const handleExport = async () => {
-    // 選択されたタグをエクスポート関数に渡す
     const result = await exportAndUpload(selectedDataTags);
     if (result.success) {
       if (result.queued) {
-        // オフラインキューに追加された場合
         Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
       } else {
         Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
@@ -135,37 +164,33 @@ export default function HomeScreen() {
     }
   };
 
-  // データが取得済みかどうか
   const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 認証チェックモーダル */}
-      <AuthCheckModal
-        visible={showAuthModal}
-        isSigningIn={isSigningIn}
-        onSkip={() => setShowAuthModal(false)}
-        onSignIn={handleAuthModalSignIn}
-      />
-
       <Header title={t('home', 'title')} />
-
-      {/* ネットワーク状態バナー */}
       <NetworkStatusBanner />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {/* ステータス表示 */}
-        {!isAvailable && (
-          <View style={styles.warningBanner}>
-            <Text style={styles.warningText}>⚠️ {t('home', 'healthConnectUnavailable')}</Text>
+        {/* Status Card */}
+        <StatusCard
+          lastSyncTime={lastSyncTime}
+          isHealthConnectConnected={isAvailable && hasPermissions}
+          isDriveConnected={!!driveConfig}
+          autoSyncEnabled={autoSyncEnabled}
+          t={t}
+          language={language as 'ja' | 'en'}
+        />
+
+        {/* Quick Actions Grid */}
+        <View style={styles.actionGrid}>
+          <View style={styles.actionItem}>
+            <PeriodPicker value={periodDays} onChange={handlePeriodChange} />
           </View>
-        )}
+        </View>
 
-        {/* 期間選択 */}
-        <PeriodPicker value={periodDays} onChange={handlePeriodChange} />
-
-        {/* データ取得ボタン */}
-        <View style={styles.syncSection}>
+        {/* Main Actions */}
+        <View style={styles.syncButtons}>
           <SyncButton
             onPress={handleSync}
             isLoading={isLoading}
@@ -173,33 +198,6 @@ export default function HomeScreen() {
             icon="🔄"
             variant="primary"
           />
-          {lastSyncTime && (
-            <Text style={styles.lastSync}>
-              {t('home', 'lastSync')} {formatDateTime(lastSyncTime)}
-            </Text>
-          )}
-        </View>
-
-        {/* データタグ一覧 */}
-        {hasData ? (
-          <DataTagList
-            healthData={healthData}
-            selectedTags={selectedDataTags}
-            onToggleTag={toggleDataTag}
-          />
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📊</Text>
-            <Text style={styles.emptyText}>
-              {t('home', 'emptyState1')}
-              {'\n'}
-              {t('home', 'emptyState2')}
-            </Text>
-          </View>
-        )}
-
-        {/* エクスポートボタン */}
-        <View style={styles.exportSection}>
           <SyncButton
             onPress={handleExport}
             isLoading={isUploading}
@@ -208,6 +206,23 @@ export default function HomeScreen() {
             variant="secondary"
           />
         </View>
+
+        {/* Data List */}
+        {hasData ? (
+          <View style={styles.dataSection}>
+            <Text style={styles.sectionTitle}>Preview Data</Text>
+            <DataTagList
+              healthData={healthData}
+              selectedTags={selectedDataTags}
+              onToggleTag={toggleDataTag}
+            />
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            {/* Empty state simplified as StatusCard shows status */}
+            <Text style={styles.emptyText}>{t('home', 'emptyState1')}</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -219,49 +234,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f1a'
   },
   content: {
-    flex: 1
+    flex: 1,
+    paddingHorizontal: 16
   },
   scrollContent: {
-    paddingBottom: 32
+    paddingBottom: 32,
+    paddingTop: 16
   },
-  warningBanner: {
-    backgroundColor: '#f59e0b20',
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f59e0b40'
+  actionGrid: {
+    marginBottom: 16
   },
-  warningText: {
-    color: '#f59e0b',
-    textAlign: 'center'
+  actionItem: {
+    marginBottom: 8
   },
-  syncSection: {
-    alignItems: 'center'
+  syncButtons: {
+    gap: 12,
+    marginBottom: 24
   },
-  lastSync: {
-    color: '#6b7280',
-    fontSize: 12,
-    textAlign: 'center',
+  dataSection: {
     marginTop: 8
+  },
+  sectionTitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 8,
+    fontWeight: '600',
+    textTransform: 'uppercase'
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 32
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16
+    paddingVertical: 24
   },
   emptyText: {
     color: '#6b7280',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22
-  },
-  exportSection: {
-    marginTop: 24
+    fontSize: 14
   }
 });

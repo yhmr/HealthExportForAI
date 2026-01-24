@@ -2,6 +2,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import {
   aggregateGroupByDuration,
   ExerciseType,
+  getGrantedPermissions,
   getSdkStatus,
   initialize,
   readRecords,
@@ -71,6 +72,27 @@ export async function checkHealthConnectAvailability(): Promise<{
 }
 
 /**
+ * 権限状態を確認（UI表示なし）
+ */
+export async function checkHealthPermissions(): Promise<boolean> {
+  try {
+    const grantedPermissions = await getGrantedPermissions();
+
+    const allGranted = REQUIRED_PERMISSIONS.every((required) =>
+      grantedPermissions.some(
+        (granted) =>
+          granted.accessType === required.accessType && granted.recordType === required.recordType
+      )
+    );
+
+    return allGranted;
+  } catch (error) {
+    await addDebugLog(`[HealthConnect] Check Permission Error: ${error}`, 'error');
+    return false;
+  }
+}
+
+/**
  * 権限をリクエスト
  */
 export async function requestHealthPermissions(): Promise<boolean> {
@@ -99,7 +121,7 @@ export async function requestHealthPermissions(): Promise<boolean> {
       );
       await addDebugLog(
         `[HealthConnect] Permissions missing: ${JSON.stringify(missingPermissions)}`,
-        'error'
+        'warn'
       );
       return false;
     }

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { loadExportPeriodDays, saveLastSyncTime } from '../services/config/exportConfig';
 import {
   checkHealthConnectAvailability,
+  checkHealthPermissions,
   fetchAllHealthData,
   initializeHealthConnect,
   requestBackgroundHealthPermission,
@@ -16,7 +17,6 @@ import {
   getDateDaysAgo,
   getEndOfToday
 } from '../utils/formatters';
-
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -47,6 +47,8 @@ export function useHealthConnect() {
 
       if (!availability.available) {
         setError('Health Connectが利用できません');
+        // 利用不可でも初期化チェック自体は完了とみなす
+        setIsInitialized(true);
         return false;
       }
 
@@ -54,14 +56,33 @@ export function useHealthConnect() {
       const initialized = await initializeHealthConnect();
       setIsInitialized(initialized);
 
+      if (initialized) {
+        // 初期化成功時に権限状態もチェックする
+        const hasPerms = await checkHealthPermissions();
+        setHasPermissions(hasPerms);
+      }
+
       if (!initialized) {
         setError('Health Connectの初期化に失敗しました');
+        // 初期化失敗時はリトライ可能にするため false のままにするか、
+        // あるいはエラーを表示して完了とするか。
+        // ここでは false のままにしておき、呼び出し元でエラーハンドリングさせるのが筋だが、
+        // 初期化待ちでブロックする実装の場合は true にしないと進まない。
+        // UI側で error があれば isInitialized が false でも表示するようにするか、
+        // ここで true にしてしまうか。
+        // 今回は initialized の結果をそのまま入れているので、失敗なら false。
+        // これだと index.tsx で詰む。
+        // なので、initialized (SDKの初期化成功) と isInitialized (アプリの準備完了) を分けるべきだが、
+        // 修正範囲を抑えるため、失敗時も isInitialized = true にして、エラーで判断させる。
+        setIsInitialized(true);
         return false;
       }
 
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : '初期化エラー');
+      // エラー時もチェック完了とする
+      setIsInitialized(true);
       return false;
     } finally {
       setLoading(false);

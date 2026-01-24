@@ -6,8 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
 import { addToExportQueue, processExportQueue } from '../services/export/service';
-import { configureGoogleSignIn } from '../services/googleAuth';
+import { configureGoogleSignIn, getAccessToken } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
+import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
 import { getCurrentISOString } from '../utils/formatters';
 
@@ -16,6 +17,7 @@ export function useGoogleDrive() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lastUploadTime, setLastUploadTime] = useState<string | null>(null);
   const [driveConfig, setDriveConfigState] = useState<DriveConfig | null>(null);
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
   // 認証状態はAuthContextから取得
   const { isAuthenticated, currentUser, authError, signIn, signOut } = useAuth();
@@ -27,13 +29,15 @@ export function useGoogleDrive() {
    * 認証状態はAuthContextで管理されるため、ここではDrive設定のみ読み込む
    */
   const loadConfig = useCallback(async () => {
-    const config = await loadDriveConfig();
-    setDriveConfigState(config);
-
-    // Google Sign-Inを設定（埋め込みIDを使用）
-    configureGoogleSignIn(WEB_CLIENT_ID);
-
-    return config;
+    try {
+      const config = await loadDriveConfig();
+      setDriveConfigState(config);
+      // Google Sign-Inを設定（埋め込みIDを使用）
+      configureGoogleSignIn(WEB_CLIENT_ID);
+      return config;
+    } finally {
+      setIsConfigLoaded(true);
+    }
   }, []);
 
   /**
@@ -127,12 +131,51 @@ export function useGoogleDrive() {
     setUploadError(null);
   }, []);
 
+  /**
+   * フォルダIDから名前を解決して保存
+   * 認証済みでない場合や見つからない場合はデフォルト名を返す
+   */
+  const resolveAndSaveFolder = useCallback(
+    async (folderId: string): Promise<string> => {
+      if (!folderId) return DEFAULT_FOLDER_NAME;
+
+      try {
+        // 既存の設定を確認（名前があればAPI呼ばない）
+        if (driveConfig?.folderId === folderId && driveConfig?.folderName) {
+          return driveConfig.folderName;
+        }
+
+        const token = await getAccessToken();
+        if (!token) return DEFAULT_FOLDER_NAME;
+
+        const folder = await getFolder(folderId, token);
+        if (folder) {
+          const newConfig = { folderId, folderName: folder.name };
+          await saveDriveConfig(newConfig);
+          setDriveConfigState(newConfig);
+          return folder.name;
+        } else {
+          // 見つからない場合は設定をクリア
+          const emptyConfig = { folderId: '', folderName: '' };
+          await saveDriveConfig(emptyConfig);
+          setDriveConfigState(emptyConfig);
+          return DEFAULT_FOLDER_NAME;
+        }
+      } catch (error) {
+        console.error('[useGoogleDrive] resolveFolder error:', error);
+        return DEFAULT_FOLDER_NAME;
+      }
+    },
+    [driveConfig]
+  );
+
   return {
     // 状態
     isUploading,
     uploadError,
     lastUploadTime,
     driveConfig,
+    isConfigLoaded,
     // 認証状態
     isAuthenticated,
     currentUser,
@@ -144,6 +187,7 @@ export function useGoogleDrive() {
     exportAndUpload,
     signIn,
     signOut,
-    clearUploadError
+    clearUploadError,
+    resolveAndSaveFolder
   };
 }

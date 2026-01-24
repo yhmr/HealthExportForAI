@@ -8,7 +8,7 @@ const STORAGE_KEYS = {
 export interface DebugLogEntry {
   timestamp: string;
   message: string;
-  type: 'info' | 'error' | 'success';
+  type: 'info' | 'error' | 'success' | 'warn';
 }
 
 /**
@@ -29,11 +29,13 @@ export async function loadDebugLogs(): Promise<DebugLogEntry[]> {
  */
 export async function addDebugLog(
   message: string,
-  type: 'info' | 'error' | 'success' = 'info'
+  type: 'info' | 'error' | 'success' | 'warn' = 'info'
 ): Promise<void> {
   // コンソールにも出力（開発環境での確認用）
   if (type === 'error') {
     console.error(message);
+  } else if (type === 'warn') {
+    console.warn(message);
   } else {
     console.log(message);
   }
