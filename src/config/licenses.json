@@ -569,11 +569,77 @@
     "licenseUrl": "https://github.com/evanw/esbuild",
     "parents": "health-export-for-ai"
   },
+  "@eslint-community/eslint-utils@4.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint-community/eslint-utils",
+    "licenseUrl": "https://github.com/eslint-community/eslint-utils/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint-community/regexpp@4.12.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint-community/regexpp",
+    "licenseUrl": "https://github.com/eslint-community/regexpp/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/config-array@0.21.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/rewrite",
+    "licenseUrl": "https://github.com/eslint/rewrite/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/config-helpers@0.4.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/rewrite",
+    "licenseUrl": "https://github.com/eslint/rewrite/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/core@0.17.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/rewrite",
+    "licenseUrl": "https://github.com/eslint/rewrite/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/eslintrc@2.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslintrc",
+    "licenseUrl": "https://github.com/eslint/eslintrc/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/eslintrc@3.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslintrc",
+    "licenseUrl": "https://github.com/eslint/eslintrc/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "@eslint/js@8.57.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslint",
+    "licenseUrl": "https://github.com/eslint/eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/js@9.39.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslint",
+    "licenseUrl": "https://github.com/eslint/eslint/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "@eslint/object-schema@2.1.7": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/rewrite",
+    "licenseUrl": "https://github.com/eslint/rewrite/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@eslint/plugin-kit@0.4.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/rewrite",
+    "licenseUrl": "https://github.com/eslint/rewrite/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "@expo/cli@54.0.21": {
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@expo/code-signing-certificates@0.0.6": {
     "licenses": "MIT",
@@ -639,7 +705,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "@expo/metro-runtime@6.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo",
+    "parents": "health-export-for-ai"
   },
   "@expo/metro@54.2.0": {
     "licenses": "MIT",
@@ -669,7 +741,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo/raw/master/LICENSE",
-    "parents": "@expo/cli:expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@expo/schema-utils@0.1.8": {
     "licenses": "MIT",
@@ -697,7 +769,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/vector-icons",
     "licenseUrl": "https://github.com/expo/vector-icons/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@expo/ws-tunnel@1.0.6": {
     "licenses": "MIT",
@@ -707,6 +779,42 @@
     "licenses": "BSD-3-Clause",
     "repository": "https://github.com/expo/expo-cli",
     "licenseUrl": "https://github.com/expo/expo-cli",
+    "parents": "health-export-for-ai"
+  },
+  "@humanfs/core@0.19.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/humanwhocodes/humanfs",
+    "licenseUrl": "https://github.com/humanwhocodes/humanfs/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@humanfs/node@0.16.7": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/humanwhocodes/humanfs",
+    "licenseUrl": "https://github.com/humanwhocodes/humanfs/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@humanwhocodes/config-array@0.11.14": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/humanwhocodes/config-array",
+    "licenseUrl": "https://github.com/humanwhocodes/config-array/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@humanwhocodes/module-importer@1.0.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/humanwhocodes/module-importer",
+    "licenseUrl": "https://github.com/humanwhocodes/module-importer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@humanwhocodes/object-schema@2.0.3": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/humanwhocodes/object-schema",
+    "licenseUrl": "https://github.com/humanwhocodes/object-schema/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@humanwhocodes/retry@0.4.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/humanwhocodes/retry",
+    "licenseUrl": "https://github.com/humanwhocodes/retry/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "@isaacs/balanced-match@4.0.1": {
@@ -815,6 +923,42 @@
     "licenseUrl": "https://github.com/jridgewell/sourcemaps/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "@nodelib/fs.scandir@2.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.scandir",
+    "licenseUrl": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.scandir/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@nodelib/fs.stat@2.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.stat",
+    "licenseUrl": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.stat/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@nodelib/fs.walk@1.2.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.walk",
+    "licenseUrl": "https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.walk/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@nolyfill/is-core-module@1.0.39": {
+    "licenses": "MIT",
+    "repository": "https://github.com/SukkaW/nolyfill",
+    "licenseUrl": "https://github.com/SukkaW/nolyfill/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@notifee/react-native@9.1.8": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/invertase/notifee",
+    "licenseUrl": "https://github.com/invertase/notifee/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@pkgr/core@0.2.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/un-ts/pkgr",
+    "licenseUrl": "https://github.com/un-ts/pkgr",
+    "parents": "health-export-for-ai"
+  },
   "@radix-ui/primitive@1.1.3": {
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
@@ -825,7 +969,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "expo-router:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-compose-refs@1.1.2": {
     "licenses": "MIT",
@@ -843,7 +987,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "vaul:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-direction@1.1.1": {
     "licenses": "MIT",
@@ -855,7 +999,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "vaul:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-focus-guards@1.1.3": {
     "licenses": "MIT",
@@ -867,7 +1011,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "vaul:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-id@1.1.1": {
     "licenses": "MIT",
@@ -879,25 +1023,25 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "vaul:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-presence@1.1.5": {
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "expo-router:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-primitive@2.1.3": {
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "expo-router:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-roving-focus@1.1.11": {
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "expo-router:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-slot@1.2.0": {
     "licenses": "MIT",
@@ -909,13 +1053,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "@radix-ui/react-primitive:expo-router:health-export-for-ai"
+    "parents": "@radix-ui/react-primitive:health-export-for-ai"
   },
   "@radix-ui/react-tabs@1.1.13": {
     "licenses": "MIT",
     "repository": "https://github.com/radix-ui/primitives",
     "licenseUrl": "https://github.com/radix-ui/primitives/raw/master/LICENSE",
-    "parents": "expo-router:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "@radix-ui/react-use-callback-ref@1.1.1": {
     "licenses": "MIT",
@@ -951,6 +1095,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/react-native-async-storage/async-storage",
     "licenseUrl": "https://github.com/react-native-async-storage/async-storage/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@react-native-community/netinfo@11.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/react-native-netinfo/react-native-netinfo",
+    "licenseUrl": "https://github.com/react-native-netinfo/react-native-netinfo/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "@react-native-google-signin/google-signin@16.1.1": {
@@ -1023,33 +1173,33 @@
     "licenses": "MIT",
     "repository": "https://github.com/facebook/react-native",
     "licenseUrl": "https://github.com/facebook/react-native",
-    "parents": "react-native:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
-  "@react-navigation/bottom-tabs@7.9.1": {
+  "@react-navigation/bottom-tabs@7.10.1": {
     "licenses": "MIT",
     "repository": "https://github.com/react-navigation/react-navigation",
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "@react-navigation/core@7.13.7": {
+  "@react-navigation/core@7.14.0": {
     "licenses": "MIT",
     "repository": "https://github.com/react-navigation/react-navigation",
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "@react-navigation/elements@2.9.4": {
+  "@react-navigation/elements@2.9.5": {
     "licenses": "MIT",
     "repository": "https://github.com/react-navigation/react-navigation",
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "@react-navigation/native-stack@7.9.1": {
+  "@react-navigation/native-stack@7.10.1": {
     "licenses": "MIT",
     "repository": "https://github.com/react-navigation/react-navigation",
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "@react-navigation/native@7.1.27": {
+  "@react-navigation/native@7.1.28": {
     "licenses": "MIT",
     "repository": "https://github.com/react-navigation/react-navigation",
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
@@ -1061,10 +1211,88 @@
     "licenseUrl": "https://github.com/react-navigation/react-navigation/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "@rollup/rollup-win32-arm64-msvc@4.55.1": {
+  "@rollup/rollup-win32-arm64-msvc@4.55.2": {
     "licenses": "MIT",
     "repository": "https://github.com/rollup/rollup",
     "licenseUrl": "https://github.com/rollup/rollup",
+    "parents": "health-export-for-ai"
+  },
+  "@rtsao/scc@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rtsao/scc",
+    "licenseUrl": "https://github.com/rtsao/scc/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry-internal/browser-utils@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry-internal/feedback@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry-internal/replay-canvas@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry-internal/replay@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/babel-plugin-component-annotate@4.6.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript-bundler-plugins",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript-bundler-plugins/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/browser@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/cli-win32-arm64@2.58.4": {
+    "licenses": "FSL-1.1-MIT",
+    "repository": "https://github.com/getsentry/sentry-cli",
+    "licenseUrl": "https://github.com/getsentry/sentry-cli",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/cli@2.58.4": {
+    "licenses": "FSL-1.1-MIT",
+    "repository": "https://github.com/getsentry/sentry-cli",
+    "licenseUrl": "https://github.com/getsentry/sentry-cli/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/core@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/react-native@7.9.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-react-native",
+    "licenseUrl": "https://github.com/getsentry/sentry-react-native/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/react@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@sentry/types@10.34.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/getsentry/sentry-javascript",
+    "licenseUrl": "https://github.com/getsentry/sentry-javascript/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "@sinclair/typebox@0.27.8": {
@@ -1157,6 +1385,24 @@
     "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "@types/js-base64@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@types/json-schema@7.0.15": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@types/json5@0.0.29": {
+    "licenses": "MIT",
+    "repository": "https://wwwhub.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseUrl": "https://wwwhub.com/DefinitelyTyped/DefinitelyTyped",
+    "parents": "health-export-for-ai"
+  },
   "@types/node@25.0.9": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
@@ -1187,10 +1433,76 @@
     "licenseUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "@typescript-eslint/eslint-plugin@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/parser@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/project-service@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/scope-manager@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/tsconfig-utils@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/type-utils@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/types@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/typescript-estree@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/utils@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@typescript-eslint/visitor-keys@8.53.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typescript-eslint/typescript-eslint",
+    "licenseUrl": "https://github.com/typescript-eslint/typescript-eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "@ungap/structured-clone@1.3.0": {
     "licenses": "ISC",
     "repository": "https://github.com/ungap/structured-clone",
     "licenseUrl": "https://github.com/ungap/structured-clone/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "@unrs/resolver-binding-win32-arm64-msvc@1.11.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unrs/unrs-resolver",
+    "licenseUrl": "https://github.com/unrs/unrs-resolver",
     "parents": "health-export-for-ai"
   },
   "@urql/core@5.2.0": {
@@ -1271,17 +1583,35 @@
     "licenseUrl": "https://github.com/jshttp/accepts/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "acorn-jsx@5.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/acornjs/acorn-jsx",
+    "licenseUrl": "https://github.com/acornjs/acorn-jsx/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "acorn@8.15.0": {
     "licenses": "MIT",
     "repository": "https://github.com/acornjs/acorn",
     "licenseUrl": "https://github.com/acornjs/acorn/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "agent-base@6.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-agent-base",
+    "licenseUrl": "https://github.com/TooTallNate/node-agent-base",
+    "parents": "health-export-for-ai"
+  },
   "agent-base@7.1.4": {
     "licenses": "MIT",
     "repository": "https://github.com/TooTallNate/proxy-agents",
     "licenseUrl": "https://github.com/TooTallNate/proxy-agents/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "metro-cache:health-export-for-ai"
+  },
+  "ajv@6.12.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ajv-validator/ajv",
+    "licenseUrl": "https://github.com/ajv-validator/ajv/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
   },
   "ajv@8.17.1": {
     "licenses": "MIT",
@@ -1301,6 +1631,12 @@
     "licenseUrl": "https://github.com/sindresorhus/ansi-escapes/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "ansi-escapes@7.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/ansi-escapes",
+    "licenseUrl": "https://github.com/sindresorhus/ansi-escapes/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
+  },
   "ansi-regex@0.2.1": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/ansi-regex",
@@ -1311,13 +1647,19 @@
     "licenses": "MIT",
     "repository": "https://github.com/chalk/ansi-regex",
     "licenseUrl": "https://github.com/chalk/ansi-regex/raw/master/license",
-    "parents": "ora:health-export-for-ai"
+    "parents": "strip-ansi:health-export-for-ai"
   },
   "ansi-regex@5.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/ansi-regex",
     "licenseUrl": "https://github.com/chalk/ansi-regex/raw/master/license",
     "parents": "health-export-for-ai"
+  },
+  "ansi-regex@6.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "licenseUrl": "https://github.com/chalk/ansi-regex/raw/master/license",
+    "parents": "cli-truncate:health-export-for-ai"
   },
   "ansi-styles@1.1.0": {
     "licenses": "MIT",
@@ -1329,19 +1671,25 @@
     "licenses": "MIT",
     "repository": "https://github.com/chalk/ansi-styles",
     "licenseUrl": "https://github.com/chalk/ansi-styles/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "ansi-styles@4.3.0": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/ansi-styles",
     "licenseUrl": "https://github.com/chalk/ansi-styles/raw/master/license",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "ansi-styles@5.2.0": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/ansi-styles",
     "licenseUrl": "https://github.com/chalk/ansi-styles/raw/master/license",
     "parents": "pretty-format:health-export-for-ai"
+  },
+  "ansi-styles@6.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-styles",
+    "licenseUrl": "https://github.com/chalk/ansi-styles/raw/master/license",
+    "parents": "slice-ansi:health-export-for-ai"
   },
   "any-promise@1.3.0": {
     "licenses": "MIT",
@@ -1365,18 +1713,66 @@
     "licenses": "MIT",
     "repository": "https://github.com/nodeca/argparse",
     "licenseUrl": "https://github.com/nodeca/argparse/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "argparse@2.0.1": {
     "licenses": "Python-2.0",
     "repository": "https://github.com/nodeca/argparse",
     "licenseUrl": "https://github.com/nodeca/argparse/raw/master/LICENSE",
-    "parents": "@expo/xcpretty:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "aria-hidden@1.2.6": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/aria-hidden",
     "licenseUrl": "https://github.com/theKashey/aria-hidden/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array-buffer-byte-length@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/array-buffer-byte-length",
+    "licenseUrl": "https://github.com/inspect-js/array-buffer-byte-length/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array-includes@3.1.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/array-includes",
+    "licenseUrl": "https://github.com/es-shims/array-includes/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array.prototype.findlast@1.2.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Array.prototype.findLast",
+    "licenseUrl": "https://github.com/es-shims/Array.prototype.findLast/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array.prototype.findlastindex@1.2.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Array.prototype.findLastIndex",
+    "licenseUrl": "https://github.com/es-shims/Array.prototype.findLastIndex/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array.prototype.flat@1.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Array.prototype.flat",
+    "licenseUrl": "https://github.com/es-shims/Array.prototype.flat/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array.prototype.flatmap@1.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Array.prototype.flatMap",
+    "licenseUrl": "https://github.com/es-shims/Array.prototype.flatMap/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "array.prototype.tosorted@1.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Array.prototype.toSorted",
+    "licenseUrl": "https://github.com/es-shims/Array.prototype.toSorted/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "arraybuffer.prototype.slice@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/ArrayBuffer.prototype.slice",
+    "licenseUrl": "https://github.com/es-shims/ArrayBuffer.prototype.slice/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "asap@2.0.6": {
@@ -1391,6 +1787,12 @@
     "licenseUrl": "https://github.com/chaijs/assertion-error/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "async-function@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/async-function",
+    "licenseUrl": "https://github.com/ljharb/async-function/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "async-limiter@1.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/strml/async-limiter",
@@ -1401,6 +1803,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/caolan/async",
     "licenseUrl": "https://github.com/caolan/async/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "available-typed-arrays@1.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/available-typed-arrays",
+    "licenseUrl": "https://github.com/inspect-js/available-typed-arrays/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "babel-jest@29.7.0": {
@@ -1473,7 +1881,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "babel-preset-jest@29.6.3": {
     "licenses": "MIT",
@@ -1493,7 +1901,7 @@
     "licenseUrl": "https://github.com/beatgammit/base64-js/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "baseline-browser-mapping@2.9.14": {
+  "baseline-browser-mapping@2.9.15": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/web-platform-dx/baseline-browser-mapping",
     "licenseUrl": "https://github.com/web-platform-dx/baseline-browser-mapping/raw/master/LICENSE.txt",
@@ -1518,6 +1926,12 @@
     "parents": "health-export-for-ai"
   },
   "bplist-parser@0.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nearinfinity/node-bplist-parser",
+    "licenseUrl": "https://github.com/nearinfinity/node-bplist-parser",
+    "parents": "simple-plist:health-export-for-ai"
+  },
+  "bplist-parser@0.3.2": {
     "licenses": "MIT",
     "repository": "https://github.com/nearinfinity/node-bplist-parser",
     "licenseUrl": "https://github.com/nearinfinity/node-bplist-parser",
@@ -1571,6 +1985,30 @@
     "licenseUrl": "https://github.com/visionmedia/bytes.js/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "call-bind-apply-helpers@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/call-bind-apply-helpers",
+    "licenseUrl": "https://github.com/ljharb/call-bind-apply-helpers/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "call-bind@1.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/call-bind",
+    "licenseUrl": "https://github.com/ljharb/call-bind/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "call-bound@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/call-bound",
+    "licenseUrl": "https://github.com/ljharb/call-bound/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "callsites@3.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/callsites",
+    "licenseUrl": "https://github.com/sindresorhus/callsites/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
   "camelcase@5.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/camelcase",
@@ -1583,7 +2021,7 @@
     "licenseUrl": "https://github.com/sindresorhus/camelcase/raw/master/license",
     "parents": "health-export-for-ai"
   },
-  "caniuse-lite@1.0.30001764": {
+  "caniuse-lite@1.0.30001765": {
     "licenses": "CC-BY-4.0",
     "repository": "https://github.com/browserslist/caniuse-lite",
     "licenseUrl": "https://github.com/browserslist/caniuse-lite/raw/master/LICENSE",
@@ -1605,13 +2043,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/chalk/chalk",
     "licenseUrl": "https://github.com/chalk/chalk/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "chalk@4.1.2": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/chalk",
     "licenseUrl": "https://github.com/chalk/chalk/raw/master/license",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "chownr@3.0.0": {
     "licenses": "BlueOak-1.0.0",
@@ -1635,13 +2073,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/watson/ci-info",
     "licenseUrl": "https://github.com/watson/ci-info/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "metro:health-export-for-ai"
   },
   "ci-info@3.9.0": {
     "licenses": "MIT",
     "repository": "https://github.com/watson/ci-info",
     "licenseUrl": "https://github.com/watson/ci-info/raw/master/LICENSE",
-    "parents": "jest-util:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "cli-cursor@2.1.0": {
     "licenses": "MIT",
@@ -1649,10 +2087,22 @@
     "licenseUrl": "https://github.com/sindresorhus/cli-cursor/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "cli-cursor@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/cli-cursor",
+    "licenseUrl": "https://github.com/sindresorhus/cli-cursor/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
+  },
   "cli-spinners@2.9.2": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/cli-spinners",
     "licenseUrl": "https://github.com/sindresorhus/cli-spinners/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "cli-truncate@5.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/cli-truncate",
+    "licenseUrl": "https://github.com/sindresorhus/cli-truncate/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "client-only@0.0.1": {
@@ -1676,25 +2126,25 @@
     "licenses": "MIT",
     "repository": "https://github.com/Qix-/color-convert",
     "licenseUrl": "https://github.com/Qix-/color-convert/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "color-convert@2.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/Qix-/color-convert",
     "licenseUrl": "https://github.com/Qix-/color-convert/raw/master/LICENSE",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "color-name@1.1.3": {
     "licenses": "MIT",
     "repository": "https://github.com/dfcreative/color-name",
     "licenseUrl": "https://github.com/dfcreative/color-name/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "color-name@1.1.4": {
     "licenses": "MIT",
     "repository": "https://github.com/colorjs/color-name",
     "licenseUrl": "https://github.com/colorjs/color-name/raw/master/LICENSE",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "color-string@1.9.1": {
     "licenses": "MIT",
@@ -1708,11 +2158,23 @@
     "licenseUrl": "https://github.com/Qix-/color/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "colorette@2.0.20": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jorgebucaran/colorette",
+    "licenseUrl": "https://github.com/jorgebucaran/colorette/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
   "commander@12.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/tj/commander.js",
     "licenseUrl": "https://github.com/tj/commander.js/raw/master/LICENSE",
     "parents": "react-native:health-export-for-ai"
+  },
+  "commander@14.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tj/commander.js",
+    "licenseUrl": "https://github.com/tj/commander.js/raw/master/LICENSE",
+    "parents": "lint-staged:health-export-for-ai"
   },
   "commander@2.20.3": {
     "licenses": "MIT",
@@ -1786,6 +2248,24 @@
     "licenseUrl": "https://github.com/frenic/csstype/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "data-view-buffer@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/data-view-buffer",
+    "licenseUrl": "https://github.com/inspect-js/data-view-buffer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "data-view-byte-length@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/data-view-byte-length",
+    "licenseUrl": "https://github.com/inspect-js/data-view-byte-length/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "data-view-byte-offset@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/data-view-byte-offset",
+    "licenseUrl": "https://github.com/inspect-js/data-view-byte-offset/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "debug@2.6.9": {
     "licenses": "MIT",
     "repository": "https://github.com/visionmedia/debug",
@@ -1822,6 +2302,12 @@
     "licenseUrl": "https://github.com/unclechu/node-deep-extend/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "deep-is@0.1.4": {
+    "licenses": "MIT",
+    "repository": "http://github.com/thlorenz/deep-is",
+    "licenseUrl": "http://github.com/thlorenz/deep-is/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "deepmerge@4.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/TehShrike/deepmerge",
@@ -1834,10 +2320,22 @@
     "licenseUrl": "https://github.com/sindresorhus/node-defaults/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "define-data-property@1.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/define-data-property",
+    "licenseUrl": "https://github.com/ljharb/define-data-property/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "define-lazy-prop@2.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/define-lazy-prop",
     "licenseUrl": "https://github.com/sindresorhus/define-lazy-prop/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "define-properties@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/define-properties",
+    "licenseUrl": "https://github.com/ljharb/define-properties/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "depd@2.0.0": {
@@ -1870,6 +2368,18 @@
     "licenseUrl": "https://github.com/npm/dezalgo/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "doctrine@2.1.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/doctrine",
+    "licenseUrl": "https://github.com/eslint/doctrine/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "doctrine@3.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/doctrine",
+    "licenseUrl": "https://github.com/eslint/doctrine/raw/master/LICENSE",
+    "parents": "eslint:health-export-for-ai"
+  },
   "dotenv-expand@11.0.7": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/motdotla/dotenv-expand",
@@ -1880,6 +2390,12 @@
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/motdotla/dotenv",
     "licenseUrl": "https://github.com/motdotla/dotenv/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "dunder-proto@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/dunder-proto",
+    "licenseUrl": "https://github.com/es-shims/dunder-proto/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "ee-first@1.1.1": {
@@ -1893,6 +2409,12 @@
     "repository": "https://github.com/kilian/electron-to-chromium/",
     "licenseUrl": "https://github.com/kilian/electron-to-chromium//raw/master/LICENSE",
     "parents": "health-export-for-ai"
+  },
+  "emoji-regex@10.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mathiasbynens/emoji-regex",
+    "licenseUrl": "https://github.com/mathiasbynens/emoji-regex/raw/master/LICENSE-MIT.txt",
+    "parents": "log-update:health-export-for-ai"
   },
   "emoji-regex@8.0.0": {
     "licenses": "MIT",
@@ -1918,16 +2440,70 @@
     "licenseUrl": "https://github.com/sindresorhus/env-editor/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "environment@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/environment",
+    "licenseUrl": "https://github.com/sindresorhus/environment/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
   "error-stack-parser@2.1.4": {
     "licenses": "MIT",
     "repository": "https://github.com/stacktracejs/error-stack-parser",
     "licenseUrl": "https://github.com/stacktracejs/error-stack-parser/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "es-abstract@1.24.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-abstract",
+    "licenseUrl": "https://github.com/ljharb/es-abstract/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-define-property@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-define-property",
+    "licenseUrl": "https://github.com/ljharb/es-define-property/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-errors@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-errors",
+    "licenseUrl": "https://github.com/ljharb/es-errors/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-iterator-helpers@1.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/iterator-helpers",
+    "licenseUrl": "https://github.com/es-shims/iterator-helpers/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "es-module-lexer@1.7.0": {
     "licenses": "MIT",
     "repository": "https://github.com/guybedford/es-module-lexer",
     "licenseUrl": "https://github.com/guybedford/es-module-lexer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-object-atoms@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-object-atoms",
+    "licenseUrl": "https://github.com/ljharb/es-object-atoms/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-set-tostringtag@2.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/es-set-tostringtag",
+    "licenseUrl": "https://github.com/es-shims/es-set-tostringtag/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-shim-unscopables@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-shim-unscopables",
+    "licenseUrl": "https://github.com/ljharb/es-shim-unscopables/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "es-to-primitive@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/es-to-primitive",
+    "licenseUrl": "https://github.com/ljharb/es-to-primitive/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "esbuild@0.27.2": {
@@ -1952,7 +2528,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/escape-string-regexp",
     "licenseUrl": "https://github.com/sindresorhus/escape-string-regexp/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "escape-string-regexp@2.0.0": {
     "licenses": "MIT",
@@ -1964,7 +2540,115 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/escape-string-regexp",
     "licenseUrl": "https://github.com/sindresorhus/escape-string-regexp/raw/master/license",
-    "parents": "chrome-launcher:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "eslint-config-expo@10.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-config-prettier@10.1.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prettier/eslint-config-prettier",
+    "licenseUrl": "https://github.com/prettier/eslint-config-prettier/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-import-resolver-node@0.3.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/import-js/eslint-plugin-import",
+    "licenseUrl": "https://github.com/import-js/eslint-plugin-import/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-import-resolver-typescript@3.10.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/import-js/eslint-import-resolver-typescript",
+    "licenseUrl": "https://github.com/import-js/eslint-import-resolver-typescript/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-module-utils@2.12.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/import-js/eslint-plugin-import",
+    "licenseUrl": "https://github.com/import-js/eslint-plugin-import/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-plugin-expo@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-plugin-import@2.32.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/import-js/eslint-plugin-import",
+    "licenseUrl": "https://github.com/import-js/eslint-plugin-import/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-plugin-prettier@5.5.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prettier/eslint-plugin-prettier",
+    "licenseUrl": "https://github.com/prettier/eslint-plugin-prettier/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-plugin-react-hooks@5.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-plugin-react@7.37.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jsx-eslint/eslint-plugin-react",
+    "licenseUrl": "https://github.com/jsx-eslint/eslint-plugin-react/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-scope@7.2.2": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/eslint/eslint-scope",
+    "licenseUrl": "https://github.com/eslint/eslint-scope/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint-scope@8.4.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/eslint/js",
+    "licenseUrl": "https://github.com/eslint/js/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "eslint-visitor-keys@3.4.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/eslint-visitor-keys",
+    "licenseUrl": "https://github.com/eslint/eslint-visitor-keys/raw/master/LICENSE",
+    "parents": "@eslint-community/eslint-utils:health-export-for-ai"
+  },
+  "eslint-visitor-keys@4.2.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/eslint/js",
+    "licenseUrl": "https://github.com/eslint/js/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint@8.57.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslint",
+    "licenseUrl": "https://github.com/eslint/eslint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eslint@9.39.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/eslint/eslint",
+    "licenseUrl": "https://github.com/eslint/eslint/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "espree@10.4.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/eslint/js",
+    "licenseUrl": "https://github.com/eslint/js/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "espree@9.6.1": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/eslint/espree",
+    "licenseUrl": "https://github.com/eslint/espree/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
   },
   "esprima@4.0.1": {
     "licenses": "BSD-2-Clause",
@@ -1972,10 +2656,34 @@
     "licenseUrl": "https://github.com/jquery/esprima/raw/master/LICENSE.BSD",
     "parents": "health-export-for-ai"
   },
+  "esquery@1.7.0": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/estools/esquery",
+    "licenseUrl": "https://github.com/estools/esquery/raw/master/license.txt",
+    "parents": "health-export-for-ai"
+  },
+  "esrecurse@4.3.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/estools/esrecurse",
+    "licenseUrl": "https://github.com/estools/esrecurse",
+    "parents": "health-export-for-ai"
+  },
+  "estraverse@5.3.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "http://github.com/estools/estraverse",
+    "licenseUrl": "http://github.com/estools/estraverse/raw/master/LICENSE.BSD",
+    "parents": "health-export-for-ai"
+  },
   "estree-walker@3.0.3": {
     "licenses": "MIT",
     "repository": "https://github.com/Rich-Harris/estree-walker",
     "licenseUrl": "https://github.com/Rich-Harris/estree-walker/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "esutils@2.0.3": {
+    "licenses": "BSD-2-Clause",
+    "repository": "http://github.com/estools/esutils",
+    "licenseUrl": "http://github.com/estools/esutils/raw/master/LICENSE.BSD",
     "parents": "health-export-for-ai"
   },
   "etag@1.8.1": {
@@ -1988,6 +2696,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/mysticatea/event-target-shim",
     "licenseUrl": "https://github.com/mysticatea/event-target-shim/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "eventemitter3@5.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/primus/eventemitter3",
+    "licenseUrl": "https://github.com/primus/eventemitter3/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "exec-async@2.2.0": {
@@ -2006,7 +2720,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "expo-background-fetch@14.0.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo",
+    "parents": "health-export-for-ai"
   },
   "expo-build-properties@1.0.10": {
     "licenses": "MIT",
@@ -2054,7 +2774,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "expo-health-connect@0.1.1": {
     "licenses": "MIT",
@@ -2072,7 +2792,7 @@
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
     "licenseUrl": "https://github.com/expo/expo",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "expo-linking@8.0.11": {
     "licenses": "MIT",
@@ -2116,6 +2836,12 @@
     "licenseUrl": "https://github.com/expo/expo",
     "parents": "health-export-for-ai"
   },
+  "expo-task-manager@14.0.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo",
+    "parents": "health-export-for-ai"
+  },
   "expo-updates-interface@2.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/expo/expo",
@@ -2140,16 +2866,34 @@
     "licenseUrl": "https://github.com/epoberezkin/fast-deep-equal/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "fast-diff@1.3.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/jhchen/fast-diff",
+    "licenseUrl": "https://github.com/jhchen/fast-diff/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "fast-json-stable-stringify@2.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/epoberezkin/fast-json-stable-stringify",
     "licenseUrl": "https://github.com/epoberezkin/fast-json-stable-stringify/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "fast-levenshtein@2.0.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/hiddentao/fast-levenshtein",
+    "licenseUrl": "https://github.com/hiddentao/fast-levenshtein/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
   "fast-uri@3.1.0": {
     "licenses": "BSD-3-Clause",
     "repository": "https://github.com/fastify/fast-uri",
     "licenseUrl": "https://github.com/fastify/fast-uri/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "fastq@1.20.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/mcollina/fastq",
+    "licenseUrl": "https://github.com/mcollina/fastq/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "fb-watchman@2.0.2": {
@@ -2163,6 +2907,18 @@
     "repository": "https://github.com/thecodrr/fdir",
     "licenseUrl": "https://github.com/thecodrr/fdir/raw/master/LICENSE",
     "parents": "health-export-for-ai"
+  },
+  "file-entry-cache@6.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/royriojas/file-entry-cache",
+    "licenseUrl": "https://github.com/royriojas/file-entry-cache/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "file-entry-cache@8.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jaredwray/file-entry-cache",
+    "licenseUrl": "https://github.com/jaredwray/file-entry-cache/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
   },
   "fill-range@7.1.1": {
     "licenses": "MIT",
@@ -2186,13 +2942,31 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/find-up",
     "licenseUrl": "https://github.com/sindresorhus/find-up/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "find-up@5.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/find-up",
     "licenseUrl": "https://github.com/sindresorhus/find-up/raw/master/license",
-    "parents": "@expo/xcpretty:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "flat-cache@3.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jaredwray/flat-cache",
+    "licenseUrl": "https://github.com/jaredwray/flat-cache/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "flat-cache@4.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jaredwray/flat-cache",
+    "licenseUrl": "https://github.com/jaredwray/flat-cache/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "flatted@3.3.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/WebReflection/flatted",
+    "licenseUrl": "https://github.com/WebReflection/flatted/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
   },
   "flow-enums-runtime@0.0.6": {
     "licenses": "MIT",
@@ -2204,6 +2978,12 @@
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/bramstein/fontfaceobserver",
     "licenseUrl": "https://github.com/bramstein/fontfaceobserver/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "for-each@0.3.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/for-each",
+    "licenseUrl": "https://github.com/Raynos/for-each/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "freeport-async@2.0.0": {
@@ -2230,6 +3010,24 @@
     "licenseUrl": "https://github.com/Raynos/function-bind/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "function.prototype.name@1.1.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Function.prototype.name",
+    "licenseUrl": "https://github.com/es-shims/Function.prototype.name/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "functions-have-names@1.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/functions-have-names",
+    "licenseUrl": "https://github.com/inspect-js/functions-have-names/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "generator-function@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TimothyGu/generator-function",
+    "licenseUrl": "https://github.com/TimothyGu/generator-function/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
   "gensync@1.0.0-beta.2": {
     "licenses": "MIT",
     "repository": "https://github.com/loganfsmyth/gensync",
@@ -2242,6 +3040,18 @@
     "licenseUrl": "https://github.com/stefanpenner/get-caller-file/raw/master/LICENSE.md",
     "parents": "health-export-for-ai"
   },
+  "get-east-asian-width@1.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/get-east-asian-width",
+    "licenseUrl": "https://github.com/sindresorhus/get-east-asian-width/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "get-intrinsic@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/get-intrinsic",
+    "licenseUrl": "https://github.com/ljharb/get-intrinsic/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "get-nonce@1.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/theKashey/get-nonce",
@@ -2252,6 +3062,24 @@
     "licenses": "MIT",
     "repository": "https://github.com/cfware/get-package-type",
     "licenseUrl": "https://github.com/cfware/get-package-type/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "get-proto@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/get-proto",
+    "licenseUrl": "https://github.com/ljharb/get-proto/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "get-symbol-description@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/get-symbol-description",
+    "licenseUrl": "https://github.com/inspect-js/get-symbol-description/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "get-tsconfig@4.13.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/privatenumber/get-tsconfig",
+    "licenseUrl": "https://github.com/privatenumber/get-tsconfig/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "getenv@2.0.0": {
@@ -2270,6 +3098,12 @@
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/robertkowalski/github-url-from-username-repo",
     "licenseUrl": "https://github.com/robertkowalski/github-url-from-username-repo/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "glob-parent@6.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/gulpjs/glob-parent",
+    "licenseUrl": "https://github.com/gulpjs/glob-parent/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "glob@13.0.0": {
@@ -2296,6 +3130,36 @@
     "licenseUrl": "https://github.com/sindresorhus/global-dirs/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "globals@13.24.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/globals",
+    "licenseUrl": "https://github.com/sindresorhus/globals/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "globals@14.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/globals",
+    "licenseUrl": "https://github.com/sindresorhus/globals/raw/master/license",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
+  },
+  "globals@16.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/globals",
+    "licenseUrl": "https://github.com/sindresorhus/globals/raw/master/license",
+    "parents": "eslint-config-expo:health-export-for-ai"
+  },
+  "globalthis@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/System.global",
+    "licenseUrl": "https://github.com/ljharb/System.global/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "gopd@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/gopd",
+    "licenseUrl": "https://github.com/ljharb/gopd/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "graceful-fs@3.0.12": {
     "licenses": "ISC",
     "repository": "https://github.com/isaacs/node-graceful-fs",
@@ -2308,23 +3172,59 @@
     "licenseUrl": "https://github.com/isaacs/node-graceful-fs/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "graphemer@1.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/flmnt/graphemer",
+    "licenseUrl": "https://github.com/flmnt/graphemer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "has-ansi@0.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/has-ansi",
     "licenseUrl": "https://github.com/sindresorhus/has-ansi",
     "parents": "health-export-for-ai"
   },
+  "has-bigints@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/has-bigints",
+    "licenseUrl": "https://github.com/ljharb/has-bigints/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "has-flag@3.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/has-flag",
     "licenseUrl": "https://github.com/sindresorhus/has-flag/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "has-flag@4.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/has-flag",
     "licenseUrl": "https://github.com/sindresorhus/has-flag/raw/master/license",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "has-property-descriptors@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/has-property-descriptors",
+    "licenseUrl": "https://github.com/inspect-js/has-property-descriptors/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "has-proto@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/has-proto",
+    "licenseUrl": "https://github.com/inspect-js/has-proto/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "has-symbols@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/has-symbols",
+    "licenseUrl": "https://github.com/inspect-js/has-symbols/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "has-tostringtag@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/has-tostringtag",
+    "licenseUrl": "https://github.com/inspect-js/has-tostringtag/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
   },
   "hasown@2.0.2": {
     "licenses": "MIT",
@@ -2332,33 +3232,29 @@
     "licenseUrl": "https://github.com/inspect-js/hasOwn/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "health-export-for-ai@1.0.0": {
-    "licenses": "GPL-3.0",
-    "parents": "UNDEFINED"
-  },
   "hermes-estree@0.29.1": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/hermes",
     "licenseUrl": "https://github.com/facebook/hermes/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "hermes-estree@0.32.0": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/hermes",
     "licenseUrl": "https://github.com/facebook/hermes/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "metro:health-export-for-ai"
   },
   "hermes-parser@0.29.1": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/hermes",
     "licenseUrl": "https://github.com/facebook/hermes/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "hermes-parser@0.32.0": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/hermes",
     "licenseUrl": "https://github.com/facebook/hermes/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "metro:health-export-for-ai"
   },
   "hosted-git-info@7.0.2": {
     "licenses": "ISC",
@@ -2372,10 +3268,22 @@
     "licenseUrl": "https://github.com/jshttp/http-errors/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "https-proxy-agent@5.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-https-proxy-agent",
+    "licenseUrl": "https://github.com/TooTallNate/node-https-proxy-agent",
+    "parents": "health-export-for-ai"
+  },
   "https-proxy-agent@7.0.6": {
     "licenses": "MIT",
     "repository": "https://github.com/TooTallNate/proxy-agents",
     "licenseUrl": "https://github.com/TooTallNate/proxy-agents/raw/master/LICENSE",
+    "parents": "metro-cache:health-export-for-ai"
+  },
+  "husky@9.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/typicode/husky",
+    "licenseUrl": "https://github.com/typicode/husky/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "ieee754@1.2.1": {
@@ -2390,10 +3298,22 @@
     "licenseUrl": "https://github.com/kaelzhang/node-ignore/raw/master/LICENSE-MIT",
     "parents": "health-export-for-ai"
   },
+  "ignore@7.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/kaelzhang/node-ignore",
+    "licenseUrl": "https://github.com/kaelzhang/node-ignore/raw/master/LICENSE-MIT",
+    "parents": "@typescript-eslint/eslint-plugin:health-export-for-ai"
+  },
   "image-size@1.2.1": {
     "licenses": "MIT",
     "repository": "https://github.com/image-size/image-size",
     "licenseUrl": "https://github.com/image-size/image-size/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "import-fresh@3.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/import-fresh",
+    "licenseUrl": "https://github.com/sindresorhus/import-fresh/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "imurmurhash@0.1.4": {
@@ -2420,10 +3340,22 @@
     "licenseUrl": "https://github.com/isaacs/ini/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "internal-slot@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/internal-slot",
+    "licenseUrl": "https://github.com/ljharb/internal-slot/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "invariant@2.2.4": {
     "licenses": "MIT",
     "repository": "https://github.com/zertosh/invariant",
     "licenseUrl": "https://github.com/zertosh/invariant/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-array-buffer@3.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-array-buffer",
+    "licenseUrl": "https://github.com/inspect-js/is-array-buffer/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "is-arrayish@0.3.4": {
@@ -2432,10 +3364,52 @@
     "licenseUrl": "https://github.com/qix-/node-is-arrayish/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "is-async-function@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-async-function",
+    "licenseUrl": "https://github.com/inspect-js/is-async-function/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-bigint@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-bigint",
+    "licenseUrl": "https://github.com/inspect-js/is-bigint/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-boolean-object@1.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-boolean-object",
+    "licenseUrl": "https://github.com/inspect-js/is-boolean-object/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-bun-module@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/SunsetTechuila/is-bun-module",
+    "licenseUrl": "https://github.com/SunsetTechuila/is-bun-module/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-callable@1.2.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-callable",
+    "licenseUrl": "https://github.com/inspect-js/is-callable/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "is-core-module@2.16.1": {
     "licenses": "MIT",
     "repository": "https://github.com/inspect-js/is-core-module",
     "licenseUrl": "https://github.com/inspect-js/is-core-module/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-data-view@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-data-view",
+    "licenseUrl": "https://github.com/inspect-js/is-data-view/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-date-object@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-date-object",
+    "licenseUrl": "https://github.com/inspect-js/is-date-object/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "is-docker@2.2.1": {
@@ -2444,10 +3418,58 @@
     "licenseUrl": "https://github.com/sindresorhus/is-docker/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "is-extglob@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jonschlinkert/is-extglob",
+    "licenseUrl": "https://github.com/jonschlinkert/is-extglob/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-finalizationregistry@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-finalizationregistry",
+    "licenseUrl": "https://github.com/inspect-js/is-finalizationregistry/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "is-fullwidth-code-point@3.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
     "licenseUrl": "https://github.com/sindresorhus/is-fullwidth-code-point/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "is-fullwidth-code-point@5.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
+    "licenseUrl": "https://github.com/sindresorhus/is-fullwidth-code-point/raw/master/license",
+    "parents": "slice-ansi:health-export-for-ai"
+  },
+  "is-generator-function@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-generator-function",
+    "licenseUrl": "https://github.com/inspect-js/is-generator-function/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-glob@4.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/micromatch/is-glob",
+    "licenseUrl": "https://github.com/micromatch/is-glob/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-map@2.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-map",
+    "licenseUrl": "https://github.com/inspect-js/is-map/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-negative-zero@2.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-negative-zero",
+    "licenseUrl": "https://github.com/inspect-js/is-negative-zero/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-number-object@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-number-object",
+    "licenseUrl": "https://github.com/inspect-js/is-number-object/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "is-number@7.0.0": {
@@ -2456,16 +3478,82 @@
     "licenseUrl": "https://github.com/jonschlinkert/is-number/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "is-path-inside@3.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-path-inside",
+    "licenseUrl": "https://github.com/sindresorhus/is-path-inside/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
   "is-plain-obj@2.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/is-plain-obj",
     "licenseUrl": "https://github.com/sindresorhus/is-plain-obj/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "is-regex@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-regex",
+    "licenseUrl": "https://github.com/inspect-js/is-regex/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-set@2.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-set",
+    "licenseUrl": "https://github.com/inspect-js/is-set/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-shared-array-buffer@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-shared-array-buffer",
+    "licenseUrl": "https://github.com/inspect-js/is-shared-array-buffer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-string@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-string",
+    "licenseUrl": "https://github.com/inspect-js/is-string/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-symbol@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-symbol",
+    "licenseUrl": "https://github.com/inspect-js/is-symbol/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-typed-array@1.1.15": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-typed-array",
+    "licenseUrl": "https://github.com/inspect-js/is-typed-array/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-weakmap@2.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-weakmap",
+    "licenseUrl": "https://github.com/inspect-js/is-weakmap/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-weakref@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-weakref",
+    "licenseUrl": "https://github.com/inspect-js/is-weakref/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "is-weakset@2.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-weakset",
+    "licenseUrl": "https://github.com/inspect-js/is-weakset/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "is-wsl@2.2.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/is-wsl",
     "licenseUrl": "https://github.com/sindresorhus/is-wsl/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "isarray@2.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/juliangruber/isarray",
+    "licenseUrl": "https://github.com/juliangruber/isarray/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "isexe@2.0.0": {
@@ -2484,6 +3572,12 @@
     "licenses": "BSD-3-Clause",
     "repository": "https://github.com/istanbuljs/istanbuljs",
     "licenseUrl": "https://github.com/istanbuljs/istanbuljs/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "iterator.prototype@1.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/Iterator.prototype",
+    "licenseUrl": "https://github.com/ljharb/Iterator.prototype/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "jest-environment-node@29.7.0": {
@@ -2558,6 +3652,12 @@
     "licenseUrl": "https://github.com/dnukem/node-jquery-extend/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "js-base64@3.7.8": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/dankogai/js-base64",
+    "licenseUrl": "https://github.com/dankogai/js-base64/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
   "js-tokens@4.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/lydell/js-tokens",
@@ -2568,13 +3668,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/nodeca/js-yaml",
     "licenseUrl": "https://github.com/nodeca/js-yaml/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "js-yaml@4.1.1": {
     "licenses": "MIT",
     "repository": "https://github.com/nodeca/js-yaml",
     "licenseUrl": "https://github.com/nodeca/js-yaml/raw/master/LICENSE",
-    "parents": "@expo/xcpretty:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "jsc-safe-url@0.2.4": {
     "licenses": "0BSD",
@@ -2588,11 +3688,23 @@
     "licenseUrl": "https://github.com/mathiasbynens/jsesc/raw/master/LICENSE-MIT.txt",
     "parents": "health-export-for-ai"
   },
+  "json-buffer@3.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/json-buffer",
+    "licenseUrl": "https://github.com/dominictarr/json-buffer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "json-parse-helpfulerror@1.0.3": {
     "licenses": "MIT",
     "repository": "https://github.com/smikes/json-parse-helpfulerror",
     "licenseUrl": "https://github.com/smikes/json-parse-helpfulerror/raw/master/LICENSE",
     "parents": "health-export-for-ai"
+  },
+  "json-schema-traverse@0.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/epoberezkin/json-schema-traverse",
+    "licenseUrl": "https://github.com/epoberezkin/json-schema-traverse/raw/master/LICENSE",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
   },
   "json-schema-traverse@1.0.0": {
     "licenses": "MIT",
@@ -2600,10 +3712,34 @@
     "licenseUrl": "https://github.com/epoberezkin/json-schema-traverse/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "json-stable-stringify-without-jsonify@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/samn/json-stable-stringify",
+    "licenseUrl": "https://github.com/samn/json-stable-stringify/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "json5@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/json5/json5",
+    "licenseUrl": "https://github.com/json5/json5/raw/master/LICENSE.md",
+    "parents": "tsconfig-paths:health-export-for-ai"
+  },
   "json5@2.2.3": {
     "licenses": "MIT",
     "repository": "https://github.com/json5/json5",
     "licenseUrl": "https://github.com/json5/json5/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "jsx-ast-utils@3.3.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jsx-eslint/jsx-ast-utils",
+    "licenseUrl": "https://github.com/jsx-eslint/jsx-ast-utils/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "keyv@4.5.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jaredwray/keyv",
+    "licenseUrl": "https://github.com/jaredwray/keyv",
     "parents": "health-export-for-ai"
   },
   "kleur@3.0.3": {
@@ -2622,6 +3758,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/leven",
     "licenseUrl": "https://github.com/sindresorhus/leven/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "levn@0.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/gkz/levn",
+    "licenseUrl": "https://github.com/gkz/levn/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "license-checker@1.0.0": {
@@ -2652,19 +3794,37 @@
     "licenseUrl": "https://github.com/eventualbuddha/lines-and-columns/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "lint-staged@16.2.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lint-staged/lint-staged",
+    "licenseUrl": "https://github.com/lint-staged/lint-staged/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "listr2@9.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/listr2/listr2",
+    "licenseUrl": "https://github.com/listr2/listr2/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "locate-path@5.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/locate-path",
     "licenseUrl": "https://github.com/sindresorhus/locate-path/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "locate-path@6.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/locate-path",
     "licenseUrl": "https://github.com/sindresorhus/locate-path/raw/master/license",
-    "parents": "@expo/xcpretty:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "lodash.debounce@4.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lodash/lodash",
+    "licenseUrl": "https://github.com/lodash/lodash/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "lodash.merge@4.6.2": {
     "licenses": "MIT",
     "repository": "https://github.com/lodash/lodash",
     "licenseUrl": "https://github.com/lodash/lodash/raw/master/LICENSE",
@@ -2686,6 +3846,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/log-symbols",
     "licenseUrl": "https://github.com/sindresorhus/log-symbols/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "log-update@6.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/log-update",
+    "licenseUrl": "https://github.com/sindresorhus/log-update/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "loose-envify@1.4.0": {
@@ -2728,6 +3894,12 @@
     "licenses": "Apache-2.0",
     "repository": "https://github.com/nolanlawson/marky",
     "licenseUrl": "https://github.com/nolanlawson/marky/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "math-intrinsics@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/math-intrinsics",
+    "licenseUrl": "https://github.com/es-shims/math-intrinsics/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "memoize-one@5.2.1": {
@@ -2842,6 +4014,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/jshttp/mime-db",
     "licenseUrl": "https://github.com/jshttp/mime-db/raw/master/LICENSE",
+    "parents": "mime-types:health-export-for-ai"
+  },
+  "mime-db@1.54.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/mime-db",
+    "licenseUrl": "https://github.com/jshttp/mime-db/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "mime-types@2.1.35": {
@@ -2860,6 +4038,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/mimic-fn",
     "licenseUrl": "https://github.com/sindresorhus/mimic-fn/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "mimic-function@5.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/mimic-function",
+    "licenseUrl": "https://github.com/sindresorhus/mimic-function/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "minimatch@10.1.1": {
@@ -2934,16 +4118,34 @@
     "licenseUrl": "https://github.com/normalize/mz/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "nano-spawn@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/nano-spawn",
+    "licenseUrl": "https://github.com/sindresorhus/nano-spawn/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
   "nanoid@3.3.11": {
     "licenses": "MIT",
     "repository": "https://github.com/ai/nanoid",
     "licenseUrl": "https://github.com/ai/nanoid/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "napi-postinstall@0.3.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/un-ts/napi-postinstall",
+    "licenseUrl": "https://github.com/un-ts/napi-postinstall/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "natives@1.1.6": {
     "licenses": "ISC",
     "repository": "https://github.com/addaleax/natives",
     "licenseUrl": "https://github.com/addaleax/natives/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "natural-compare@1.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/litejs/natural-compare-lite",
+    "licenseUrl": "https://github.com/litejs/natural-compare-lite",
     "parents": "health-export-for-ai"
   },
   "negotiator@0.6.3": {
@@ -2962,6 +4164,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/mdlavin/nested-error-stacks",
     "licenseUrl": "https://github.com/mdlavin/nested-error-stacks/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "node-fetch@2.7.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bitinn/node-fetch",
+    "licenseUrl": "https://github.com/bitinn/node-fetch/raw/master/LICENSE.md",
     "parents": "health-export-for-ai"
   },
   "node-forge@1.3.3": {
@@ -3046,6 +4254,48 @@
     "licenseUrl": "https://github.com/sindresorhus/object-assign/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "object-inspect@1.13.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/object-inspect",
+    "licenseUrl": "https://github.com/inspect-js/object-inspect/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object-keys@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/object-keys",
+    "licenseUrl": "https://github.com/ljharb/object-keys/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object.assign@4.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/object.assign",
+    "licenseUrl": "https://github.com/ljharb/object.assign/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object.entries@1.1.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Object.entries",
+    "licenseUrl": "https://github.com/es-shims/Object.entries/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object.fromentries@2.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Object.fromEntries",
+    "licenseUrl": "https://github.com/es-shims/Object.fromEntries/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object.groupby@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Object.groupBy",
+    "licenseUrl": "https://github.com/es-shims/Object.groupBy/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "object.values@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Object.values",
+    "licenseUrl": "https://github.com/es-shims/Object.values/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "obug@2.1.1": {
     "licenses": "MIT",
     "repository": "https://github.com/sxzz/obug",
@@ -3082,6 +4332,12 @@
     "licenseUrl": "https://github.com/sindresorhus/onetime/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "onetime@7.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/onetime",
+    "licenseUrl": "https://github.com/sindresorhus/onetime/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
+  },
   "open@7.4.2": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/open",
@@ -3094,17 +4350,29 @@
     "licenseUrl": "https://github.com/sindresorhus/open/raw/master/license",
     "parents": "better-opn:health-export-for-ai"
   },
+  "optionator@0.9.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/gkz/optionator",
+    "licenseUrl": "https://github.com/gkz/optionator/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "ora@3.4.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/ora",
     "licenseUrl": "https://github.com/sindresorhus/ora/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "own-keys@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/own-keys",
+    "licenseUrl": "https://github.com/ljharb/own-keys/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "p-limit@2.3.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/p-limit",
     "licenseUrl": "https://github.com/sindresorhus/p-limit/raw/master/license",
-    "parents": "p-locate:health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "p-limit@3.1.0": {
     "licenses": "MIT",
@@ -3116,18 +4384,24 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/p-locate",
     "licenseUrl": "https://github.com/sindresorhus/p-locate/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@istanbuljs/load-nyc-config:health-export-for-ai"
   },
   "p-locate@5.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/p-locate",
     "licenseUrl": "https://github.com/sindresorhus/p-locate/raw/master/license",
-    "parents": "@expo/xcpretty:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "p-try@2.2.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/p-try",
     "licenseUrl": "https://github.com/sindresorhus/p-try/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "parent-module@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/parent-module",
+    "licenseUrl": "https://github.com/sindresorhus/parent-module/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "parse-png@2.1.0": {
@@ -3194,12 +4468,18 @@
     "licenses": "MIT",
     "repository": "https://github.com/micromatch/picomatch",
     "licenseUrl": "https://github.com/micromatch/picomatch/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "picomatch@4.0.3": {
     "licenses": "MIT",
     "repository": "https://github.com/micromatch/picomatch",
     "licenseUrl": "https://github.com/micromatch/picomatch/raw/master/LICENSE",
+    "parents": "tinyglobby:health-export-for-ai"
+  },
+  "pidtree@0.6.0": {
+    "licenses": "MIT",
+    "repository": "github:simonepri/pidtree",
+    "licenseUrl": "github:simonepri/pidtree",
     "parents": "health-export-for-ai"
   },
   "pirates@4.0.7": {
@@ -3220,6 +4500,12 @@
     "licenseUrl": "https://github.com/lukeapage/pngjs2/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "possible-typed-array-names@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/possible-typed-array-names",
+    "licenseUrl": "https://github.com/ljharb/possible-typed-array-names/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "postcss@8.4.49": {
     "licenses": "MIT",
     "repository": "https://github.com/postcss/postcss",
@@ -3231,6 +4517,30 @@
     "repository": "https://github.com/postcss/postcss",
     "licenseUrl": "https://github.com/postcss/postcss/raw/master/LICENSE",
     "parents": "vite:health-export-for-ai"
+  },
+  "prelude-ls@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/gkz/prelude-ls",
+    "licenseUrl": "https://github.com/gkz/prelude-ls/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "prettier-linter-helpers@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prettier/prettier-linter-helpers",
+    "licenseUrl": "https://github.com/prettier/prettier-linter-helpers/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "prettier-plugin-organize-imports@4.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/simonhaenisch/prettier-plugin-organize-imports",
+    "licenseUrl": "https://github.com/simonhaenisch/prettier-plugin-organize-imports/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "prettier@3.8.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prettier/prettier",
+    "licenseUrl": "https://github.com/prettier/prettier/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
   },
   "pretty-bytes@5.6.0": {
     "licenses": "MIT",
@@ -3268,6 +4578,18 @@
     "licenseUrl": "https://github.com/terkelg/prompts/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "prop-types@15.8.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/prop-types",
+    "licenseUrl": "https://github.com/facebook/prop-types/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "proxy-from-env@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rob--W/proxy-from-env",
+    "licenseUrl": "https://github.com/Rob--W/proxy-from-env/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "punycode@2.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/mathiasbynens/punycode.js",
@@ -3284,6 +4606,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/query-string",
     "licenseUrl": "https://github.com/sindresorhus/query-string/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "queue-microtask@1.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/queue-microtask",
+    "licenseUrl": "https://github.com/feross/queue-microtask/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "queue@6.0.2": {
@@ -3322,17 +4650,29 @@
     "licenseUrl": "https://github.com/software-mansion/react-freeze/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "react-is@16.13.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
+    "parents": "prop-types:health-export-for-ai"
+  },
   "react-is@18.3.1": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/react",
     "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "pretty-format:health-export-for-ai"
   },
   "react-is@19.2.3": {
     "licenses": "MIT",
     "repository": "https://github.com/facebook/react",
     "licenseUrl": "https://github.com/facebook/react/raw/master/LICENSE",
-    "parents": "@react-navigation/core:health-export-for-ai"
+    "parents": "health-export-for-ai"
+  },
+  "react-native-android-widget@0.20.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sAleksovski/react-native-android-widget",
+    "licenseUrl": "https://github.com/sAleksovski/react-native-android-widget/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
   },
   "react-native-health-connect@3.5.0": {
     "licenses": "MIT",
@@ -3352,7 +4692,7 @@
     "licenseUrl": "https://github.com/AppAndFlow/react-native-safe-area-context/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "react-native-screens@4.19.0": {
+  "react-native-screens@4.20.0": {
     "licenses": "MIT",
     "repository": "https://github.com/software-mansion/react-native-screens",
     "licenseUrl": "https://github.com/software-mansion/react-native-screens/raw/master/LICENSE",
@@ -3412,6 +4752,12 @@
     "licenseUrl": "https://github.com/npm/readdir-scoped-modules/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "reflect.getprototypeof@1.0.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/Reflect.getPrototypeOf",
+    "licenseUrl": "https://github.com/es-shims/Reflect.getPrototypeOf/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "regenerate-unicode-properties@10.2.2": {
     "licenses": "MIT",
     "repository": "https://github.com/mathiasbynens/regenerate-unicode-properties",
@@ -3428,6 +4774,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/facebook/regenerator/tree/main/packages/runtime",
     "licenseUrl": "https://github.com/facebook/regenerator/tree/main/packages/runtime/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "regexp.prototype.flags@1.5.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/RegExp.prototype.flags",
+    "licenseUrl": "https://github.com/es-shims/RegExp.prototype.flags/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "regexpu-core@6.4.0": {
@@ -3466,6 +4818,12 @@
     "licenseUrl": "https://github.com/h2non/requireg/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "resolve-from@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/resolve-from",
+    "licenseUrl": "https://github.com/sindresorhus/resolve-from/raw/master/license",
+    "parents": "import-fresh:health-export-for-ai"
+  },
   "resolve-from@5.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/resolve-from",
@@ -3476,6 +4834,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/resolve-global",
     "licenseUrl": "https://github.com/sindresorhus/resolve-global/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "resolve-pkg-maps@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/privatenumber/resolve-pkg-maps",
+    "licenseUrl": "https://github.com/privatenumber/resolve-pkg-maps/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "resolve-workspace-root@2.0.1": {
@@ -3502,10 +4866,34 @@
     "licenseUrl": "https://github.com/browserify/resolve/raw/master/LICENSE",
     "parents": "requireg:health-export-for-ai"
   },
+  "resolve@2.0.0-next.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/browserify/resolve",
+    "licenseUrl": "https://github.com/browserify/resolve/raw/master/LICENSE",
+    "parents": "eslint-plugin-react:health-export-for-ai"
+  },
   "restore-cursor@2.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/restore-cursor",
     "licenseUrl": "https://github.com/sindresorhus/restore-cursor/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "restore-cursor@5.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/restore-cursor",
+    "licenseUrl": "https://github.com/sindresorhus/restore-cursor/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
+  },
+  "reusify@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mcollina/reusify",
+    "licenseUrl": "https://github.com/mcollina/reusify/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "rfdc@1.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/davidmarkclements/rfdc",
+    "licenseUrl": "https://github.com/davidmarkclements/rfdc/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "rimraf@3.0.2": {
@@ -3514,16 +4902,40 @@
     "licenseUrl": "https://github.com/isaacs/rimraf/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "rollup@4.55.1": {
+  "rollup@4.55.2": {
     "licenses": "MIT",
     "repository": "https://github.com/rollup/rollup",
     "licenseUrl": "https://github.com/rollup/rollup/raw/master/LICENSE.md",
+    "parents": "health-export-for-ai"
+  },
+  "run-parallel@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/run-parallel",
+    "licenseUrl": "https://github.com/feross/run-parallel/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "safe-array-concat@1.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/safe-array-concat",
+    "licenseUrl": "https://github.com/ljharb/safe-array-concat/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "safe-buffer@5.2.1": {
     "licenses": "MIT",
     "repository": "https://github.com/feross/safe-buffer",
     "licenseUrl": "https://github.com/feross/safe-buffer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "safe-push-apply@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/safe-push-apply",
+    "licenseUrl": "https://github.com/ljharb/safe-push-apply/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "safe-regex-test@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/safe-regex-test",
+    "licenseUrl": "https://github.com/ljharb/safe-regex-test/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "sax@1.4.4": {
@@ -3585,6 +4997,24 @@
     "licenseUrl": "https://reactjs.org/",
     "parents": "health-export-for-ai"
   },
+  "set-function-length@1.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/set-function-length",
+    "licenseUrl": "https://github.com/ljharb/set-function-length/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "set-function-name@2.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/set-function-name",
+    "licenseUrl": "https://github.com/ljharb/set-function-name/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "set-proto@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/set-proto",
+    "licenseUrl": "https://github.com/ljharb/set-proto/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "setprototypeof@1.2.0": {
     "licenses": "ISC",
     "repository": "https://github.com/wesleytodd/setprototypeof",
@@ -3621,6 +5051,30 @@
     "licenseUrl": "http://github.com/ljharb/shell-quote/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "side-channel-list@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/side-channel-list",
+    "licenseUrl": "https://github.com/ljharb/side-channel-list/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "side-channel-map@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/side-channel-map",
+    "licenseUrl": "https://github.com/ljharb/side-channel-map/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "side-channel-weakmap@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/side-channel-weakmap",
+    "licenseUrl": "https://github.com/ljharb/side-channel-weakmap/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "side-channel@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/side-channel",
+    "licenseUrl": "https://github.com/ljharb/side-channel/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "siginfo@2.0.0": {
     "licenses": "ISC",
     "repository": "https://github.com/emilbayes/siginfo",
@@ -3632,6 +5086,12 @@
     "repository": "https://github.com/tapjs/signal-exit",
     "licenseUrl": "https://github.com/tapjs/signal-exit/raw/master/LICENSE.txt",
     "parents": "health-export-for-ai"
+  },
+  "signal-exit@4.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/tapjs/signal-exit",
+    "licenseUrl": "https://github.com/tapjs/signal-exit/raw/master/LICENSE.txt",
+    "parents": "log-update:health-export-for-ai"
   },
   "simple-plist@1.3.1": {
     "licenses": "MIT",
@@ -3655,6 +5115,12 @@
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/slash",
     "licenseUrl": "https://github.com/sindresorhus/slash/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "slice-ansi@7.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/slice-ansi",
+    "licenseUrl": "https://github.com/chalk/slice-ansi/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "slide@1.1.6": {
@@ -3705,6 +5171,12 @@
     "licenseUrl": "https://github.com/alexei/sprintf.js/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "stable-hash@0.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/shuding/stable-hash",
+    "licenseUrl": "https://github.com/shuding/stable-hash",
+    "parents": "health-export-for-ai"
+  },
   "stack-utils@2.0.6": {
     "licenses": "MIT",
     "repository": "https://github.com/tapjs/stack-utils",
@@ -3747,6 +5219,12 @@
     "licenseUrl": "https://github.com/unjs/std-env/raw/master/LICENCE",
     "parents": "health-export-for-ai"
   },
+  "stop-iteration-iterator@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/stop-iteration-iterator",
+    "licenseUrl": "https://github.com/ljharb/stop-iteration-iterator/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "stream-buffers@2.2.0": {
     "licenses": "Unlicense",
     "repository": "https://github.com/samcday/node-stream-buffer",
@@ -3759,10 +5237,58 @@
     "licenseUrl": "https://github.com/kevva/strict-uri-encode/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "string-argv@0.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mccormicka/string-argv",
+    "licenseUrl": "https://github.com/mccormicka/string-argv/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "string-width@4.2.3": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/string-width",
     "licenseUrl": "https://github.com/sindresorhus/string-width/raw/master/license",
+    "parents": "health-export-for-ai"
+  },
+  "string-width@7.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "licenseUrl": "https://github.com/sindresorhus/string-width/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
+  },
+  "string-width@8.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "licenseUrl": "https://github.com/sindresorhus/string-width/raw/master/license",
+    "parents": "cli-truncate:health-export-for-ai"
+  },
+  "string.prototype.matchall@4.0.12": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/String.prototype.matchAll",
+    "licenseUrl": "https://github.com/es-shims/String.prototype.matchAll/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "string.prototype.repeat@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mathiasbynens/String.prototype.repeat",
+    "licenseUrl": "https://github.com/mathiasbynens/String.prototype.repeat/raw/master/LICENSE-MIT.txt",
+    "parents": "health-export-for-ai"
+  },
+  "string.prototype.trim@1.2.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/String.prototype.trim",
+    "licenseUrl": "https://github.com/es-shims/String.prototype.trim/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "string.prototype.trimend@1.0.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/String.prototype.trimEnd",
+    "licenseUrl": "https://github.com/es-shims/String.prototype.trimEnd/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "string.prototype.trimstart@1.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/es-shims/String.prototype.trimStart",
+    "licenseUrl": "https://github.com/es-shims/String.prototype.trimStart/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "strip-ansi@0.3.0": {
@@ -3775,12 +5301,24 @@
     "licenses": "MIT",
     "repository": "https://github.com/chalk/strip-ansi",
     "licenseUrl": "https://github.com/chalk/strip-ansi/raw/master/license",
-    "parents": "ora:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "strip-ansi@6.0.1": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/strip-ansi",
     "licenseUrl": "https://github.com/chalk/strip-ansi/raw/master/license",
+    "parents": "string-width:health-export-for-ai"
+  },
+  "strip-ansi@7.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "licenseUrl": "https://github.com/chalk/strip-ansi/raw/master/license",
+    "parents": "cli-truncate:health-export-for-ai"
+  },
+  "strip-bom@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/strip-bom",
+    "licenseUrl": "https://github.com/sindresorhus/strip-bom/raw/master/license",
     "parents": "health-export-for-ai"
   },
   "strip-json-comments@2.0.1": {
@@ -3788,6 +5326,12 @@
     "repository": "https://github.com/sindresorhus/strip-json-comments",
     "licenseUrl": "https://github.com/sindresorhus/strip-json-comments/raw/master/license",
     "parents": "health-export-for-ai"
+  },
+  "strip-json-comments@3.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/strip-json-comments",
+    "licenseUrl": "https://github.com/sindresorhus/strip-json-comments/raw/master/license",
+    "parents": "eslint-plugin-expo:health-export-for-ai"
   },
   "structured-headers@0.4.1": {
     "licenses": "MIT",
@@ -3811,13 +5355,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/chalk/supports-color",
     "licenseUrl": "https://github.com/chalk/supports-color/raw/master/license",
-    "parents": "health-export-for-ai"
+    "parents": "@babel/highlight:health-export-for-ai"
   },
   "supports-color@7.2.0": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/supports-color",
     "licenseUrl": "https://github.com/chalk/supports-color/raw/master/license",
-    "parents": "@expo/config-plugins:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "supports-color@8.1.1": {
     "licenses": "MIT",
@@ -3837,7 +5381,13 @@
     "licenseUrl": "https://github.com/inspect-js/node-supports-preserve-symlinks-flag/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "tar@7.5.2": {
+  "synckit@0.11.12": {
+    "licenses": "MIT",
+    "repository": "https://github.com/un-ts/synckit",
+    "licenseUrl": "https://github.com/un-ts/synckit/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "tar@7.5.3": {
     "licenses": "BlueOak-1.0.0",
     "repository": "https://github.com/isaacs/node-tar",
     "licenseUrl": "https://github.com/isaacs/node-tar/raw/master/LICENSE.md",
@@ -3865,6 +5415,12 @@
     "licenses": "ISC",
     "repository": "https://github.com/istanbuljs/test-exclude",
     "licenseUrl": "https://github.com/istanbuljs/test-exclude/raw/master/LICENSE.txt",
+    "parents": "health-export-for-ai"
+  },
+  "text-table@0.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/text-table",
+    "licenseUrl": "https://github.com/substack/text-table/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "thenify-all@1.6.0": {
@@ -3927,10 +5483,22 @@
     "licenseUrl": "https://github.com/component/toidentifier/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "tr46@0.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Sebmaster/tr46.js",
+    "licenseUrl": "https://github.com/Sebmaster/tr46.js",
+    "parents": "health-export-for-ai"
+  },
   "treeify@1.1.0": {
     "licenses": "MIT",
     "repository": "https://github.com/notatestuser/treeify",
     "licenseUrl": "https://github.com/notatestuser/treeify/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "ts-api-utils@2.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/JoshuaKGoldberg/ts-api-utils",
+    "licenseUrl": "https://github.com/JoshuaKGoldberg/ts-api-utils/raw/master/LICENSE.md",
     "parents": "health-export-for-ai"
   },
   "ts-interface-checker@0.1.13": {
@@ -3939,10 +5507,22 @@
     "licenseUrl": "https://github.com/gristlabs/ts-interface-checker/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "tsconfig-paths@3.15.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dividab/tsconfig-paths",
+    "licenseUrl": "https://github.com/dividab/tsconfig-paths/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "tslib@2.8.1": {
     "licenses": "0BSD",
     "repository": "https://github.com/Microsoft/tslib",
     "licenseUrl": "https://github.com/Microsoft/tslib/raw/master/LICENSE.txt",
+    "parents": "health-export-for-ai"
+  },
+  "type-check@0.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/gkz/type-check",
+    "licenseUrl": "https://github.com/gkz/type-check/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "type-detect@4.0.8": {
@@ -3950,6 +5530,12 @@
     "repository": "https://github.com/chaijs/type-detect",
     "licenseUrl": "https://github.com/chaijs/type-detect/raw/master/LICENSE",
     "parents": "health-export-for-ai"
+  },
+  "type-fest@0.20.2": {
+    "licenses": "(MIT OR CC0-1.0)",
+    "repository": "https://github.com/sindresorhus/type-fest",
+    "licenseUrl": "https://github.com/sindresorhus/type-fest/raw/master/license",
+    "parents": "globals:health-export-for-ai"
   },
   "type-fest@0.21.3": {
     "licenses": "(MIT OR CC0-1.0)",
@@ -3963,10 +5549,40 @@
     "licenseUrl": "https://github.com/sindresorhus/type-fest/raw/master/license",
     "parents": "health-export-for-ai"
   },
+  "typed-array-buffer@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/typed-array-buffer",
+    "licenseUrl": "https://github.com/inspect-js/typed-array-buffer/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "typed-array-byte-length@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/typed-array-byte-length",
+    "licenseUrl": "https://github.com/inspect-js/typed-array-byte-length/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "typed-array-byte-offset@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/typed-array-byte-offset",
+    "licenseUrl": "https://github.com/inspect-js/typed-array-byte-offset/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "typed-array-length@1.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/typed-array-length",
+    "licenseUrl": "https://github.com/inspect-js/typed-array-length/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "typescript@5.9.3": {
     "licenses": "Apache-2.0",
     "repository": "https://github.com/microsoft/TypeScript",
     "licenseUrl": "https://github.com/microsoft/TypeScript/raw/master/LICENSE.txt",
+    "parents": "health-export-for-ai"
+  },
+  "unbox-primitive@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ljharb/unbox-primitive",
+    "licenseUrl": "https://github.com/ljharb/unbox-primitive/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "undici-types@7.16.0": {
@@ -4005,6 +5621,12 @@
     "licenseUrl": "https://github.com/mathiasbynens/unicode-property-aliases-ecmascript/raw/master/LICENSE-MIT.txt",
     "parents": "health-export-for-ai"
   },
+  "unimodules-app-loader@6.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expo/expo",
+    "licenseUrl": "https://github.com/expo/expo",
+    "parents": "health-export-for-ai"
+  },
   "unique-string@2.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/unique-string",
@@ -4017,10 +5639,22 @@
     "licenseUrl": "https://github.com/stream-utils/unpipe/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
+  "unrs-resolver@1.11.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unrs/unrs-resolver",
+    "licenseUrl": "https://github.com/unrs/unrs-resolver",
+    "parents": "health-export-for-ai"
+  },
   "update-browserslist-db@1.2.3": {
     "licenses": "MIT",
     "repository": "https://github.com/browserslist/update-db",
     "licenseUrl": "https://github.com/browserslist/update-db/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "uri-js@4.4.1": {
+    "licenses": "BSD-2-Clause",
+    "repository": "http://github.com/garycourt/uri-js",
+    "licenseUrl": "http://github.com/garycourt/uri-js/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "use-callback-ref@1.3.3": {
@@ -4119,11 +5753,17 @@
     "licenseUrl": "https://github.com/timoxley/wcwidth/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
-  "webidl-conversions@5.0.0": {
+  "webidl-conversions@3.0.1": {
     "licenses": "BSD-2-Clause",
     "repository": "https://github.com/jsdom/webidl-conversions",
     "licenseUrl": "https://github.com/jsdom/webidl-conversions/raw/master/LICENSE.md",
     "parents": "health-export-for-ai"
+  },
+  "webidl-conversions@5.0.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/jsdom/webidl-conversions",
+    "licenseUrl": "https://github.com/jsdom/webidl-conversions/raw/master/LICENSE.md",
+    "parents": "whatwg-url-without-unicode:health-export-for-ai"
   },
   "whatwg-fetch@3.6.20": {
     "licenses": "MIT",
@@ -4135,6 +5775,36 @@
     "licenses": "MIT",
     "repository": "https://github.com/charpeni/whatwg-url",
     "licenseUrl": "https://github.com/charpeni/whatwg-url/raw/master/LICENSE.txt",
+    "parents": "health-export-for-ai"
+  },
+  "whatwg-url@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jsdom/whatwg-url",
+    "licenseUrl": "https://github.com/jsdom/whatwg-url/raw/master/LICENSE.txt",
+    "parents": "health-export-for-ai"
+  },
+  "which-boxed-primitive@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/which-boxed-primitive",
+    "licenseUrl": "https://github.com/inspect-js/which-boxed-primitive/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "which-builtin-type@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/which-builtin-type",
+    "licenseUrl": "https://github.com/inspect-js/which-builtin-type/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "which-collection@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/which-collection",
+    "licenseUrl": "https://github.com/inspect-js/which-collection/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
+  "which-typed-array@1.1.20": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/which-typed-array",
+    "licenseUrl": "https://github.com/inspect-js/which-typed-array/raw/master/LICENSE",
     "parents": "health-export-for-ai"
   },
   "which@2.0.2": {
@@ -4155,11 +5825,23 @@
     "licenseUrl": "https://github.com/0no-co/wonka/raw/master/LICENSE.md",
     "parents": "health-export-for-ai"
   },
+  "word-wrap@1.2.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jonschlinkert/word-wrap",
+    "licenseUrl": "https://github.com/jonschlinkert/word-wrap/raw/master/LICENSE",
+    "parents": "health-export-for-ai"
+  },
   "wrap-ansi@7.0.0": {
     "licenses": "MIT",
     "repository": "https://github.com/chalk/wrap-ansi",
     "licenseUrl": "https://github.com/chalk/wrap-ansi/raw/master/license",
     "parents": "health-export-for-ai"
+  },
+  "wrap-ansi@9.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/wrap-ansi",
+    "licenseUrl": "https://github.com/chalk/wrap-ansi/raw/master/license",
+    "parents": "log-update:health-export-for-ai"
   },
   "wrappy@1.0.2": {
     "licenses": "ISC",
@@ -4183,13 +5865,13 @@
     "licenses": "MIT",
     "repository": "https://github.com/websockets/ws",
     "licenseUrl": "https://github.com/websockets/ws/raw/master/LICENSE",
-    "parents": "health-export-for-ai"
+    "parents": "metro:health-export-for-ai"
   },
   "ws@8.19.0": {
     "licenses": "MIT",
     "repository": "https://github.com/websockets/ws",
     "licenseUrl": "https://github.com/websockets/ws/raw/master/LICENSE",
-    "parents": "expo:health-export-for-ai"
+    "parents": "health-export-for-ai"
   },
   "xcode@3.0.1": {
     "licenses": "Apache-2.0",
