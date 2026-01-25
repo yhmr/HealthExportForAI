@@ -11,13 +11,13 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a2e"
+      "backgroundColor": "#FFFFFF"
     },
     "android": {
       "package": "com.yhmr.healthexportforai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1a2e"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
@@ -66,6 +66,21 @@
       ],
       "expo-background-fetch",
       "expo-task-manager",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "SyncWidget",
+              "label": "Sync Health Data",
+              "minWidth": "60dp",
+              "minHeight": "60dp",
+              "description": "Sync health data to Google Drive",
+              "previewImage": "./assets/widget-preview.png"
+            }
+          ]
+        }
+      ],
       [
         "@sentry/react-native/expo",
         {
