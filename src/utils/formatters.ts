@@ -92,3 +92,25 @@ export function generateDateRange(startDate: Date, endDate: Date): Set<string> {
 
   return dates;
 }
+
+/**
+ * 相対時間を取得（例: "2分前", "1時間前"）
+ * 簡易的な実装
+ */
+export function formatRelativeTime(isoString: string): string {
+  if (!isoString) return '';
+
+  const now = new Date();
+  const date = new Date(isoString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} mins ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hours ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} days ago`;
+}
