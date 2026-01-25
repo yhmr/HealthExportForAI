@@ -5,7 +5,7 @@
     <strong>Health Connect データを AI 分析のためにエクスポート</strong>
   </p>
   <p>
-    <a href="./README_en.md">Examples with NotebookLM (English)</a>
+    <a href="./README_en.md">英語 (English)</a>
   </p>
 </div>
 
