@@ -66,6 +66,7 @@ Android 14以降は標準搭載されていますが、それ以前のバージ�
 <img src="/HealthExportForAI/img/setting-01.png" width="200" />
 
 - **Google Sheets:** スプレッドシートとして保存（AI分析に最適）
+- **PDF:** PDFファイルとして保存
 - **JSON / CSV:** 生データとして保存
 
 ---
