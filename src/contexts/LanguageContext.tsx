@@ -2,6 +2,7 @@
 // アプリ全体の言語設定を管理
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 import React, {
   createContext,
   ReactNode,
@@ -28,11 +29,8 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
-// デフォルト言語は日本語
-const DEFAULT_LANGUAGE: Language = 'ja';
-
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
+  const [language, setLanguageState] = useState<Language>('en');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 保存された言語設定を読み込み
@@ -42,6 +40,17 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
         if (savedLanguage === 'ja' || savedLanguage === 'en') {
           setLanguageState(savedLanguage);
+        } else {
+          // 保存された設定がない場合はシステム設定を使用
+          const locales = getLocales();
+          const systemLanguageCode = locales[0]?.languageCode;
+
+          if (systemLanguageCode === 'ja') {
+            setLanguageState('ja');
+          } else {
+            // 英語またはその他の言語はデフォルトで英語とする
+            setLanguageState('en');
+          }
         }
       } catch (error) {
         console.error('[LanguageContext] Failed to load language:', error);
