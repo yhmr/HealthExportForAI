@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "pages:dev": "hugo server -s pages -D"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
@@ -47,6 +48,7 @@
     "eslint-config-expo": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "hugo-extended": "^0.154.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "npm-license-crawler": "^0.2.1",

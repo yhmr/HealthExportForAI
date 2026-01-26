@@ -1,0 +1,99 @@
+baseURL = 'https://yhmr.github.io/HealthExportForAI/'
+defaultContentLanguage = 'ja'
+defaultContentLanguageInSubdir = false
+title = 'Health Export For AI'
+theme = 'PaperMod'
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[params]
+  defaultTheme = "auto"
+  ShowShareButtons = true
+  ShowBreadCrumbs = true
+  ShowReadingTime = false
+  ShowPostNavLinks = true
+  ShowCodeCopyButtons = true
+
+[languages]
+  [languages.ja]
+    languageCode = 'ja'
+    title = 'Health Export For AI'
+    contentDir = 'content'
+    weight = 1
+    
+    [languages.ja.params.profileMode]
+      enabled = true
+      title = "Health Export For AI"
+      subtitle = "Google Health ConnectのデータをAI分析用にエクスポート"
+      imageUrl = "img/icon.png"
+      imageWidth = 200
+      imageHeight = 200
+      
+      [[languages.ja.params.profileMode.buttons]]
+        name = "操作ガイド"
+        url = "guide"
+      [[languages.ja.params.profileMode.buttons]]
+        name = "利用規約"
+        url = "terms"
+      [[languages.ja.params.profileMode.buttons]]
+        name = "プライバシーポリシー"
+        url = "privacy"
+
+    [languages.ja.menu]
+      [[languages.ja.menu.main]]
+        identifier = "guide"
+        name = "操作ガイド"
+        url = "/guide/"
+        weight = 10
+      [[languages.ja.menu.main]]
+        identifier = "privacy"
+        name = "プライバシーポリシー"
+        url = "/privacy/"
+        weight = 20
+      [[languages.ja.menu.main]]
+        identifier = "terms"
+        name = "利用規約"
+        url = "/terms/"
+        weight = 30
+
+  [languages.en]
+    languageCode = 'en'
+    title = 'Health Export For AI'
+    contentDir = 'content'
+    weight = 2
+
+    [languages.en.params.profileMode]
+      enabled = true
+      title = "Health Export For AI"
+      subtitle = "Export Google Health Connect data for AI analysis"
+      imageUrl = "img/icon.png"
+      imageWidth = 200
+      imageHeight = 200
+
+      [[languages.en.params.profileMode.buttons]]
+        name = "Guide"
+        url = "guide"
+      [[languages.en.params.profileMode.buttons]]
+        name = "Terms"
+        url = "terms"
+      [[languages.en.params.profileMode.buttons]]
+        name = "Privacy"
+        url = "privacy"
+
+    [languages.en.menu]
+      [[languages.en.menu.main]]
+        identifier = "guide"
+        name = "Guide"
+        url = "/en/guide/"
+        weight = 10
+      [[languages.en.menu.main]]
+        identifier = "privacy"
+        name = "Privacy"
+        url = "/en/privacy/"
+        weight = 20
+      [[languages.en.menu.main]]
+        identifier = "terms"
+        name = "Terms"
+        url = "/en/terms/"
+        weight = 30
