@@ -22,7 +22,9 @@ export const translations = {
       emptyState2: 'Health Connectからデータを取得してください',
       exportButton: 'エクスポート',
       exportSuccess: 'データをエクスポートしました',
-      uploadError: 'アップロードエラー'
+      uploadError: 'アップロードエラー',
+      statusReady: '準備完了',
+      statusSetupRequired: '設定が必要です'
     },
     // 設定画面
     settings: {
@@ -57,9 +59,6 @@ export const translations = {
       sectionAppInfo: 'アプリ情報',
       about: 'About App',
       licenses: 'サードパーティライセンス',
-      // ホームステータス
-      statusReady: '準備完了',
-      statusSetupRequired: '設定が必要です',
       // 言語
       sectionLanguage: '言語',
       languageJa: '日本語',
@@ -171,7 +170,9 @@ export const translations = {
       emptyState2: 'retrieve data from Health Connect',
       exportButton: 'Export',
       exportSuccess: 'Data exported successfully',
-      uploadError: 'Upload Error'
+      uploadError: 'Upload Error',
+      statusReady: 'Ready',
+      statusSetupRequired: 'Setup Required'
     },
     // Settings screen
     settings: {
