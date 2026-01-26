@@ -6,6 +6,9 @@ on:
       - 'pages/**'
     branches:
       - main
+  pull_request:
+    paths:
+      - 'pages/**'
   workflow_dispatch:
 
 permissions:
@@ -52,6 +55,7 @@ jobs:
           path: ./pages/public
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
