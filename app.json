@@ -92,6 +92,7 @@
           "organization": "yhmr"
         }
       ],
+      "./plugins/withWoAFix",
       "expo-localization"
     ],
     "extra": {
