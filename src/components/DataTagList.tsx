@@ -10,13 +10,19 @@ interface DataTagListProps {
   healthData: HealthData;
   selectedTags: Set<DataTagKey>;
   onToggleTag: (tag: DataTagKey) => void;
+  hideCount?: boolean;
 }
 
 /**
  * データタグ一覧を表示するコンポーネント
  * 各タグには取得件数とチェックボックスを表示
  */
-export function DataTagList({ healthData, selectedTags, onToggleTag }: DataTagListProps) {
+export function DataTagList({
+  healthData,
+  selectedTags,
+  onToggleTag,
+  hideCount = false
+}: DataTagListProps) {
   const { t } = useLanguage();
 
   // タグごとのデータ件数を取得
@@ -40,13 +46,16 @@ export function DataTagList({ healthData, selectedTags, onToggleTag }: DataTagLi
           const isSelected = selectedTags.has(tag);
           const hasData = count > 0;
 
+          // hideCountの場合はデータなしスタイル（暗くする）を適用しない
+          const showDimmed = !hasData && !hideCount;
+
           return (
             <TouchableOpacity
               key={tag}
               style={[
                 styles.tagItem,
                 isSelected && styles.tagItemSelected,
-                !hasData && styles.tagItemNoData
+                showDimmed && styles.tagItemNoData
               ]}
               onPress={() => onToggleTag(tag)}
               activeOpacity={0.7}
@@ -58,24 +67,28 @@ export function DataTagList({ healthData, selectedTags, onToggleTag }: DataTagLi
 
               {/* アイコンとラベル */}
               <Text style={styles.icon}>{icon}</Text>
-              <Text style={[styles.label, !hasData && styles.labelNoData]}>{getTagLabel(tag)}</Text>
+              <Text style={[styles.label, showDimmed && styles.labelNoData]}>
+                {getTagLabel(tag)}
+              </Text>
 
-              {/* 件数バッジ */}
-              <View
-                style={[
-                  styles.countBadge,
-                  hasData ? styles.countBadgeActive : styles.countBadgeEmpty
-                ]}
-              >
-                <Text
+              {/* 件数バッジ - hideCountがfalseのときのみ表示 */}
+              {!hideCount && (
+                <View
                   style={[
-                    styles.countText,
-                    hasData ? styles.countTextActive : styles.countTextEmpty
+                    styles.countBadge,
+                    hasData ? styles.countBadgeActive : styles.countBadgeEmpty
                   ]}
                 >
-                  {count}
-                </Text>
-              </View>
+                  <Text
+                    style={[
+                      styles.countText,
+                      hasData ? styles.countTextActive : styles.countTextEmpty
+                    ]}
+                  >
+                    {count}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
