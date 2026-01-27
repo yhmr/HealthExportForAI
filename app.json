@@ -32,7 +32,9 @@
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "plugins": [
@@ -44,7 +46,8 @@
           "android": {
             "minSdkVersion": 28,
             "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "34.0.0"
           }
         }
       ],
@@ -96,6 +99,9 @@
       "eas": {
         "projectId": "524e5bbb-60a5-463b-8e55-8f56ccbcf809"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.yhmr.healthexportforai"
     }
   }
 }
