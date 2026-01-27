@@ -1,12 +1,12 @@
 import React from 'react';
-import { Text, View, ScrollView, Switch } from 'react-native';
-import { SyncButton } from '../SyncButton';
-import { PeriodPicker } from '../PeriodPicker';
-import { DataTagList } from '../DataTagList';
-import { onboardingStyles as styles } from './styles';
+import { ScrollView, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { DataTagKey } from '../../stores/healthStore';
-import { ExportFormat } from '../../config/driveConfig';
+import { DataTagList } from '../DataTagList';
+import { PeriodPicker } from '../PeriodPicker';
+import { SyncButton } from '../SyncButton';
+import { onboardingStyles as styles } from './styles';
+
 import { HealthData } from '../../types/health';
 
 interface SetupStepProps {
@@ -18,10 +18,6 @@ interface SetupStepProps {
   healthData: HealthData;
   selectedTags: Set<DataTagKey>;
   onToggleTag: (tag: DataTagKey) => void;
-  exportFormats: ExportFormat[];
-  toggleFormat: (format: ExportFormat) => void;
-  exportSheetAsPdf: boolean;
-  setExportSheetAsPdf: (value: boolean) => void;
   onNext: () => void;
 }
 
@@ -34,13 +30,10 @@ export const SetupStep: React.FC<SetupStepProps> = ({
   healthData,
   selectedTags,
   onToggleTag,
-  exportFormats,
-  toggleFormat,
-  exportSheetAsPdf,
-  setExportSheetAsPdf,
   onNext
 }) => {
   const { t } = useLanguage();
+
   const colors = { primary: '#6366f1' };
 
   return (
@@ -79,44 +72,6 @@ export const SetupStep: React.FC<SetupStepProps> = ({
           />
         </View>
       )}
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>{t('onboarding', 'setupExportFormats')}</Text>
-        <View style={styles.formatOption}>
-          <Text style={styles.formatLabel}>{t('settings', 'formatSheets')}</Text>
-          <Switch
-            value={exportFormats.includes('googleSheets')}
-            onValueChange={() => toggleFormat('googleSheets')}
-            trackColor={{ false: '#374151', true: colors.primary }}
-          />
-        </View>
-        {exportFormats.includes('googleSheets') && (
-          <View style={styles.subOption}>
-            <Text style={styles.subOptionLabel}>{t('onboarding', 'setupPdfOption')}</Text>
-            <Switch
-              value={exportSheetAsPdf}
-              onValueChange={setExportSheetAsPdf}
-              trackColor={{ false: '#374151', true: colors.primary }}
-            />
-          </View>
-        )}
-        <View style={styles.formatOption}>
-          <Text style={styles.formatLabel}>{t('settings', 'formatCsv')}</Text>
-          <Switch
-            value={exportFormats.includes('csv')}
-            onValueChange={() => toggleFormat('csv')}
-            trackColor={{ false: '#374151', true: colors.primary }}
-          />
-        </View>
-        <View style={styles.formatOption}>
-          <Text style={styles.formatLabel}>{t('settings', 'formatJson')}</Text>
-          <Switch
-            value={exportFormats.includes('json')}
-            onValueChange={() => toggleFormat('json')}
-            trackColor={{ false: '#374151', true: colors.primary }}
-          />
-        </View>
-      </View>
 
       {!hasFetched && (
         <Text style={styles.warningText}>{t('onboarding', 'dataFetchRequired')}</Text>

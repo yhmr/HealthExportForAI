@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // New Components
 import { AuthStep } from '../src/components/Onboarding/AuthStep';
 import { CompletedStep } from '../src/components/Onboarding/CompletedStep';
+import { ExportFormatStep } from '../src/components/Onboarding/ExportFormatStep';
 import { ExportStep } from '../src/components/Onboarding/ExportStep';
 import { FolderStep } from '../src/components/Onboarding/FolderStep';
 import { PermissionsStep } from '../src/components/Onboarding/PermissionsStep';
@@ -33,9 +34,10 @@ const STEPS = {
   AUTH: 1,
   PERMISSIONS: 2,
   SETUP: 3,
-  FOLDER: 4,
-  EXPORT: 5,
-  COMPLETED: 6
+  FORMAT: 4,
+  FOLDER: 5,
+  EXPORT: 6,
+  COMPLETED: 7
 } as const;
 
 type Step = (typeof STEPS)[keyof typeof STEPS];
@@ -111,6 +113,9 @@ export default function OnboardingScreen() {
       // 設定保存
       await saveExportPeriodDays(initialDays);
       await saveSelectedDataTags(Array.from(selectedTags));
+    }
+
+    if (currentStep === STEPS.FORMAT) {
       await saveExportFormats(exportFormats);
       await saveExportSheetAsPdf(exportSheetAsPdf);
     }
@@ -228,6 +233,13 @@ export default function OnboardingScreen() {
             healthData={healthData}
             selectedTags={selectedTags}
             onToggleTag={toggleTag}
+            onNext={handleNext}
+          />
+        );
+
+      case STEPS.FORMAT:
+        return (
+          <ExportFormatStep
             exportFormats={exportFormats}
             toggleFormat={toggleFormat}
             exportSheetAsPdf={exportSheetAsPdf}
