@@ -2,9 +2,8 @@
 
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DataTagList } from '../src/components/DataTagList';
 import { Header } from '../src/components/Header';
 import { StatusCard } from '../src/components/Home/StatusCard';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
@@ -179,23 +178,6 @@ export default function HomeScreen() {
             variant="primary" // メインアクションなのでPrimaryに
           />
         </View>
-
-        {/* Data List */}
-        {hasData ? (
-          <View style={styles.dataSection}>
-            <Text style={styles.sectionTitle}>Preview Data</Text>
-            <DataTagList
-              healthData={healthData}
-              selectedTags={selectedDataTags}
-              onToggleTag={toggleDataTag}
-            />
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            {/* Empty state simplified as StatusCard shows status */}
-            <Text style={styles.emptyText}>{t('home', 'emptyState1')}</Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

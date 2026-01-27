@@ -1,20 +1,16 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  View
-} from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // New Components
-import { WelcomeStep } from '../src/components/Onboarding/WelcomeStep';
 import { AuthStep } from '../src/components/Onboarding/AuthStep';
+import { CompletedStep } from '../src/components/Onboarding/CompletedStep';
+import { ExportStep } from '../src/components/Onboarding/ExportStep';
+import { FolderStep } from '../src/components/Onboarding/FolderStep';
 import { PermissionsStep } from '../src/components/Onboarding/PermissionsStep';
 import { SetupStep } from '../src/components/Onboarding/SetupStep';
-import { FolderStep } from '../src/components/Onboarding/FolderStep';
-import { ExportStep } from '../src/components/Onboarding/ExportStep';
-import { CompletedStep } from '../src/components/Onboarding/CompletedStep';
+import { WelcomeStep } from '../src/components/Onboarding/WelcomeStep';
 
 // Config & Services
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../src/config/driveConfig';
@@ -29,11 +25,7 @@ import {
   saveSelectedDataTags
 } from '../src/services/config/exportConfig';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
-import {
-  ALL_DATA_TAGS,
-  DataTagKey,
-  useHealthStore
-} from '../src/stores/healthStore';
+import { ALL_DATA_TAGS, DataTagKey, useHealthStore } from '../src/stores/healthStore';
 
 // ステップ定義
 const STEPS = {
@@ -226,7 +218,10 @@ export default function OnboardingScreen() {
         return (
           <SetupStep
             initialDays={initialDays}
-            setInitialDays={setInitialDays}
+            setInitialDays={(days) => {
+              setInitialDays(days);
+              setHasFetched(false);
+            }}
             isSyncing={isSyncing}
             onFetch={handleFetch}
             hasFetched={hasFetched}

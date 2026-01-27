@@ -39,7 +39,7 @@ interface HealthStore {
 
   // アクション
   setAllData: (data: HealthData, dateRange?: Set<string>) => void;
-  setLastSyncTime: (time: string) => void;
+  setLastSyncTime: (time: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   toggleDataTag: (tag: DataTagKey) => void;

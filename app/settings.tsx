@@ -15,12 +15,10 @@ import { AutoSyncSection } from '../src/components/Settings/AutoSyncSection';
 import { DataTypesSection } from '../src/components/Settings/DataTypesSection';
 import { DriveSection } from '../src/components/Settings/DriveSection';
 import { ExportSection } from '../src/components/Settings/ExportSection';
-import { SyncSettingsSection } from '../src/components/Settings/SyncSettingsSection';
 
 // Services/Stores
-import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
+import { saveSelectedDataTags } from '../src/services/config/exportConfig';
 import { useHealthStore } from '../src/stores/healthStore';
-import { removeLastSyncTime, saveSelectedDataTags } from '../src/services/config/exportConfig';
 
 // Hooks
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -38,30 +36,9 @@ export default function SettingsScreen() {
   const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
   const [isAboutModalVisible, setAboutModalVisible] = useState(false);
   const [showAutoSyncModal, setShowAutoSyncModal] = useState(false);
-  
+
   // ストアからデータタグ関連を取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
-
-  // 初期データ再取得ハンドラ
-  const handleResetInitialData = async () => {
-    Alert.alert(
-      'Reset Initial Data',
-      'This will clear the last sync time and fetch data from the beginning of the configured period on the next sync. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          style: 'destructive',
-          onPress: async () => {
-             await removeLastSyncTime();
-             Alert.alert('Success', 'Last sync time cleared. Next sync will be a full fetch.');
-          }
-        }
-      ]
-    );
-  };
-
-
 
   // Back Handler
   const handleBack = () => {
@@ -77,7 +54,7 @@ export default function SettingsScreen() {
 
   // selectedDataTagsが変更されたら保存
   useEffect(() => {
-      saveSelectedDataTags(Array.from(selectedDataTags));
+    saveSelectedDataTags(Array.from(selectedDataTags));
   }, [selectedDataTags]);
 
   return (
@@ -104,10 +81,7 @@ export default function SettingsScreen() {
           onOpenFolderPicker={() => setPickerVisible(true)}
         />
 
-        <DataTypesSection 
-            selectedTags={selectedDataTags}
-            onToggleTag={toggleDataTag}
-        />
+        <DataTypesSection selectedTags={selectedDataTags} onToggleTag={toggleDataTag} />
 
         <ExportSection
           exportFormats={state.exportFormats}
@@ -122,9 +96,6 @@ export default function SettingsScreen() {
           currentLanguage={state.language}
           onSetLanguage={actions.setLanguage}
         />
-
-        <SyncSettingsSection onReset={handleResetInitialData} />
-
 
         <AboutSection onOpenAbout={() => setAboutModalVisible(true)} />
 

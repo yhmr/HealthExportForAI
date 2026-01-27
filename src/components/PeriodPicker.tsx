@@ -1,7 +1,15 @@
 // 期間選択コンポーネント
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ViewStyle
+} from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeColors } from '../theme/types';
@@ -16,13 +24,14 @@ export const MAX_PERIOD_DAYS = 365 * 3; // 3年
 interface PeriodPickerProps {
   value: number;
   onChange: (days: number) => void;
+  style?: ViewStyle;
 }
 
 /**
  * 期間選択ドロップダウン
  * プリセット選択 + カスタム入力
  */
-export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
+export function PeriodPicker({ value, onChange, style }: PeriodPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isCustom, setIsCustom] = useState(false);
   const [customValue, setCustomValue] = useState('');
@@ -79,7 +88,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Text style={styles.label}>{t('periodPicker', 'label')}</Text>
 
       <View style={styles.row}>
