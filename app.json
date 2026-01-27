@@ -75,10 +75,18 @@
           "widgets": [
             {
               "name": "SyncWidget",
-              "label": "Sync Health Data",
-              "minWidth": "60dp",
-              "minHeight": "60dp",
-              "description": "Sync health data to Google Drive",
+              "label": "Sync Health (Wide)",
+              "minWidth": "130dp",
+              "minHeight": "57dp",
+              "description": "Sync health data to Google Drive (Wide)",
+              "previewImage": "./assets/widget-preview.png"
+            },
+            {
+              "name": "SyncWidgetSmall",
+              "label": "Sync Health (Small)",
+              "minWidth": "57dp",
+              "minHeight": "57dp",
+              "description": "Sync health data to Google Drive (Small)",
               "previewImage": "./assets/widget-preview.png"
             }
           ]
