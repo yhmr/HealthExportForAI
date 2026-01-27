@@ -14,6 +14,7 @@ import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
+import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
 import { useHealthStore } from '../src/stores/healthStore';
 import { ThemeColors } from '../src/theme/types';
@@ -44,6 +45,7 @@ export default function HomeScreen() {
 
   // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+  const [isSetupCompleted, setIsSetupCompleted] = useState(false);
 
   // 翻訳 & テーマ
   const { t, language } = useLanguage();
@@ -59,19 +61,22 @@ export default function HomeScreen() {
         console.log('[HomeScreen] Setup started');
 
         // 並列で初期化と設定読み込みを実行
-        // initialize() は成否(boolean)を、loadConfig() は設定オブジェクト(DriveConfig | null)を返す
-        const [initResult, configResult] = await Promise.all([
+        const [initResult, configResult, setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
-          loadConfig()
+          loadConfig(),
+          loadIsSetupCompleted()
         ]);
 
         if (!isMounted) return;
 
-        // Health Connectの権限状態を直接チェック（State更新待ちを防ぐため）
-        // initializeが成功している場合のみチェックを行う
+        // Health Connectの権限状態を直接チェック
         const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
 
-        // UI設定の読み込み
+        // 設定の反映
+        if (setupCompletedResult) {
+          setIsSetupCompleted(true);
+        }
+
         // UI設定の読み込み
         const bgConfig = await loadBackgroundSyncConfig();
         setAutoSyncEnabled(bgConfig.enabled);
@@ -79,19 +84,18 @@ export default function HomeScreen() {
         console.log('[HomeScreen] Setup completed');
 
         // オンボーディング判定
-        // 以下のいずれかの場合はオンボーディングへ誘導
-        // 1. 未認証
-        // 2. Health Connect初期化成功済みだが権限がない
-        // 3. Drive設定がない
-
         const needsOnboarding =
-          !isAuthenticated || (initResult && !currentHealthPermissions) || !configResult;
+          !isAuthenticated ||
+          (initResult && !currentHealthPermissions) ||
+          !configResult ||
+          !setupCompletedResult;
 
         console.log('[HomeScreen] Check Onboarding:', {
           isAuthenticated,
           initResult,
           currentHealthPermissions,
           hasConfig: !!configResult,
+          isSetupCompleted: setupCompletedResult,
           needsOnboarding
         });
 
@@ -150,8 +154,6 @@ export default function HomeScreen() {
     }
   };
 
-  const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
-
   return (
     <SafeAreaView style={styles.container}>
       <Header title={t('home', 'title')} />
@@ -163,6 +165,7 @@ export default function HomeScreen() {
           lastSyncTime={lastSyncTime}
           isHealthConnectConnected={isAvailable && hasPermissions}
           isDriveConnected={!!driveConfig}
+          isSetupCompleted={isSetupCompleted}
           autoSyncEnabled={autoSyncEnabled}
           t={t}
           language={language as 'ja' | 'en'}

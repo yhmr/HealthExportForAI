@@ -23,6 +23,7 @@ import {
   saveExportFormats,
   saveExportPeriodDays,
   saveExportSheetAsPdf,
+  saveIsSetupCompleted,
   saveSelectedDataTags
 } from '../src/services/config/exportConfig';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
@@ -123,6 +124,7 @@ export default function OnboardingScreen() {
     if (currentStep < STEPS.COMPLETED) {
       setCurrentStep((prev) => (prev + 1) as Step);
     } else {
+      await saveIsSetupCompleted(true);
       router.replace('/');
     }
   };

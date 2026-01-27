@@ -8,8 +8,24 @@ const STORAGE_KEYS = {
   EXPORT_PERIOD_DAYS: '@export_period_days',
   EXPORT_FORMATS: '@export_formats',
   EXPORT_SHEET_AS_PDF: '@export_sheet_as_pdf',
-  SELECTED_DATA_TAGS: '@selected_data_tags'
+  SELECTED_DATA_TAGS: '@selected_data_tags',
+  IS_SETUP_COMPLETED: '@is_setup_completed'
 } as const;
+
+/**
+ * 初期設定完了フラグを保存
+ */
+export async function saveIsSetupCompleted(completed: boolean): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.IS_SETUP_COMPLETED, completed ? 'true' : 'false');
+}
+
+/**
+ * 初期設定完了フラグを取得
+ */
+export async function loadIsSetupCompleted(): Promise<boolean> {
+  const value = await AsyncStorage.getItem(STORAGE_KEYS.IS_SETUP_COMPLETED);
+  return value === 'true';
+}
 
 /**
  * 最後の同期時刻を保存
