@@ -7,7 +7,8 @@ const STORAGE_KEYS = {
   LAST_SYNC_TIME: '@last_sync_time',
   EXPORT_PERIOD_DAYS: '@export_period_days',
   EXPORT_FORMATS: '@export_formats',
-  EXPORT_SHEET_AS_PDF: '@export_sheet_as_pdf'
+  EXPORT_SHEET_AS_PDF: '@export_sheet_as_pdf',
+  SELECTED_DATA_TAGS: '@selected_data_tags'
 } as const;
 
 /**
@@ -72,4 +73,30 @@ export async function saveExportSheetAsPdf(enabled: boolean): Promise<void> {
 export async function loadExportSheetAsPdf(): Promise<boolean> {
   const value = await AsyncStorage.getItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF);
   return value === 'true';
+}
+
+/**
+ * 選択されたデータタグを保存
+ */
+export async function saveSelectedDataTags(tags: string[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags));
+}
+
+/**
+ * 選択されたデータタグを取得
+ * 保存されていない場合はnullを返し、呼び出し元でデフォルト値を使用させる
+ */
+export async function loadSelectedDataTags(): Promise<string[] | null> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);
+  if (json) {
+    return JSON.parse(json) as string[];
+  }
+  return null;
+}
+
+/**
+ * 最後の同期時刻を削除（初期データ再取得のため）
+ */
+export async function removeLastSyncTime(): Promise<void> {
+  await AsyncStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
 }

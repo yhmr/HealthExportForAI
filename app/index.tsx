@@ -8,7 +8,6 @@ import { DataTagList } from '../src/components/DataTagList';
 import { Header } from '../src/components/Header';
 import { StatusCard } from '../src/components/Home/StatusCard';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { DEFAULT_PERIOD_DAYS, PeriodPicker } from '../src/components/PeriodPicker';
 import { SyncButton } from '../src/components/SyncButton';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
@@ -16,7 +15,6 @@ import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
-import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
 import { useHealthStore } from '../src/stores/healthStore';
 import { ThemeColors } from '../src/theme/types';
@@ -45,8 +43,7 @@ export default function HomeScreen() {
   // ストアから選択状態とアクションを取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
 
-  // 取得期間
-  const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
+  // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
 
   // 翻訳 & テーマ
@@ -76,8 +73,7 @@ export default function HomeScreen() {
         const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
 
         // UI設定の読み込み
-        const savedDays = await loadExportPeriodDays();
-        setPeriodDays(savedDays);
+        // UI設定の読み込み
         const bgConfig = await loadBackgroundSyncConfig();
         setAutoSyncEnabled(bgConfig.enabled);
 
@@ -128,14 +124,8 @@ export default function HomeScreen() {
     }
   }, [error, uploadError, clearUploadError, t]);
 
-  // 期間変更ハンドラ
-  const handlePeriodChange = async (days: number) => {
-    setPeriodDays(days);
-    await saveExportPeriodDays(days);
-  };
-
-  // データ取得ハンドラ
-  const handleSync = async () => {
+  // 統合ハンドラ: 同期してエクスポート
+  const handleSyncAndExport = async () => {
     if (!isInitialized) {
       const success = await initialize();
       if (!success) return;
@@ -146,11 +136,11 @@ export default function HomeScreen() {
       if (!granted) return;
     }
 
-    await syncData(periodDays);
-  };
+    // 1. 同期
+    const syncSuccess = await syncData(); // 引数なしで差分更新または設定値に基づく初期取得
+    if (!syncSuccess) return;
 
-  // エクスポートハンドラ
-  const handleExport = async () => {
+    // 2. アップロード
     const result = await exportAndUpload(selectedDataTags);
     if (result.success) {
       if (result.queued) {
@@ -179,28 +169,14 @@ export default function HomeScreen() {
           language={language as 'ja' | 'en'}
         />
 
-        {/* Quick Actions Grid */}
-        <View style={styles.actionGrid}>
-          <View style={styles.actionItem}>
-            <PeriodPicker value={periodDays} onChange={handlePeriodChange} />
-          </View>
-        </View>
-
         {/* Main Actions */}
         <View style={styles.syncButtons}>
           <SyncButton
-            onPress={handleSync}
-            isLoading={isLoading}
-            label={t('home', 'syncButton')}
-            icon="🔄"
-            variant="primary"
-          />
-          <SyncButton
-            onPress={handleExport}
-            isLoading={isUploading}
-            label={t('home', 'exportButton')}
+            onPress={handleSyncAndExport}
+            isLoading={isLoading || isUploading}
+            label={t('home', 'exportButton')} // "Sync & Export" 的な文言に変えるべきだが、一旦既存キーを使用
             icon="📤"
-            variant="secondary"
+            variant="primary" // メインアクションなのでPrimaryに
           />
         </View>
 

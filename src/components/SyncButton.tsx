@@ -11,6 +11,7 @@ interface SyncButtonProps {
   label: string;
   icon?: string;
   variant?: 'primary' | 'secondary';
+  disabled?: boolean;
 }
 
 export function SyncButton({
@@ -18,7 +19,8 @@ export function SyncButton({
   isLoading,
   label,
   icon,
-  variant = 'primary'
+  variant = 'primary',
+  disabled = false
 }: SyncButtonProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -28,9 +30,9 @@ export function SyncButton({
 
   return (
     <TouchableOpacity
-      style={[styles.button, buttonStyle, isLoading && styles.disabled]}
+      style={[styles.button, buttonStyle, (isLoading || disabled) && styles.disabled]}
       onPress={onPress}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       activeOpacity={0.7}
     >
       {isLoading ? (

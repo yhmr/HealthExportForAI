@@ -44,10 +44,11 @@ interface HealthStore {
   setError: (error: string | null) => void;
   toggleDataTag: (tag: DataTagKey) => void;
   setAllDataTagsSelected: (selected: boolean) => void;
+  setSelectedDataTags: (tags: DataTagKey[]) => void;
   reset: () => void;
 }
 
-const initialHealthData: HealthData = {
+export const initialHealthData: HealthData = {
   steps: [],
   weight: [],
   bodyFat: [],
@@ -87,6 +88,8 @@ export const useHealthStore = create<HealthStore>((set) => ({
 
   setAllDataTagsSelected: (selected) =>
     set({ selectedDataTags: selected ? new Set(ALL_DATA_TAGS) : new Set() }),
+
+  setSelectedDataTags: (tags) => set({ selectedDataTags: new Set(tags) }),
 
   reset: () =>
     set({

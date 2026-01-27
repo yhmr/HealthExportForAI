@@ -1,7 +1,11 @@
 // Health Connect カスタムフック
 
 import { useCallback, useState } from 'react';
-import { loadExportPeriodDays, saveLastSyncTime } from '../services/config/exportConfig';
+import {
+  loadExportPeriodDays,
+  loadSelectedDataTags,
+  saveLastSyncTime
+} from '../services/config/exportConfig';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
@@ -10,7 +14,7 @@ import {
   requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
-import { useHealthStore } from '../stores/healthStore';
+import { useHealthStore, DataTagKey } from '../stores/healthStore';
 import {
   generateDateRange,
   getCurrentISOString,
@@ -30,7 +34,8 @@ export function useHealthConnect() {
     setAllData,
     setLastSyncTime,
     setLoading,
-    setError
+    setError,
+    setSelectedDataTags
   } = useHealthStore();
 
   /**
@@ -60,6 +65,13 @@ export function useHealthConnect() {
         // 初期化成功時に権限状態もチェックする
         const hasPerms = await checkHealthPermissions();
         setHasPermissions(hasPerms);
+
+        // 保存されたデータタグ設定を読み込む
+        const savedTags = await loadSelectedDataTags();
+        if (savedTags) {
+          // 保存された設定があれば反映（バリデーションとしてHealthDataのキーに含まれるか確認してもよいが、一旦そのままキャスト）
+          setSelectedDataTags(savedTags as DataTagKey[]);
+        }
       }
 
       if (!initialized) {
@@ -87,7 +99,7 @@ export function useHealthConnect() {
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setError]);
+  }, [setLoading, setError, setSelectedDataTags]);
 
   /**
    * 権限をリクエスト
@@ -123,10 +135,32 @@ export function useHealthConnect() {
       setError(null);
 
       try {
-        // 引数で日数が指定されていればそれを使用、なければ設定から読み込み
-        const days = periodDays ?? (await loadExportPeriodDays());
-        const startTime = getDateDaysAgo(days);
-        const endTime = getEndOfToday();
+        // 差分更新のロジック:
+        // 1. 最終同期時刻 (lastSyncTime) がある場合は、そこから現在までを取得
+        // 2. ない場合は、期間設定 (periodDays) 分だけ過去から取得
+
+        // 引数で明示的に日数が指定された場合は、それを優先して初期取得（再構築）とみなすこともできるが、
+        // ここでは「引数periodDaysが未指定」かつ「lastSyncTimeあり」なら差分更新とする。
+        // UI側で「再構築」ボタンを作る場合は、明示的に期間を指定して呼ぶか、lastSyncTimeをクリアしてから呼ぶ形になる。
+        // ユーザーが「日数を変更」した直後などはどうする？ -> 今回の仕様ではメイン画面から期間選択が消えるので、
+        // periodDaysは「初期設定」または「設定画面での設定」になる。
+
+        let startTime: Date;
+        const endTime = new Date(); // 現在時刻
+
+        // 元の実装の getEndOfToday は「今日の終わり」なので未来も含む可能性があるが、
+        // HealthConnectは未来のデータは基本ない。
+        // 差分更新の場合、前回同期時刻(lastSyncTime) ～ 現在(new Date()) とするのが自然。
+
+        if (!periodDays && lastSyncTime) {
+          console.log('[Sync] Performing differential sync from:', lastSyncTime);
+          startTime = new Date(lastSyncTime);
+        } else {
+          // 初期取得、または明示的な期間指定（再構築など）
+          const days = periodDays ?? (await loadExportPeriodDays());
+          console.log('[Sync] Performing full sync for days:', days);
+          startTime = getDateDaysAgo(days);
+        }
 
         // 取得期間の全日付を生成
         const dateRange = generateDateRange(startTime, endTime);
@@ -146,7 +180,7 @@ export function useHealthConnect() {
         setLoading(false);
       }
     },
-    [setAllData, setLastSyncTime, setLoading, setError]
+    [setAllData, setLastSyncTime, setLoading, setError, lastSyncTime]
   );
 
   const requestBackgroundPermissions = useCallback(async () => {
