@@ -29,6 +29,7 @@ Running on Android, built with React Native + Expo. Reads health data from Healt
 - 📂 **Cloud Sync**: Automatic backup to a specified Google Drive folder
 - 📄 **Multi-Format**: Supports CSV/JSON for AI analysis, and PDF/Sheets for readability
 - 🤖 **AI Ready**: Optimized output structure for LLMs (e.g., NotebookLM)
+- 📱 **Widgets**: Home screen widgets (1x1, 2x1) to execute sync and view sync status at a glance
 - 🔋 **Background Sync(Experimental)**: Supports scheduled automatic synchronization
 
 ## Tech Stack
