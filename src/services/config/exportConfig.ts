@@ -1,8 +1,8 @@
-// エクスポート設定サービス (Adapter/Facade)
-
 import { ExportFormat } from '../../config/driveConfig';
+import { ExportConfig } from '../../types/exportTypes';
 import { AsyncStorageAdapter } from '../infrastructure/AsyncStorageAdapter';
 import { ExportConfigService } from './ExportConfigService';
+import { loadDriveConfig } from './driveConfig'; // 追加
 
 // シングルトンインスタンスの作成（デフォルトでAsyncStorageAdapterを使用）
 const storageAdapter = new AsyncStorageAdapter();
@@ -99,5 +99,24 @@ export function removeLastSyncTime(): Promise<void> {
   return exportConfigService.removeLastSyncTime();
 }
 
+/**
+ * デフォルトのエクスポート設定を生成
+ */
+export async function createDefaultExportConfig(): Promise<ExportConfig> {
+  const formats = await loadExportFormats();
+  const exportAsPdf = await loadExportSheetAsPdf();
+  const driveConfig = await loadDriveConfig();
+
+  return {
+    formats,
+    exportAsPdf,
+    targetFolder: {
+      id: driveConfig?.folderId,
+      name: driveConfig?.folderName
+    }
+  };
+}
+
 // DI注入用（SyncService等）にサービスインスタンスをエクスポート
+export { ExportConfigService } from './ExportConfigService';
 export { exportConfigService };

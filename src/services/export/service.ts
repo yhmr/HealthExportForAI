@@ -25,13 +25,7 @@ import type {
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';
-import {
-  addToQueue,
-  getQueue,
-  hasExceededMaxRetries,
-  incrementRetry,
-  removeFromQueue
-} from './queue-storage';
+import { queueManager } from './QueueManager';
 import { exportToSpreadsheet } from './sheets';
 
 // ===== 型定義 =====
@@ -88,39 +82,6 @@ export async function createDefaultExportConfig(): Promise<ExportConfig> {
 }
 
 /**
- * エクスポートリクエストをキューに追加
- */
-export async function addToExportQueue(
-  healthData: HealthData,
-  dateRange: Set<string>,
-  config?: ExportConfig
-): Promise<boolean> {
-  const exportConfig = config ?? (await createDefaultExportConfig());
-  const tags = Object.keys(healthData) as string[];
-
-  await addDebugLog('[ExportService] Adding request to queue', 'info');
-
-  try {
-    const id = await addToQueue({
-      healthData,
-      selectedTags: tags,
-      syncDateRange: Array.from(dateRange),
-      exportConfig
-    });
-
-    if (id) {
-      const count = (await getQueue()).length;
-      useOfflineStore.getState().setPendingCount(count);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    await addDebugLog(`[ExportService] Queue add failed: ${error}`, 'error');
-    return false;
-  }
-}
-
-/**
  * キュー内のエクスポートを処理
  * @param timeoutMs 各エントリのタイムアウト時間（ミリ秒）。デフォルトは5分。
  */
@@ -142,14 +103,14 @@ export async function processExportQueue(
     return result;
   }
 
-  const queue = await getQueue();
+  const queue = await queueManager.getQueue();
   await addDebugLog(`[ExportService] Queue size: ${queue.length}`, 'info');
 
   for (const entry of queue) {
-    if (hasExceededMaxRetries(entry)) {
+    if (queueManager.hasExceededMaxRetries(entry)) {
       await addDebugLog(`[ExportService] Skipping ${entry.id} (max retries)`, 'info');
       result.skippedCount++;
-      await removeFromQueue(entry.id);
+      await queueManager.removeFromQueue(entry.id);
       result.errors.push(`Entry ${entry.id}: Max retries`);
       continue;
     }
@@ -158,7 +119,7 @@ export async function processExportQueue(
 
     if (success) {
       result.successCount++;
-      await removeFromQueue(entry.id);
+      await queueManager.removeFromQueue(entry.id);
     } else {
       result.failCount++;
       const currentStatus = await getNetworkStatus();
@@ -169,7 +130,7 @@ export async function processExportQueue(
     }
   }
 
-  const remainingQueue = await getQueue();
+  const remainingQueue = await queueManager.getQueue();
   useOfflineStore.getState().setPendingCount(remainingQueue.length);
 
   await addDebugLog(
@@ -225,13 +186,13 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
     } else {
       const errorMsg = result.error || 'Unknown error';
       await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
-      await incrementRetry(entry.id, errorMsg);
+      await queueManager.incrementRetry(entry.id, errorMsg);
       return false;
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     await addDebugLog(`[ExportService] Entry ${entry.id} error: ${errorMsg}`, 'error');
-    await incrementRetry(entry.id, errorMsg);
+    await queueManager.incrementRetry(entry.id, errorMsg);
     return false;
   }
 }

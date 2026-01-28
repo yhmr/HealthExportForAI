@@ -1,56 +1,76 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as exportService from '../../src/services/export/service';
-import * as healthConnect from '../../src/services/healthConnect';
+import { ExportConfigService } from '../../src/services/config/ExportConfigService';
 import { SyncServiceImpl } from '../../src/services/syncService';
 import { HealthData } from '../../src/types/health';
 
-// 外部依存のモック（Factory関数を使用）
-vi.mock('../../src/services/healthConnect', () => ({
-  fetchAllHealthData: vi.fn(),
-  checkHealthConnectAvailability: vi.fn(),
-  checkHealthPermissions: vi.fn(),
-  initializeHealthConnect: vi.fn()
-}));
-
+// 外部モジュールのモック
+vi.mock('../../src/services/health/AccessChecker');
+vi.mock('../../src/services/health/Fetcher');
+vi.mock('../../src/services/data/Filter');
+vi.mock('../../src/services/export/QueueManager');
+vi.mock('../../src/services/config/exportConfig', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/services/config/exportConfig')>();
+  return {
+    ...actual,
+    createDefaultExportConfig: vi.fn().mockResolvedValue({})
+  };
+});
 vi.mock('../../src/services/export/service', () => ({
-  addToExportQueue: vi.fn(),
   processExportQueue: vi.fn()
 }));
-
-vi.mock('../../src/utils/dataHelpers', () => ({
-  filterHealthDataByTags: vi.fn((data) => data)
+vi.mock('../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
 }));
 
 describe('SyncServiceImpl', () => {
   let syncService: SyncServiceImpl;
-  let mockConfigService: any; // 型はanyで回避
+  let mockAccessChecker: any;
+  let mockFetcher: any;
+  let mockFilter: any;
+  let mockQueueManager: any;
+  let mockConfigService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // ExportConfigServiceのモック作成
+    // モックオブジェクトの作成
+    mockAccessChecker = {
+      checkAvailability: vi.fn().mockResolvedValue({ available: true }),
+      initialize: vi.fn().mockResolvedValue(true),
+      hasPermissions: vi.fn().mockResolvedValue(true)
+    };
+
+    mockFetcher = {
+      fetchAllData: vi.fn().mockResolvedValue({})
+    };
+
+    mockFilter = {
+      filterByTags: vi.fn((data) => data)
+    };
+
+    mockQueueManager = {
+      addToQueue: vi.fn().mockResolvedValue('queue-id')
+    };
+
+    // ExportConfigServiceのモック (Interface like object)
     mockConfigService = {
       saveIsSetupCompleted: vi.fn(),
       loadIsSetupCompleted: vi.fn(),
-      loadLastSyncTime: vi.fn(),
+      loadLastSyncTime: vi.fn().mockResolvedValue(null),
       saveLastSyncTime: vi.fn(),
       loadExportPeriodDays: vi.fn().mockResolvedValue(7),
-      saveExportPeriodDays: vi.fn(),
-      saveExportFormats: vi.fn(),
-      loadExportFormats: vi.fn(),
-      saveExportSheetAsPdf: vi.fn(),
-      loadExportSheetAsPdf: vi.fn(),
-      saveSelectedDataTags: vi.fn(),
-      loadSelectedDataTags: vi.fn(),
-      removeLastSyncTime: vi.fn()
-    };
+      saveExportPeriodDays: vi.fn()
+      // ...他のメソッドは必要に応じて追加
+    } as unknown as ExportConfigService;
 
-    // モックオブジェクトを注入してインスタンス化
-    syncService = new SyncServiceImpl(mockConfigService);
-
-    // デフォルトのモック動作設定
-    (healthConnect.fetchAllHealthData as any).mockResolvedValue({} as HealthData);
-    (exportService.addToExportQueue as any).mockResolvedValue(true);
+    // SyncServiceのインスタンス化
+    syncService = new SyncServiceImpl(
+      mockAccessChecker,
+      mockFetcher,
+      mockFilter,
+      mockQueueManager,
+      mockConfigService
+    );
   });
 
   describe('fetchAndQueueNewData', () => {
@@ -65,24 +85,57 @@ describe('SyncServiceImpl', () => {
     it('should save LastSyncTime on success when data exists', async () => {
       // データが存在する場合のモック
       const mockData = { steps: [{ value: 100 }] } as unknown as HealthData;
-      (healthConnect.fetchAllHealthData as any).mockResolvedValue(mockData);
-      (mockConfigService.loadLastSyncTime as any).mockResolvedValue('2023-01-01T00:00:00.000Z');
+      mockFetcher.fetchAllData.mockResolvedValue(mockData);
+      mockConfigService.loadLastSyncTime.mockResolvedValue('2023-01-01T00:00:00.000Z');
 
       await syncService.fetchAndQueueNewData(undefined, false, undefined);
 
       // 成功時にLastSyncTimeが保存されるか検証
       expect(mockConfigService.saveLastSyncTime).toHaveBeenCalled();
-      expect(exportService.addToExportQueue).toHaveBeenCalled();
+      // QueueManagerに追加されるか
+      expect(mockQueueManager.addToQueue).toHaveBeenCalled();
     });
 
     it('should not save LastSyncTime if no data found', async () => {
       // データがない場合のモック
-      (healthConnect.fetchAllHealthData as any).mockResolvedValue({});
+      mockFetcher.fetchAllData.mockResolvedValue({});
 
       await syncService.fetchAndQueueNewData(undefined, false, undefined);
 
       // データなしなのでLastSyncTimeは更新されないはず
       expect(mockConfigService.saveLastSyncTime).not.toHaveBeenCalled();
+      // Queueに追加されない
+      expect(mockQueueManager.addToQueue).not.toHaveBeenCalled();
+    });
+
+    it('should filter data if selectedTags provided', async () => {
+      const mockData = { steps: [1], weight: [2] } as any;
+      mockFetcher.fetchAllData.mockResolvedValue(mockData);
+      mockConfigService.loadLastSyncTime.mockResolvedValue('2023-01-01');
+
+      await syncService.fetchAndQueueNewData(undefined, false, ['steps']);
+
+      expect(mockFilter.filterByTags).toHaveBeenCalledWith(mockData, ['steps']);
+      expect(mockQueueManager.addToQueue).toHaveBeenCalled();
+    });
+  });
+
+  describe('initialize', () => {
+    it('should check availability and permissions', async () => {
+      await syncService.initialize();
+
+      expect(mockAccessChecker.checkAvailability).toHaveBeenCalled();
+      expect(mockAccessChecker.initialize).toHaveBeenCalled();
+      expect(mockAccessChecker.hasPermissions).toHaveBeenCalled();
+    });
+
+    it('should return false if not available', async () => {
+      mockAccessChecker.checkAvailability.mockResolvedValue({ available: false });
+
+      const result = await syncService.initialize();
+
+      expect(result.available).toBe(false);
+      expect(mockAccessChecker.initialize).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadDriveConfig } from '../../../src/services/config/driveConfig';
 import { loadExportFormats, loadExportSheetAsPdf } from '../../../src/services/config/exportConfig';
-import {
-  getQueue,
-  hasExceededMaxRetries,
-  incrementRetry,
-  removeFromQueue
-} from '../../../src/services/export/queue-storage';
+import { queueManager } from '../../../src/services/export/QueueManager';
 import { processExportQueue } from '../../../src/services/export/service';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
@@ -25,12 +20,14 @@ vi.mock('../../../src/services/networkService', () => ({
   subscribeToNetworkChanges: vi.fn(),
   isInternetReachable: vi.fn()
 }));
-vi.mock('../../../src/services/export/queue-storage', () => ({
-  getQueue: vi.fn(),
-  removeFromQueue: vi.fn(),
-  incrementRetry: vi.fn(),
-  hasExceededMaxRetries: vi.fn(),
-  addToQueue: vi.fn()
+vi.mock('../../../src/services/export/QueueManager', () => ({
+  queueManager: {
+    getQueue: vi.fn(),
+    removeFromQueue: vi.fn(),
+    incrementRetry: vi.fn(),
+    hasExceededMaxRetries: vi.fn(),
+    addToQueue: vi.fn()
+  }
 }));
 vi.mock('../../../src/services/storage/adapterFactory', () => ({
   createStorageAdapter: vi.fn(),
@@ -65,8 +62,8 @@ describe('ExportService - processExportQueue', () => {
 
     // デフォルトのモック動作
     vi.mocked(getNetworkStatus).mockResolvedValue('online');
-    vi.mocked(getQueue).mockResolvedValue([]);
-    vi.mocked(hasExceededMaxRetries).mockReturnValue(false);
+    vi.mocked(queueManager.getQueue).mockResolvedValue([]);
+    vi.mocked(queueManager.hasExceededMaxRetries).mockReturnValue(false);
 
     // Config系モック
     vi.mocked(loadExportFormats).mockResolvedValue(['googleSheets']);
@@ -112,7 +109,7 @@ describe('ExportService - processExportQueue', () => {
   it('should skip processing if offline', async () => {
     // Arrange
     vi.mocked(getNetworkStatus).mockResolvedValue('offline');
-    vi.mocked(getQueue).mockResolvedValue([{ id: '1' }] as any);
+    vi.mocked(queueManager.getQueue).mockResolvedValue([{ id: '1' }] as any);
 
     // Act
     const result = await processExportQueue();
@@ -133,7 +130,7 @@ describe('ExportService - processExportQueue', () => {
       retryCount: 0,
       exportConfig: { formats: ['googleSheets'], targetFolder: { id: 'f1' } }
     };
-    vi.mocked(getQueue)
+    vi.mocked(queueManager.getQueue)
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue([]); // Processing -> Empty
 
@@ -142,7 +139,7 @@ describe('ExportService - processExportQueue', () => {
 
     // Assert
     expect(result.successCount).toBe(1);
-    expect(removeFromQueue).toHaveBeenCalledWith('entry-1');
+    expect(queueManager.removeFromQueue).toHaveBeenCalledWith('entry-1');
     expect(exportToSpreadsheet).toHaveBeenCalled();
   });
 
@@ -152,17 +149,17 @@ describe('ExportService - processExportQueue', () => {
       id: 'entry-2',
       retryCount: 3
     };
-    vi.mocked(getQueue)
+    vi.mocked(queueManager.getQueue)
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue([]);
-    vi.mocked(hasExceededMaxRetries).mockReturnValue(true);
+    vi.mocked(queueManager.hasExceededMaxRetries).mockReturnValue(true);
 
     // Act
     const result = await processExportQueue();
 
     // Assert
     expect(result.skippedCount).toBe(1);
-    expect(removeFromQueue).toHaveBeenCalledWith('entry-2');
+    expect(queueManager.removeFromQueue).toHaveBeenCalledWith('entry-2');
     expect(exportToSpreadsheet).not.toHaveBeenCalled();
   });
 
@@ -175,7 +172,7 @@ describe('ExportService - processExportQueue', () => {
       retryCount: 0,
       exportConfig: { formats: ['googleSheets'], targetFolder: { id: 'f1' } }
     };
-    vi.mocked(getQueue)
+    vi.mocked(queueManager.getQueue)
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue(['entry-3'] as any); // Still in queue
     vi.mocked(exportToSpreadsheet).mockResolvedValue({
@@ -189,8 +186,8 @@ describe('ExportService - processExportQueue', () => {
 
     // Assert
     expect(result.failCount).toBe(1);
-    expect(incrementRetry).toHaveBeenCalledWith('entry-3', expect.any(String));
-    expect(removeFromQueue).not.toHaveBeenCalledWith('entry-3');
+    expect(queueManager.incrementRetry).toHaveBeenCalledWith('entry-3', expect.any(String));
+    expect(queueManager.removeFromQueue).not.toHaveBeenCalledWith('entry-3');
   });
 
   it('should stop processing if network goes offline during processing', async () => {
@@ -199,7 +196,7 @@ describe('ExportService - processExportQueue', () => {
       { id: 'e1', exportConfig: { formats: ['googleSheets'] } },
       { id: 'e2', exportConfig: { formats: ['googleSheets'] } }
     ];
-    vi.mocked(getQueue).mockResolvedValueOnce(entries as any);
+    vi.mocked(queueManager.getQueue).mockResolvedValueOnce(entries as any);
 
     // e1 fails -> check network -> offline -> break
     vi.mocked(exportToSpreadsheet).mockResolvedValue({ success: false, exportedSheets: [] });

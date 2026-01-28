@@ -1,16 +1,16 @@
-import { DataTagKey, HealthData } from '../types/health';
-import { filterHealthDataByTags } from '../utils/dataHelpers';
+import { HealthData } from '../types/health';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
-import { ExportConfigService } from './config/ExportConfigService';
-import { exportConfigService } from './config/exportConfig';
-import { addDebugLog } from './debugLogService';
-import { addToExportQueue, processExportQueue, ProcessQueueResult } from './export/service';
 import {
-  checkHealthConnectAvailability,
-  checkHealthPermissions,
-  fetchAllHealthData,
-  initializeHealthConnect
-} from './healthConnect';
+  createDefaultExportConfig,
+  ExportConfigService,
+  exportConfigService
+} from './config/exportConfig';
+import { Filter } from './data/Filter';
+import { addDebugLog } from './debugLogService';
+import { queueManager, QueueManager } from './export/QueueManager';
+import { processExportQueue, ProcessQueueResult } from './export/service';
+import { AccessChecker } from './health/AccessChecker';
+import { Fetcher } from './health/Fetcher';
 
 /** 最小取得日数 */
 const MIN_FETCH_DAYS = 7;
@@ -23,15 +23,22 @@ export interface SyncResult {
   dateRange: Set<string>;
   startTime: string;
   endTime: string;
-  isNewData: boolean; // 前回同期よりもデータが新しいか（簡易判定）
-  queued: boolean; // エクスポートキューに追加されたか
+  isNewData: boolean;
+  queued: boolean;
 }
 
 /**
  * 同期サービスの実装クラス
+ * 機能ごとのサービスクラスを統括するオーケストレーター
  */
 export class SyncServiceImpl {
-  constructor(private configService: ExportConfigService) {}
+  constructor(
+    private accessChecker: AccessChecker,
+    private fetcher: Fetcher,
+    private filter: Filter,
+    private queueManager: QueueManager,
+    private configService: ExportConfigService
+  ) {}
 
   /**
    * Health Connectの状態確認と初期化
@@ -41,17 +48,17 @@ export class SyncServiceImpl {
     initialized: boolean;
     hasPermissions: boolean;
   }> {
-    const availability = await checkHealthConnectAvailability();
+    const availability = await this.accessChecker.checkAvailability();
     if (!availability.available) {
       return { available: false, initialized: false, hasPermissions: false };
     }
 
-    const initialized = await initializeHealthConnect();
+    const initialized = await this.accessChecker.initialize();
     if (!initialized) {
       return { available: true, initialized: false, hasPermissions: false };
     }
 
-    const hasPermissions = await checkHealthPermissions();
+    const hasPermissions = await this.accessChecker.hasPermissions();
     return { available: true, initialized: true, hasPermissions };
   }
 
@@ -78,8 +85,8 @@ export class SyncServiceImpl {
         'info'
       );
 
-      // 2. データの取得
-      const healthData = await fetchAllHealthData(startTime, endTime);
+      // 2. データの取得 (Fetcher利用)
+      const healthData = await this.fetcher.fetchAllData(startTime, endTime);
 
       // データが存在するか確認
       const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
@@ -95,20 +102,25 @@ export class SyncServiceImpl {
         await this.configService.saveLastSyncTime(now);
         await addDebugLog(`[SyncService] Sync success. LastSyncTime updated: ${now}`, 'success');
 
-        // エクスポートキューへの追加
-        // バックグラウンド/Widget/UI統一で、SyncServiceが責務を持つ
-
-        // タグフィルタリング (selectedTagsが指定されている場合)
+        // タグフィルタリング (Filter利用)
         let dataToQueue = healthData;
-        // Note: filterHealthDataByTagsを使わずに手動でフィルタリング（循環参照回避のため）
-
         if (selectedTags && selectedTags.length > 0) {
-          // Utilを使ってフィルタリング
-          const tagSet = new Set<DataTagKey>(selectedTags as DataTagKey[]);
-          dataToQueue = filterHealthDataByTags(healthData, tagSet);
+          dataToQueue = this.filter.filterByTags(healthData, selectedTags);
         }
 
-        queued = await addToExportQueue(dataToQueue, dateRange);
+        // 3. エクスポートキューへの追加 (QueueManager利用)
+        const exportConfig = await createDefaultExportConfig();
+        const tags = Object.keys(dataToQueue) as string[];
+
+        const queueId = await this.queueManager.addToQueue({
+          healthData: dataToQueue,
+          selectedTags: tags,
+          syncDateRange: Array.from(dateRange),
+          exportConfig
+        });
+
+        queued = !!queueId;
+
         if (queued) {
           await addDebugLog('[SyncService] Data automatically added to export queue', 'info');
         } else {
@@ -182,19 +194,14 @@ export class SyncServiceImpl {
 
     if (lastSyncTimeStr) {
       // 前回同期がある場合はそこから
-      // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
-      // ここでは前回同期時刻をそのまま採用
       const lastSyncDate = new Date(lastSyncTimeStr);
-      // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
-      // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
 
       // 経過日数を計算
       const daysSinceLastSync = Math.ceil(
         (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
-      // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
+      // 最小7日、最大30日の範囲で調整
       const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
       const startTime = getDateDaysAgo(fetchDays);
 
@@ -210,6 +217,11 @@ export class SyncServiceImpl {
 
 /**
  * 同期サービスのシングルトンインスタンス
- * フォアグラウンド(UI)とバックグラウンド(Task)で共通利用されるロジックを提供
  */
-export const SyncService = new SyncServiceImpl(exportConfigService);
+export const SyncService = new SyncServiceImpl(
+  new AccessChecker(),
+  new Fetcher(),
+  new Filter(),
+  queueManager,
+  exportConfigService
+);
