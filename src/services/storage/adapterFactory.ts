@@ -1,6 +1,7 @@
 // アダプターファクトリ
 // テスト容易性とDIのためにアダプター生成を一元管理
 
+import { googleAuthService } from '../../services/infrastructure/googleAuth';
 import { GoogleDriveAdapter } from './googleDriveAdapter';
 import { GoogleSheetsAdapter } from './googleSheetsAdapter';
 import type { SpreadsheetAdapter, StorageAdapter } from './interfaces';
@@ -19,11 +20,11 @@ export interface AdapterFactory {
  */
 class DefaultAdapterFactory implements AdapterFactory {
   createStorageAdapter(): StorageAdapter {
-    return new GoogleDriveAdapter();
+    return new GoogleDriveAdapter(googleAuthService);
   }
 
   createSpreadsheetAdapter(): SpreadsheetAdapter {
-    return new GoogleSheetsAdapter();
+    return new GoogleSheetsAdapter(googleAuthService);
   }
 }
 
