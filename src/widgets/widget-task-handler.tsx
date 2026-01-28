@@ -1,7 +1,7 @@
 import React from 'react';
 import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
-import { BACKGROUND_EXECUTION_TIMEOUT_MS, processExportQueue } from '../services/export/service';
+import { loadLastSyncTime } from '../services/config/exportConfig';
 import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
@@ -53,52 +53,46 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         if (!authenticated) {
           console.error('[Widget] Auth failed');
           renderCurrentWidget('error', null);
-          // 数秒後にアイドルに戻す（エラー表示を残すため少し待つ）
+          // 数秒後にアイドルに戻す
           await new Promise((resolve) => setTimeout(resolve, 3000));
-          renderCurrentWidget('idle', null);
+
+          const lastTime = await loadLastSyncTime();
+          renderCurrentWidget('idle', lastTime);
           return;
         }
 
-        // 4. データ取得 (本日分 = 0日前から)
-        console.log('[Widget] Fetching data for today...');
+        // 4. データ取得 & エクスポート (一括実行)
+        console.log('[Widget] Starting sync and upload...');
 
-        // SyncServiceを使用
         // 0を指定して「今日のみ」を取得
-        const syncResult = await SyncService.performSync(0);
+        // syncAndUploadはData new -> Queued -> Uploadを内部で処理する
+        const { syncResult, exportResult } = await SyncService.syncAndUpload(0);
 
         if (!syncResult.success || !syncResult.isNewData) {
           console.log('[Widget] No new data found or sync failed');
-          renderCurrentWidget('idle', new Date().toISOString());
+          const lastTime = await loadLastSyncTime();
+          renderCurrentWidget('idle', lastTime);
           return;
         }
 
-        // SyncService内でキューに追加されているはずなのでチェック
-        if (!syncResult.queued) {
-          console.error('[Widget] Failed to queue data (in SyncService)');
-          renderCurrentWidget('error', null);
-          return;
-        }
-
-        // 6. エクスポート実行 (タイムアウト付き)
-        console.log('[Widget] Processing queue...');
-        const result = await processExportQueue(BACKGROUND_EXECUTION_TIMEOUT_MS);
-
-        if (result.successCount > 0) {
+        if (exportResult && exportResult.successCount > 0) {
           console.log('[Widget] Sync success!');
-          renderCurrentWidget('idle', new Date().toISOString());
+          // アップロード成功時は SyncService が saveLastSyncTime しているので、それをロードすれば最新になる
         } else {
-          console.warn('[Widget] Sync finished but no success count (maybe skipped or failed)');
-          // 部分失敗でもエラー扱いにするか、古い時刻のままアイドルに戻す
-          renderCurrentWidget('error', null);
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-          renderCurrentWidget('idle', now); // 直前の時刻に戻す
+          console.log('[Widget] Data queued but upload not finished (or other state)');
         }
+
+        // 常に保存されている最終同期時刻を表示してアイドルに戻る
+        const lastTime = await loadLastSyncTime();
+        renderCurrentWidget('idle', lastTime);
       } catch (error) {
         console.error('Widget sync error:', error);
         renderCurrentWidget('error', null);
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        // エラー時は時刻更新せずアイドルへ
-        renderCurrentWidget('idle', null);
+
+        // エラー後も保存されている時刻を表示
+        const lastTime = await loadLastSyncTime();
+        renderCurrentWidget('idle', lastTime);
       }
       break;
 
@@ -107,7 +101,8 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'WIDGET_RESIZED':
       {
         // 初期表示
-        renderCurrentWidget('idle', null);
+        const lastTime = await loadLastSyncTime();
+        renderCurrentWidget('idle', lastTime);
       }
       break;
 

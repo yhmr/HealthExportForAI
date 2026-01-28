@@ -2,7 +2,7 @@ import { HealthData } from '../types/health';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
 import { loadExportPeriodDays, loadLastSyncTime, saveLastSyncTime } from './config/exportConfig';
 import { addDebugLog } from './debugLogService';
-import { addToExportQueue } from './export/service';
+import { addToExportQueue, processExportQueue } from './export/service';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
@@ -196,5 +196,32 @@ export const SyncService = {
       const startTime = getDateDaysAgo(days);
       return { startTime, endTime };
     }
+  },
+
+  /**
+   * 同期とアップロードを一括実行 (Facade)
+   * 1. データの取得とキューイング (Phase 1)
+   * 2. 成功したらアップロード試行 (Phase 2)
+   */
+  async syncAndUpload(
+    periodDays?: number,
+    forceFullSync: boolean = false,
+    selectedTags?: string[]
+  ): Promise<{ syncResult: SyncResult; exportResult?: any }> {
+    // 1. データ取得 & キューイング
+    const syncResult = await this.performSync(periodDays, forceFullSync, selectedTags);
+
+    let exportResult = null;
+
+    // 2. 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
+    if (syncResult.success) {
+      // オフライン判定等は processExportQueue 側で行われるため、ここでは単に呼び出す
+      exportResult = await processExportQueue();
+    }
+
+    return {
+      syncResult,
+      exportResult
+    };
   }
 };

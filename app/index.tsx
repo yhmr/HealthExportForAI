@@ -13,6 +13,7 @@ import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
@@ -21,8 +22,7 @@ import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { driveConfig, isUploading, uploadError, loadConfig, exportAndUpload, clearUploadError } =
-    useGoogleDrive();
+  const { driveConfig, uploadError, loadConfig, clearUploadError } = useGoogleDrive();
 
   const {
     isInitialized,
@@ -33,8 +33,7 @@ export default function HomeScreen() {
     isLoading,
     error,
     initialize,
-    requestPermissions,
-    syncData
+    requestPermissions
   } = useHealthConnect();
 
   // 認証状態
@@ -127,6 +126,13 @@ export default function HomeScreen() {
     }
   }, [error, uploadError, clearUploadError, t]);
 
+  // 同期操作Hook
+  const {
+    isSyncing: isOperationSyncing,
+    syncError: operationError,
+    syncAndUpload
+  } = useSyncOperation();
+
   // 統合ハンドラ: 同期してエクスポート
   const handleSyncAndExport = async () => {
     if (!isInitialized) {
@@ -139,17 +145,15 @@ export default function HomeScreen() {
       if (!granted) return;
     }
 
-    // 1. 同期
-    const syncSuccess = await syncData(); // 引数なしで差分更新または設定値に基づく初期取得
-    if (!syncSuccess) return;
+    // 新しい統合メソッドを使用
+    const result = await syncAndUpload(); // 引数なしで差分更新または設定値に基づく初期取得
 
-    // 2. アップロード
-    const result = await exportAndUpload(selectedDataTags);
     if (result.success) {
-      if (result.queued) {
-        Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
-      } else {
+      if (result.uploaded) {
         Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
+      } else if (result.queued) {
+        // オフライン等でキューに入っただけの場合
+        Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
       }
     }
   };
@@ -175,7 +179,7 @@ export default function HomeScreen() {
         <View style={styles.syncButtons}>
           <SyncButton
             onPress={handleSyncAndExport}
-            isLoading={isLoading || isUploading}
+            isLoading={isLoading || isOperationSyncing}
             label={t('home', 'exportButton')} // "Sync & Export" 的な文言に変えるべきだが、一旦既存キーを使用
             icon="📤"
             variant="primary" // メインアクションなのでPrimaryに

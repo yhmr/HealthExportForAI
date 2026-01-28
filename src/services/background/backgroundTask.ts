@@ -1,6 +1,5 @@
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
-import { BACKGROUND_EXECUTION_TIMEOUT_MS, processExportQueue } from '../export/service';
 import { SyncService } from '../syncService';
 
 // モジュールロード時のログは非同期で実行
@@ -35,40 +34,30 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
       return { ...result, success: false };
     }
 
-    // === 新規データ取得・エクスポート ===
+    // === 同期実行（取得〜エクスポートまで一括） ===
     try {
-      const syncResult = await SyncService.performSync();
+      const { syncResult, exportResult } = await SyncService.syncAndUpload();
+
+      if (!syncResult.success) {
+        // 同期自体に失敗
+        await addDebugLog('[SyncOperation] Sync failed during execution', 'error');
+        return { ...result, success: false };
+      }
 
       if (syncResult.isNewData) {
-        if (syncResult.queued) {
-          await addDebugLog('[SyncOperation] New data found and queued by SyncService', 'info');
-        } else {
-          // SyncService側でログが出ているはずだが、念のためここでも
-          await addDebugLog(
-            '[SyncOperation] New data found but queueing failed in SyncService',
-            'warn'
-          );
-        }
-      } else {
-        await addDebugLog('[SyncOperation] No new health data to export', 'info');
+        result.hasNewData = true;
       }
-    } catch (fetchError) {
-      await addDebugLog(`[SyncOperation] Fetch error: ${fetchError}`, 'error');
-      // 取得エラーがあっても（既存の）キュー処理は続行
-    }
 
-    // === キュー処理（新規追加分も含む） ===
-    // オンラインであれば処理を試みる
-    // ★バックグラウンド用タイムアウト(25s)を指定
-    const queueResult = await processExportQueue(BACKGROUND_EXECUTION_TIMEOUT_MS);
-
-    if (queueResult.successCount > 0) {
-      await addDebugLog(
-        `[SyncOperation] Queue processed: ${queueResult.successCount} items`,
-        'success'
-      );
-      result.hasQueueProcessed = true;
-      result.hasNewData = true; // キュー処理できた＝何らかのデータが進んだ
+      // キュー処理結果の確認
+      if (exportResult && exportResult.successCount > 0) {
+        result.hasQueueProcessed = true;
+        // ここでは「何らかの進捗があった」ことをOSに伝えるため true を維持
+        result.hasNewData = true;
+      }
+    } catch (err) {
+      await addDebugLog(`[SyncOperation] Error during syncAndUpload: ${err}`, 'error');
+      // 全体的な失敗として扱うかは要件によるが、エラーログは出したので例外は握りつぶし、success: falseを返す
+      return { ...result, success: false };
     }
 
     return result;
