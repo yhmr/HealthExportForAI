@@ -1,6 +1,6 @@
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { IKeyValueStorage } from '../interfaces/IKeyValueStorage';
+import { IKeyValueStorage } from '../../types/storage';
 
 /**
  * エクスポート設定サービス
@@ -21,6 +21,14 @@ export class ExportConfigService {
   async loadIsSetupCompleted(): Promise<boolean> {
     const value = await this.storage.getItem(STORAGE_KEYS.IS_SETUP_COMPLETED);
     return value === 'true';
+  }
+
+  /**
+   * テスト用にストレージを差し替える
+   * @internal
+   */
+  setStorage(storage: IKeyValueStorage): void {
+    this.storage = storage; // Note: storage should be mutable (remove readonly if present or just work because private is mutable by default unless readonly)
   }
 
   /**
