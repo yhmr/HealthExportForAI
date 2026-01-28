@@ -7,6 +7,9 @@ export default defineConfig({
       'react-native': './__tests__/mocks/react-native.js'
     }
   },
+  define: {
+    __DEV__: true
+  },
   test: {
     server: {
       deps: {
