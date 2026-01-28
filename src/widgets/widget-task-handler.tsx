@@ -53,9 +53,8 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         }
 
         // 4. データ取得 & エクスポート (一括実行)
-        // 0を指定して「今日のみ」を取得
-        // syncAndUploadはData new -> Queued -> Uploadを内部で処理する
-        const { syncResult } = await SyncService.syncAndUpload(0);
+        // 前回同期からの差分を取得
+        const { syncResult } = await SyncService.syncAndUpload();
 
         if (!syncResult.success || !syncResult.isNewData) {
           const lastTime = await loadLastSyncTime();
