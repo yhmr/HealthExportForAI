@@ -1,9 +1,14 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
 import { NetworkError, StorageError } from '../../types/errors';
+import { GoogleDriveFile, GoogleDriveFileListResponse } from '../../types/external/googleDrive';
 import { Result, err, ok } from '../../types/result';
 import { addDebugLog, logError } from '../debugLogService';
 import { escapeDriveQuery } from './driveUtils';
+import {
+  mapGoogleDriveFileToBasicInfo,
+  mapGoogleDriveFileToExistence
+} from './mappers/googleDriveMapper';
 
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 
@@ -41,7 +46,7 @@ export async function createFolder(
     });
 
     if (createResponse.ok) {
-      const data = await createResponse.json();
+      const data = (await createResponse.json()) as GoogleDriveFile;
       return ok(data.id);
     } else {
       const msg = `[GoogleDrive] Create folder failed: ${createResponse.status}`;
@@ -84,8 +89,9 @@ export async function listFolders(
     });
 
     if (response.ok) {
-      const data = await response.json();
-      return ok(data.files || []);
+      const data = (await response.json()) as GoogleDriveFileListResponse;
+      const files = (data.files || []).map(mapGoogleDriveFileToBasicInfo);
+      return ok(files);
     } else {
       await addDebugLog(`[GoogleDrive] List folders failed: ${response.status}`, 'error');
       return err(
@@ -126,9 +132,9 @@ export async function getFolder(
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as GoogleDriveFile;
       if (data.trashed) return ok(null);
-      return ok({ id: data.id, name: data.name });
+      return ok(mapGoogleDriveFileToBasicInfo(data));
     } else {
       await addDebugLog(`[GoogleDrive] Get folder failed: ${response.status}`, 'error');
       return err(new StorageError(`Get folder failed: ${response.status}`, 'GET_FOLDER_FAILED'));
@@ -174,9 +180,9 @@ export async function checkFolderExists(
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as GoogleDriveFile;
     // trashedの場合も存在しないとみなす
-    return ok(!data.trashed);
+    return ok(mapGoogleDriveFileToExistence(data));
   } catch (error: any) {
     if (error?.message === 'Network request failed') {
       // ネットワークエラーは判定不能なのでエラーを返す
@@ -215,7 +221,7 @@ export async function findOrCreateFolder(
     });
 
     if (searchResponse.ok) {
-      const data = await searchResponse.json();
+      const data = (await searchResponse.json()) as GoogleDriveFileListResponse;
       if (data.files && data.files.length > 0) {
         return ok(data.files[0].id);
       }
@@ -308,7 +314,7 @@ export async function uploadFile(
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as GoogleDriveFile;
       await addDebugLog(`[GoogleDrive] File uploaded: ${fileName} (ID: ${data.id})`, 'success');
       return ok(data.id);
     } else {
@@ -363,9 +369,9 @@ export async function findFile(
       return err(new StorageError(`Find file failed: ${response.status}`, 'FIND_FILE_FAILED'));
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as GoogleDriveFileListResponse;
     if (data.files && data.files.length > 0) {
-      return ok({ id: data.files[0].id, name: data.files[0].name });
+      return ok(mapGoogleDriveFileToBasicInfo(data.files[0]));
     }
     return ok(null);
   } catch (error: any) {
