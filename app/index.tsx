@@ -58,8 +58,6 @@ export default function HomeScreen() {
       let isMounted = true;
 
       const setup = async () => {
-        console.log('[HomeScreen] Setup started');
-
         // 並列で初期化と設定読み込みを実行
         const [initResult, configResult, setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
@@ -81,23 +79,12 @@ export default function HomeScreen() {
         const bgConfig = await loadBackgroundSyncConfig();
         setAutoSyncEnabled(bgConfig.enabled);
 
-        console.log('[HomeScreen] Setup completed');
-
         // オンボーディング判定
         const needsOnboarding =
           !isAuthenticated ||
           (initResult && !currentHealthPermissions) ||
           !configResult ||
           !setupCompletedResult;
-
-        console.log('[HomeScreen] Check Onboarding:', {
-          isAuthenticated,
-          initResult,
-          currentHealthPermissions,
-          hasConfig: !!configResult,
-          isSetupCompleted: setupCompletedResult,
-          needsOnboarding
-        });
 
         if (needsOnboarding) {
           router.replace('/onboarding');

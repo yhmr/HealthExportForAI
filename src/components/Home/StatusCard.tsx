@@ -3,13 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../theme/types';
 
+import { TranslationKeys } from '../../i18n/translations';
+
 interface StatusCardProps {
   lastSyncTime: string | null;
   isHealthConnectConnected: boolean;
   isDriveConnected: boolean;
   isSetupCompleted: boolean;
   autoSyncEnabled: boolean;
-  t: (scope: any, key: string) => string;
+  t: (scope: keyof TranslationKeys, key: string) => string;
   language: 'ja' | 'en';
 }
 

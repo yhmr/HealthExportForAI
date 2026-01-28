@@ -54,6 +54,21 @@ export interface NutritionData {
   saturatedFat?: number;
 }
 
+// データタグの種類（HealthDataのキーと対応）
+export type DataTagKey = keyof HealthData;
+
+// 全タグのリスト
+export const ALL_DATA_TAGS: DataTagKey[] = [
+  'steps',
+  'weight',
+  'bodyFat',
+  'totalCaloriesBurned',
+  'basalMetabolicRate',
+  'sleep',
+  'exercise',
+  'nutrition'
+];
+
 export interface HealthData {
   steps: StepsData[];
   weight: WeightData[];

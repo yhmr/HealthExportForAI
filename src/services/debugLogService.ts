@@ -29,12 +29,14 @@ export async function addDebugLog(
   type: 'info' | 'error' | 'success' | 'warn' = 'info'
 ): Promise<void> {
   // コンソールにも出力（開発環境での確認用）
-  if (type === 'error') {
-    console.error(message);
-  } else if (type === 'warn') {
-    console.warn(message);
-  } else {
-    console.log(message);
+  if (__DEV__) {
+    if (type === 'error') {
+      console.error(message);
+    } else if (type === 'warn') {
+      console.warn(message);
+    } else {
+      console.log(message);
+    }
   }
 
   try {

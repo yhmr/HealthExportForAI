@@ -1,8 +1,9 @@
-import { HealthData } from '../types/health';
+import { DataTagKey, HealthData } from '../types/health';
+import { filterHealthDataByTags } from '../utils/dataHelpers';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
 import { loadExportPeriodDays, loadLastSyncTime, saveLastSyncTime } from './config/exportConfig';
 import { addDebugLog } from './debugLogService';
-import { addToExportQueue, processExportQueue } from './export/service';
+import { addToExportQueue, processExportQueue, ProcessQueueResult } from './export/service';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
@@ -97,33 +98,12 @@ export const SyncService = {
 
         // タグフィルタリング (selectedTagsが指定されている場合)
         let dataToQueue = healthData;
-        /* Note: filterHealthDataByTags is in healthStore, creating circular dependency potentially if moved to service.
-           Instead of filtering here, we can pass exportConfig with specific tags to addToExportQueue if that supported it,
-           but addToExportQueue takes HealthData.
-           
-           Simplest approach: If selectedTags is provided, we filter the keys manually or use a helper.
-           Since we don't want to depend on store logic here if possible. 
-           But wait, addToExportQueue takes data and *config*.
-           The queue processing logic re-reads config. 
-           Actually, the queue entry stores `selectedTags`. 
-           
-           addToExportQueue source:
-             const tags = Object.keys(healthData) as string[]; 
-             // ...
-             selectedTags: tags,
-           
-           It infers tags from the data keys. So we should filter the data.
-        */
+        // Note: filterHealthDataByTagsを使わずに手動でフィルタリング（循環参照回避のため）
 
         if (selectedTags && selectedTags.length > 0) {
-          const filteredData: any = {};
-          selectedTags.forEach((tag) => {
-            if ((healthData as any)[tag]) {
-              filteredData[tag] = (healthData as any)[tag];
-            }
-          });
-          // 他のキーは含めない
-          dataToQueue = filteredData as HealthData;
+          // Utilを使ってフィルタリング
+          const tagSet = new Set<DataTagKey>(selectedTags as DataTagKey[]);
+          dataToQueue = filterHealthDataByTags(healthData, tagSet);
         }
 
         queued = await addToExportQueue(dataToQueue, dateRange);
@@ -207,7 +187,7 @@ export const SyncService = {
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<{ syncResult: SyncResult; exportResult?: any }> {
+  ): Promise<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }> {
     // 1. データ取得 & キューイング
     const syncResult = await this.performSync(periodDays, forceFullSync, selectedTags);
 

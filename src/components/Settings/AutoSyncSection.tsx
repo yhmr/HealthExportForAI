@@ -3,6 +3,7 @@ import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SYNC_INTERVALS, getSyncIntervalLabel } from '../../services/config/backgroundSyncConfig';
+import { ThemeColors } from '../../theme/types';
 import { AutoSyncConfig, SyncInterval } from '../../types/exportTypes';
 import { SettingsItem } from './SettingsItem';
 import { SettingsSection } from './SettingsSection';
@@ -123,7 +124,7 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
   );
 };
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     intervalContainer: {
       flexDirection: 'row',
