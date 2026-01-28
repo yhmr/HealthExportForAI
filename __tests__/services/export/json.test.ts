@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
-import type { FileOperations } from '../../../src/services/storage/interfaces';
 import { ok } from '../../../src/types/result';
+import { FileOperations } from '../../../src/types/storage';
 
 // Mock debugLogService to prevent AsyncStorage usage
 vi.mock('../../../src/services/debugLogService', () => ({

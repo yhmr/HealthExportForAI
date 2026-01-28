@@ -1,8 +1,8 @@
 import { GoogleSignin, statusCodes, type User } from '@react-native-google-signin/google-signin';
+import { IAuthService } from '../../types/auth';
 import { AuthError } from '../../types/errors';
 import { Result, err, ok } from '../../types/result';
 import { logError } from '../debugLogService';
-import { IAuthService } from '../interfaces/IAuthService';
 
 // Google Drive APIとGoogle Sheets APIのスコープ
 const SCOPES = [

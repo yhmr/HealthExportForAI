@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
-import type { FileOperations } from '../../../src/services/storage/interfaces';
 import { StorageError } from '../../../src/types/errors';
 import { err, ok } from '../../../src/types/result';
+import { FileOperations } from '../../../src/types/storage';
 
 // Mock StorageAdapter
 const mockFileOps = {

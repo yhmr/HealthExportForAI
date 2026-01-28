@@ -1,5 +1,5 @@
 import { GoogleDriveFile } from '../../../types/external/googleDrive';
-import { FileInfo } from '../interfaces';
+import { FileInfo } from '../../../types/storage';
 
 /**
  * GoogleDriveFile型をアプリ内部のFileInfo型に変換する

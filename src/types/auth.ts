@@ -1,7 +1,7 @@
 import { User } from '@react-native-google-signin/google-signin';
 
-import { AuthError } from '../../types/errors';
-import { Result } from '../../types/result';
+import { AuthError } from './errors';
+import { Result } from './result';
 
 export interface IAuthService {
   configure(webClientId: string): void;

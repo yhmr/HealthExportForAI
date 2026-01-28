@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
-import type { SpreadsheetAdapter } from '../../../src/services/storage/interfaces';
 import { StorageError } from '../../../src/types/errors';
 import { err, ok } from '../../../src/types/result';
+import { SpreadsheetAdapter } from '../../../src/types/storage';
 
 // Mock Adapters
 const mockSpreadsheetAdapter = {

@@ -1,6 +1,7 @@
+import { IAuthService } from '../../types/auth';
 import { NetworkError, StorageError } from '../../types/errors';
 import { err, Result } from '../../types/result';
-import { IAuthService } from '../interfaces/IAuthService';
+import { FileInfo, FileOperations, FolderOperations, Initializable } from '../../types/storage';
 import {
   checkFolderExists,
   DEFAULT_FOLDER_NAME,
@@ -10,7 +11,6 @@ import {
   updateFile,
   uploadFile
 } from './googleDrive';
-import type { FileInfo, FileOperations, FolderOperations, Initializable } from './interfaces';
 
 export class GoogleDriveAdapter implements Initializable, FolderOperations, FileOperations {
   private accessToken: string | null = null;

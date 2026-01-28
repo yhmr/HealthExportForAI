@@ -2,15 +2,15 @@
 // テスト容易性とDIのためにアダプター生成を一元管理
 
 import { googleAuthService } from '../../services/infrastructure/googleAuth';
-import type { IAuthService } from '../interfaces/IAuthService';
-import { GoogleDriveAdapter } from './GoogleDriveAdapter';
-import { GoogleSheetsAdapter } from './GoogleSheetsAdapter';
-import type {
+import { IAuthService } from '../../types/auth';
+import {
   FileOperations,
   FolderOperations,
   Initializable,
   SpreadsheetAdapter
-} from './interfaces';
+} from '../../types/storage';
+import { GoogleDriveAdapter } from './GoogleDriveAdapter';
+import { GoogleSheetsAdapter } from './GoogleSheetsAdapter';
 
 /**
  * アダプターファクトリのインターフェース
