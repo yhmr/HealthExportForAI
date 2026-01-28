@@ -2,19 +2,21 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
-
-const STORAGE_KEYS = {
-  LAST_SYNC_TIME: '@last_sync_time',
-  EXPORT_PERIOD_DAYS: '@export_period_days',
-  EXPORT_FORMATS: '@export_formats',
-  EXPORT_SHEET_AS_PDF: '@export_sheet_as_pdf'
-} as const;
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 /**
- * 最後の同期時刻を保存
+ * 初期設定完了フラグを保存
  */
-export async function saveLastSyncTime(time: string): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time);
+export async function saveIsSetupCompleted(completed: boolean): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.IS_SETUP_COMPLETED, completed ? 'true' : 'false');
+}
+
+/**
+ * 初期設定完了フラグを取得
+ */
+export async function loadIsSetupCompleted(): Promise<boolean> {
+  const value = await AsyncStorage.getItem(STORAGE_KEYS.IS_SETUP_COMPLETED);
+  return value === 'true';
 }
 
 /**
@@ -22,6 +24,13 @@ export async function saveLastSyncTime(time: string): Promise<void> {
  */
 export async function loadLastSyncTime(): Promise<string | null> {
   return AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME);
+}
+
+/**
+ * 最後の同期時刻を保存
+ */
+export async function saveLastSyncTime(time: string): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time);
 }
 
 /**
@@ -72,4 +81,31 @@ export async function saveExportSheetAsPdf(enabled: boolean): Promise<void> {
 export async function loadExportSheetAsPdf(): Promise<boolean> {
   const value = await AsyncStorage.getItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF);
   return value === 'true';
+}
+
+/**
+ * 選択されたデータタグを保存
+ * (HealthStoreでの永続化に使用、および設定画面等でのフォールバック用)
+ */
+export async function saveSelectedDataTags(tags: string[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags));
+}
+
+/**
+ * 選択されたデータタグを取得
+ * 保存されていない場合はnullを返し、呼び出し元でデフォルト値を使用させる
+ */
+export async function loadSelectedDataTags(): Promise<string[] | null> {
+  const json = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);
+  if (json) {
+    return JSON.parse(json) as string[];
+  }
+  return null;
+}
+
+/**
+ * 最後の同期時刻を削除（初期データ再取得のため）
+ */
+export async function removeLastSyncTime(): Promise<void> {
+  await AsyncStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
 }

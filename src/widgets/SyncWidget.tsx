@@ -9,6 +9,11 @@ interface SyncWidgetProps {
 
 export function SyncWidget({ lastSyncTime, status = 'idle' }: SyncWidgetProps) {
   const isSyncing = status === 'syncing';
+  const isError = status === 'error';
+
+  // 背景色: 通常時は薄い緑、同期中は少し濃い緑、エラー時は薄い赤
+  const backgroundColor = isError ? '#FFCDD2' : isSyncing ? '#9ABF9F' : '#CFEAD1';
+  const borderColor = isError ? '#E57373' : isSyncing ? '#6E9672' : '#A3CFA8';
 
   return (
     <FlexWidget
@@ -18,13 +23,13 @@ export function SyncWidget({ lastSyncTime, status = 'idle' }: SyncWidgetProps) {
         flexDirection: 'row',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        backgroundColor: isSyncing ? '#9ABF9F' : '#CFEAD1',
+        backgroundColor: backgroundColor,
         borderRadius: 32,
         paddingHorizontal: 12,
         paddingVertical: 8,
         marginVertical: 8, // 上下を削ってスリムにする
         borderWidth: 2, // 枠線を追加してボタン感を出す
-        borderColor: isSyncing ? '#6E9672' : '#A3CFA8' // 枠線も状態に合わせて少し変える
+        borderColor: borderColor
       }}
       clickAction="SYNC_CLICKED"
     >
@@ -49,7 +54,7 @@ export function SyncWidget({ lastSyncTime, status = 'idle' }: SyncWidgetProps) {
         }}
       >
         <TextWidget
-          text={isSyncing ? 'Syncing' : 'Sync Now'}
+          text={isError ? 'Error' : isSyncing ? 'Syncing' : 'Sync Now'}
           style={{
             fontSize: 20,
             fontFamily: 'sans-serif-medium',

@@ -2,29 +2,27 @@
 
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DataTagList } from '../src/components/DataTagList';
 import { Header } from '../src/components/Header';
 import { StatusCard } from '../src/components/Home/StatusCard';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { DEFAULT_PERIOD_DAYS, PeriodPicker } from '../src/components/PeriodPicker';
 import { SyncButton } from '../src/components/SyncButton';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
-import { loadExportPeriodDays, saveExportPeriodDays } from '../src/services/config/exportConfig';
+import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
 import { useHealthStore } from '../src/stores/healthStore';
 import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { driveConfig, isUploading, uploadError, loadConfig, exportAndUpload, clearUploadError } =
-    useGoogleDrive();
+  const { driveConfig, uploadError, loadConfig, clearUploadError } = useGoogleDrive();
 
   const {
     isInitialized,
@@ -35,8 +33,7 @@ export default function HomeScreen() {
     isLoading,
     error,
     initialize,
-    requestPermissions,
-    syncData
+    requestPermissions
   } = useHealthConnect();
 
   // 認証状態
@@ -45,9 +42,9 @@ export default function HomeScreen() {
   // ストアから選択状態とアクションを取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
 
-  // 取得期間
-  const [periodDays, setPeriodDays] = useState(DEFAULT_PERIOD_DAYS);
+  // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+  const [isSetupCompleted, setIsSetupCompleted] = useState(false);
 
   // 翻訳 & テーマ
   const { t, language } = useLanguage();
@@ -63,40 +60,41 @@ export default function HomeScreen() {
         console.log('[HomeScreen] Setup started');
 
         // 並列で初期化と設定読み込みを実行
-        // initialize() は成否(boolean)を、loadConfig() は設定オブジェクト(DriveConfig | null)を返す
-        const [initResult, configResult] = await Promise.all([
+        const [initResult, configResult, setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
-          loadConfig()
+          loadConfig(),
+          loadIsSetupCompleted()
         ]);
 
         if (!isMounted) return;
 
-        // Health Connectの権限状態を直接チェック（State更新待ちを防ぐため）
-        // initializeが成功している場合のみチェックを行う
+        // Health Connectの権限状態を直接チェック
         const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
 
+        // 設定の反映
+        if (setupCompletedResult) {
+          setIsSetupCompleted(true);
+        }
+
         // UI設定の読み込み
-        const savedDays = await loadExportPeriodDays();
-        setPeriodDays(savedDays);
         const bgConfig = await loadBackgroundSyncConfig();
         setAutoSyncEnabled(bgConfig.enabled);
 
         console.log('[HomeScreen] Setup completed');
 
         // オンボーディング判定
-        // 以下のいずれかの場合はオンボーディングへ誘導
-        // 1. 未認証
-        // 2. Health Connect初期化成功済みだが権限がない
-        // 3. Drive設定がない
-
         const needsOnboarding =
-          !isAuthenticated || (initResult && !currentHealthPermissions) || !configResult;
+          !isAuthenticated ||
+          (initResult && !currentHealthPermissions) ||
+          !configResult ||
+          !setupCompletedResult;
 
         console.log('[HomeScreen] Check Onboarding:', {
           isAuthenticated,
           initResult,
           currentHealthPermissions,
           hasConfig: !!configResult,
+          isSetupCompleted: setupCompletedResult,
           needsOnboarding
         });
 
@@ -128,14 +126,15 @@ export default function HomeScreen() {
     }
   }, [error, uploadError, clearUploadError, t]);
 
-  // 期間変更ハンドラ
-  const handlePeriodChange = async (days: number) => {
-    setPeriodDays(days);
-    await saveExportPeriodDays(days);
-  };
+  // 同期操作Hook
+  const {
+    isSyncing: isOperationSyncing,
+    syncError: operationError,
+    syncAndUpload
+  } = useSyncOperation();
 
-  // データ取得ハンドラ
-  const handleSync = async () => {
+  // 統合ハンドラ: 同期してエクスポート
+  const handleSyncAndExport = async () => {
     if (!isInitialized) {
       const success = await initialize();
       if (!success) return;
@@ -146,22 +145,18 @@ export default function HomeScreen() {
       if (!granted) return;
     }
 
-    await syncData(periodDays);
-  };
+    // 新しい統合メソッドを使用
+    const result = await syncAndUpload(); // 引数なしで差分更新または設定値に基づく初期取得
 
-  // エクスポートハンドラ
-  const handleExport = async () => {
-    const result = await exportAndUpload(selectedDataTags);
     if (result.success) {
-      if (result.queued) {
-        Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
-      } else {
+      if (result.uploaded) {
         Alert.alert(t('common', 'success'), t('home', 'exportSuccess'));
+      } else if (result.queued) {
+        // オフライン等でキューに入っただけの場合
+        Alert.alert(t('common', 'success'), t('network', 'pendingItems').replace('{{count}}', '1'));
       }
     }
   };
-
-  const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -174,52 +169,22 @@ export default function HomeScreen() {
           lastSyncTime={lastSyncTime}
           isHealthConnectConnected={isAvailable && hasPermissions}
           isDriveConnected={!!driveConfig}
+          isSetupCompleted={isSetupCompleted}
           autoSyncEnabled={autoSyncEnabled}
           t={t}
           language={language as 'ja' | 'en'}
         />
 
-        {/* Quick Actions Grid */}
-        <View style={styles.actionGrid}>
-          <View style={styles.actionItem}>
-            <PeriodPicker value={periodDays} onChange={handlePeriodChange} />
-          </View>
-        </View>
-
         {/* Main Actions */}
         <View style={styles.syncButtons}>
           <SyncButton
-            onPress={handleSync}
-            isLoading={isLoading}
-            label={t('home', 'syncButton')}
-            icon="🔄"
-            variant="primary"
-          />
-          <SyncButton
-            onPress={handleExport}
-            isLoading={isUploading}
-            label={t('home', 'exportButton')}
+            onPress={handleSyncAndExport}
+            isLoading={isLoading || isOperationSyncing}
+            label={t('home', 'exportButton')} // "Sync & Export" 的な文言に変えるべきだが、一旦既存キーを使用
             icon="📤"
-            variant="secondary"
+            variant="primary" // メインアクションなのでPrimaryに
           />
         </View>
-
-        {/* Data List */}
-        {hasData ? (
-          <View style={styles.dataSection}>
-            <Text style={styles.sectionTitle}>Preview Data</Text>
-            <DataTagList
-              healthData={healthData}
-              selectedTags={selectedDataTags}
-              onToggleTag={toggleDataTag}
-            />
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            {/* Empty state simplified as StatusCard shows status */}
-            <Text style={styles.emptyText}>{t('home', 'emptyState1')}</Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

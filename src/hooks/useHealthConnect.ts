@@ -1,22 +1,17 @@
 // Health Connect カスタムフック
 
 import { useCallback, useState } from 'react';
-import { loadExportPeriodDays, saveLastSyncTime } from '../services/config/exportConfig';
+import { loadLastSyncTime, loadSelectedDataTags } from '../services/config/exportConfig';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
-  fetchAllHealthData,
   initializeHealthConnect,
   requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
-import { useHealthStore } from '../stores/healthStore';
-import {
-  generateDateRange,
-  getCurrentISOString,
-  getDateDaysAgo,
-  getEndOfToday
-} from '../utils/formatters';
+import { SyncService } from '../services/syncService';
+import { DataTagKey, useHealthStore } from '../stores/healthStore';
+
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -30,7 +25,8 @@ export function useHealthConnect() {
     setAllData,
     setLastSyncTime,
     setLoading,
-    setError
+    setError,
+    setSelectedDataTags
   } = useHealthStore();
 
   /**
@@ -60,20 +56,23 @@ export function useHealthConnect() {
         // 初期化成功時に権限状態もチェックする
         const hasPerms = await checkHealthPermissions();
         setHasPermissions(hasPerms);
+
+        // 保存されたデータタグ設定を読み込む
+        const savedTags = await loadSelectedDataTags();
+        if (savedTags) {
+          // 保存された設定があれば反映
+          setSelectedDataTags(savedTags as DataTagKey[]);
+        }
+
+        // 保存された最終同期時刻を読み込む
+        const savedTime = await loadLastSyncTime();
+        if (savedTime) {
+          setLastSyncTime(savedTime);
+        }
       }
 
       if (!initialized) {
         setError('Health Connectの初期化に失敗しました');
-        // 初期化失敗時はリトライ可能にするため false のままにするか、
-        // あるいはエラーを表示して完了とするか。
-        // ここでは false のままにしておき、呼び出し元でエラーハンドリングさせるのが筋だが、
-        // 初期化待ちでブロックする実装の場合は true にしないと進まない。
-        // UI側で error があれば isInitialized が false でも表示するようにするか、
-        // ここで true にしてしまうか。
-        // 今回は initialized の結果をそのまま入れているので、失敗なら false。
-        // これだと index.tsx で詰む。
-        // なので、initialized (SDKの初期化成功) と isInitialized (アプリの準備完了) を分けるべきだが、
-        // 修正範囲を抑えるため、失敗時も isInitialized = true にして、エラーで判断させる。
         setIsInitialized(true);
         return false;
       }
@@ -81,13 +80,12 @@ export function useHealthConnect() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : '初期化エラー');
-      // エラー時もチェック完了とする
       setIsInitialized(true);
       return false;
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setError]);
+  }, [setLoading, setError, setSelectedDataTags, setLastSyncTime]);
 
   /**
    * 権限をリクエスト
@@ -114,33 +112,29 @@ export function useHealthConnect() {
   }, [setLoading, setError]);
 
   /**
-   * データを同期
+   * データを取得
    * @param periodDays 取得する日数（指定がなければ設定から読み込み）
    */
-  const syncData = useCallback(
+  const fetchHealthData = useCallback(
     async (periodDays?: number) => {
       setLoading(true);
       setError(null);
 
       try {
-        // 引数で日数が指定されていればそれを使用、なければ設定から読み込み
-        const days = periodDays ?? (await loadExportPeriodDays());
-        const startTime = getDateDaysAgo(days);
-        const endTime = getEndOfToday();
+        const { selectedDataTags } = useHealthStore.getState();
+        const tags = Array.from(selectedDataTags || []);
 
-        // 取得期間の全日付を生成
-        const dateRange = generateDateRange(startTime, endTime);
+        // 第2引数は forceFullSync (false), 第3引数にタグを渡す
+        const result = await SyncService.performSync(periodDays, false, tags);
 
-        const data = await fetchAllHealthData(startTime, endTime);
-        setAllData(data, dateRange);
-
-        const syncTime = getCurrentISOString();
-        setLastSyncTime(syncTime);
-        await saveLastSyncTime(syncTime);
-
-        return true;
+        if (result.success) {
+          setAllData(result.data, result.dateRange);
+          setLastSyncTime(result.endTime);
+          return true;
+        }
+        return false;
       } catch (err) {
-        setError(err instanceof Error ? err.message : '同期エラー');
+        setError(err instanceof Error ? err.message : '取得エラー');
         return false;
       } finally {
         setLoading(false);
@@ -184,7 +178,7 @@ export function useHealthConnect() {
     // アクション
     initialize,
     requestPermissions,
-    syncData,
+    fetchHealthData,
     /** Android 14+ 向けのバックグラウンド権限リクエスト */
     requestBackgroundPermissions
   };

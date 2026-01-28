@@ -38,6 +38,7 @@ export function useSettings() {
   const [folderName, setFolderName] = useState('');
   const [exportFormats, setExportFormats] = useState<ExportFormat[]>(['googleSheets']);
   const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
+  const [periodDays, setPeriodDays] = useState(30);
 
   // 自動同期設定
   const [autoSyncConfig, setAutoSyncConfigState] = useState<AutoSyncConfig>({
@@ -66,6 +67,8 @@ export function useSettings() {
         const config = await loadConfig();
         const formats = await loadExportFormats();
         const pdfOption = await loadExportSheetAsPdf();
+        const days = await (() =>
+          import('../services/config/exportConfig').then((m) => m.loadExportPeriodDays()))();
         const syncConfig = await loadBackgroundSyncConfig();
         const lastSync = await loadLastBackgroundSync();
         const logs = await loadDebugLogs();
@@ -74,6 +77,7 @@ export function useSettings() {
 
         setExportFormats(formats);
         setExportSheetAsPdf(pdfOption);
+        setPeriodDays(days);
         setAutoSyncConfigState(syncConfig);
         setLastBackgroundSync(lastSync);
         setDebugLogs(logs);
@@ -197,6 +201,7 @@ export function useSettings() {
       folderName,
       exportFormats,
       exportSheetAsPdf,
+      periodDays,
       autoSyncConfig,
       lastBackgroundSync,
       debugLogs,

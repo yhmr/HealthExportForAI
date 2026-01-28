@@ -2,10 +2,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_DRIVE_CONFIG, DriveConfig } from '../../config/driveConfig';
-
-const STORAGE_KEYS = {
-  DRIVE_CONFIG: '@drive_config'
-} as const;
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 /**
  * Drive設定を保存

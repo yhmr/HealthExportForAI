@@ -7,6 +7,7 @@ interface StatusCardProps {
   lastSyncTime: string | null;
   isHealthConnectConnected: boolean;
   isDriveConnected: boolean;
+  isSetupCompleted: boolean;
   autoSyncEnabled: boolean;
   t: (scope: any, key: string) => string;
   language: 'ja' | 'en';
@@ -16,6 +17,7 @@ export function StatusCard({
   lastSyncTime,
   isHealthConnectConnected,
   isDriveConnected,
+  isSetupCompleted,
   autoSyncEnabled,
   t,
   language
@@ -23,7 +25,7 @@ export function StatusCard({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const isReady = isHealthConnectConnected && isDriveConnected;
+  const isReady = isHealthConnectConnected && isDriveConnected && isSetupCompleted;
   const statusColor = isReady ? '#10b981' : '#f59e0b';
   const statusText = isReady ? t('home', 'statusReady') : t('home', 'statusSetupRequired');
 
@@ -67,6 +69,12 @@ export function StatusCard({
           <Text style={styles.label}>Google Drive</Text>
           <Text style={[styles.value, { color: isDriveConnected ? '#10b981' : '#f59e0b' }]}>
             {isDriveConnected ? 'Connected' : 'Disconnected'}
+          </Text>
+        </View>
+        <View style={styles.gridItem}>
+          <Text style={styles.label}>Setup</Text>
+          <Text style={[styles.value, { color: isSetupCompleted ? '#10b981' : '#f59e0b' }]}>
+            {isSetupCompleted ? 'Completed' : 'Incomplete'}
           </Text>
         </View>
       </View>

@@ -32,7 +32,9 @@
         "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "plugins": [
@@ -44,7 +46,8 @@
           "android": {
             "minSdkVersion": 28,
             "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "34.0.0"
           }
         }
       ],
@@ -72,10 +75,18 @@
           "widgets": [
             {
               "name": "SyncWidget",
-              "label": "Sync Health Data",
-              "minWidth": "60dp",
-              "minHeight": "60dp",
-              "description": "Sync health data to Google Drive",
+              "label": "Sync Health (Wide)",
+              "minWidth": "130dp",
+              "minHeight": "57dp",
+              "description": "Sync health data to Google Drive (Wide)",
+              "previewImage": "./assets/widget-preview.png"
+            },
+            {
+              "name": "SyncWidgetSmall",
+              "label": "Sync Health (Small)",
+              "minWidth": "57dp",
+              "minHeight": "57dp",
+              "description": "Sync health data to Google Drive (Small)",
               "previewImage": "./assets/widget-preview.png"
             }
           ]
@@ -88,13 +99,18 @@
           "project": "react-native",
           "organization": "yhmr"
         }
-      ]
+      ],
+      "./plugins/withWoAFix",
+      "expo-localization"
     ],
     "extra": {
       "router": {},
       "eas": {
         "projectId": "524e5bbb-60a5-463b-8e55-8f56ccbcf809"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.yhmr.healthexportforai"
     }
   }
 }

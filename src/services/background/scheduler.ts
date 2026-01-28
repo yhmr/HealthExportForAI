@@ -11,7 +11,7 @@ import { Language, translations } from '../../i18n/translations';
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
-import { executeSyncLogic } from './sync-operation';
+import { executeSyncLogic } from './backgroundTask';
 
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';

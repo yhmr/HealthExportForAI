@@ -1,22 +1,44 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, BackHandler, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FolderPickerModal } from '../src/components/FolderPickerModal';
-import { SyncButton } from '../src/components/SyncButton';
+
+// New Components
+import { AuthStep } from '../src/components/Onboarding/AuthStep';
+import { CompletedStep } from '../src/components/Onboarding/CompletedStep';
+import { ExportFormatStep } from '../src/components/Onboarding/ExportFormatStep';
+import { ExportStep } from '../src/components/Onboarding/ExportStep';
+import { FolderStep } from '../src/components/Onboarding/FolderStep';
+import { PermissionsStep } from '../src/components/Onboarding/PermissionsStep';
+import { SetupStep } from '../src/components/Onboarding/SetupStep';
+import { WelcomeStep } from '../src/components/Onboarding/WelcomeStep';
+
+// Config & Services
+import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../src/config/driveConfig';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import {
+  saveExportFormats,
+  saveExportPeriodDays,
+  saveExportSheetAsPdf,
+  saveIsSetupCompleted,
+  saveSelectedDataTags
+} from '../src/services/config/exportConfig';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
+import { ALL_DATA_TAGS, DataTagKey, useHealthStore } from '../src/stores/healthStore';
 
 // ステップ定義
 const STEPS = {
   WELCOME: 0,
   AUTH: 1,
   PERMISSIONS: 2,
-  FOLDER: 3,
-  COMPLETED: 4
+  SETUP: 3,
+  FORMAT: 4,
+  FOLDER: 5,
+  EXPORT: 6,
+  COMPLETED: 7
 } as const;
 
 type Step = (typeof STEPS)[keyof typeof STEPS];
@@ -28,22 +50,42 @@ export default function OnboardingScreen() {
 
   // Auth state
   const { isAuthenticated, currentUser, signIn } = useAuth();
+  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
 
   // Health Connect state
-  const { hasPermissions, requestPermissions } = useHealthConnect();
+  const {
+    hasPermissions,
+    requestPermissions,
+    fetchHealthData,
+    isLoading: isSyncing
+  } = useHealthConnect();
+  const { healthData } = useHealthStore();
+  const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
 
   // Drive state
-  const { loadConfig, saveConfig, driveConfig } = useGoogleDrive();
+  const {
+    loadConfig,
+    saveConfig,
+    driveConfig,
+    exportAndUpload,
+    isUploading,
+    uploadError,
+    clearUploadError
+  } = useGoogleDrive();
   const [folderName, setFolderName] = useState<string>(DEFAULT_FOLDER_NAME);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
 
-  // 試行状態管理
-  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
-  const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
+  // 初期設定State
+  const [initialDays, setInitialDays] = useState(30);
+  const [selectedTags, setSelectedTags] = useState<Set<DataTagKey>>(new Set(ALL_DATA_TAGS));
+  const [exportFormats, setExportFormats] = useState<ExportFormat[]>(DEFAULT_EXPORT_FORMATS);
+  const [exportSheetAsPdf, setExportSheetAsPdf] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false); // データ取得済みフラグ
 
   // 初期設定読み込み
   useEffect(() => {
     loadConfig();
+    // 既存のエクスポート設定も読み込む場合はここに追加
   }, [loadConfig]);
 
   // configからフォルダ名反映
@@ -53,11 +95,41 @@ export default function OnboardingScreen() {
     }
   }, [driveConfig]);
 
+  // EXPORTステップに入ったら自動実行
+  useEffect(() => {
+    if (currentStep === STEPS.EXPORT && !isUploading && !uploadError) {
+      handleExport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
+
+  // エクスポート実行
+  const handleExport = async () => {
+    // 選択されたタグでエクスポート
+    const result = await exportAndUpload(selectedTags);
+    if (result.success) {
+      setCurrentStep(STEPS.COMPLETED);
+    }
+    // 失敗時はエラー表示（exportAndUpload内でセットされるuploadErrorを表示）
+  };
+
   // ハンドラ: 次へ
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (currentStep === STEPS.SETUP) {
+      // 設定保存
+      await saveExportPeriodDays(initialDays);
+      await saveSelectedDataTags(Array.from(selectedTags));
+    }
+
+    if (currentStep === STEPS.FORMAT) {
+      await saveExportFormats(exportFormats);
+      await saveExportSheetAsPdf(exportSheetAsPdf);
+    }
+
     if (currentStep < STEPS.COMPLETED) {
       setCurrentStep((prev) => (prev + 1) as Step);
     } else {
+      await saveIsSetupCompleted(true);
       router.replace('/');
     }
   };
@@ -67,7 +139,7 @@ export default function OnboardingScreen() {
     try {
       const success = await signIn();
       if (success) {
-        handleNext(); // 自動で次へ
+        if (currentStep < STEPS.COMPLETED) setCurrentStep((prev) => (prev + 1) as Step);
       }
     } catch {
       Alert.alert(t('common', 'error'), 'Sign in failed');
@@ -81,7 +153,7 @@ export default function OnboardingScreen() {
     try {
       const granted = await requestPermissions();
       if (granted) {
-        handleNext(); // 自動で次へ
+        if (currentStep < STEPS.COMPLETED) setCurrentStep((prev) => (prev + 1) as Step);
       }
     } catch {
       Alert.alert(t('common', 'error'), 'Permission request failed');
@@ -99,174 +171,115 @@ export default function OnboardingScreen() {
     await saveConfig({ folderId, folderName: name });
   };
 
+  // タグ切り替え
+  const toggleTag = (tag: DataTagKey) => {
+    const newSet = new Set(selectedTags);
+    if (newSet.has(tag)) {
+      newSet.delete(tag);
+    } else {
+      newSet.add(tag);
+    }
+    setSelectedTags(newSet);
+  };
+
+  // データ取得ハンドラ
+  const handleFetch = async () => {
+    const success = await fetchHealthData(initialDays);
+    if (success) {
+      setHasFetched(true);
+    }
+  };
+
+  // フォーマット切り替え
+  const toggleFormat = (format: ExportFormat) => {
+    if (exportFormats.includes(format)) {
+      setExportFormats(exportFormats.filter((f) => f !== format));
+    } else {
+      setExportFormats([...exportFormats, format]);
+    }
+  };
+
   // レンダリング用ヘルパー
   const renderStepContent = () => {
     switch (currentStep) {
       case STEPS.WELCOME:
-        return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.icon}>👋</Text>
-            <Text style={styles.title}>{t('onboarding', 'welcomeTitle')}</Text>
-            <Text style={styles.description}>{t('onboarding', 'welcomeDesc')}</Text>
-            <SyncButton
-              onPress={handleNext}
-              isLoading={false}
-              label={t('onboarding', 'getStarted')}
-              icon="➡️"
-              variant="primary"
-            />
-          </View>
-        );
+        return <WelcomeStep onNext={handleNext} />;
 
       case STEPS.AUTH:
         return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.icon}>🔐</Text>
-            <Text style={styles.title}>{t('onboarding', 'signInTitle')}</Text>
-            <Text style={styles.description}>{t('onboarding', 'signInDesc')}</Text>
-            {isAuthenticated ? (
-              <View style={styles.completedState}>
-                <Text style={styles.successText}>
-                  {t('onboarding', 'signedInAs').replace(
-                    '{{email}}',
-                    currentUser?.user.email || ''
-                  )}
-                </Text>
-                <SyncButton
-                  onPress={handleNext}
-                  isLoading={false}
-                  label={t('onboarding', 'next')}
-                  icon="check"
-                  variant="primary"
-                />
-              </View>
-            ) : (
-              <View style={styles.actionContainer}>
-                {hasAttemptedAuth && (
-                  <Text style={styles.warningText}>{t('onboarding', 'authRequired')}</Text>
-                )}
-
-                <SyncButton
-                  onPress={handleSignIn}
-                  isLoading={false}
-                  label={t('onboarding', 'signInButton')}
-                  icon="🇬"
-                  variant="primary"
-                />
-
-                {hasAttemptedAuth && (
-                  <SyncButton
-                    onPress={() => BackHandler.exitApp()}
-                    isLoading={false}
-                    label={t('onboarding', 'exitApp')}
-                    icon="✕"
-                    variant="secondary"
-                  />
-                )}
-              </View>
-            )}
-          </View>
+          <AuthStep
+            isAuthenticated={isAuthenticated}
+            currentUser={currentUser}
+            hasAttemptedAuth={hasAttemptedAuth}
+            onSignIn={handleSignIn}
+            onNext={handleNext}
+          />
         );
 
       case STEPS.PERMISSIONS:
         return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.icon}>❤️</Text>
-            <Text style={styles.title}>{t('onboarding', 'healthTitle')}</Text>
-            <Text style={styles.description}>{t('onboarding', 'healthDesc')}</Text>
-            {hasPermissions ? (
-              <View style={styles.completedState}>
-                <Text style={styles.successText}>{t('onboarding', 'permissionsGranted')}</Text>
-                <SyncButton
-                  onPress={handleNext}
-                  isLoading={false}
-                  label={t('onboarding', 'next')}
-                  icon="✅"
-                  variant="primary"
-                />
-              </View>
-            ) : (
-              <View style={styles.actionContainer}>
-                {hasAttemptedPermissions && (
-                  <Text style={styles.warningText}>{t('onboarding', 'permissionRequired')}</Text>
-                )}
+          <PermissionsStep
+            hasPermissions={hasPermissions}
+            hasAttemptedPermissions={hasAttemptedPermissions}
+            onRequestPermissions={handleRequestPermissions}
+            onNext={handleNext}
+          />
+        );
 
-                <SyncButton
-                  onPress={handleRequestPermissions}
-                  isLoading={false}
-                  label={t('onboarding', 'grantPermissions')}
-                  icon="🛡️"
-                  variant="primary"
-                />
+      case STEPS.SETUP:
+        return (
+          <SetupStep
+            initialDays={initialDays}
+            setInitialDays={(days) => {
+              setInitialDays(days);
+              setHasFetched(false);
+            }}
+            isSyncing={isSyncing}
+            onFetch={handleFetch}
+            hasFetched={hasFetched}
+            healthData={healthData}
+            selectedTags={selectedTags}
+            onToggleTag={toggleTag}
+            onNext={handleNext}
+          />
+        );
 
-                {hasAttemptedPermissions && (
-                  <SyncButton
-                    onPress={() => BackHandler.exitApp()}
-                    isLoading={false}
-                    label={t('onboarding', 'exitApp')}
-                    icon="✕"
-                    variant="secondary"
-                  />
-                )}
-              </View>
-            )}
-          </View>
+      case STEPS.FORMAT:
+        return (
+          <ExportFormatStep
+            exportFormats={exportFormats}
+            toggleFormat={toggleFormat}
+            exportSheetAsPdf={exportSheetAsPdf}
+            setExportSheetAsPdf={setExportSheetAsPdf}
+            onNext={handleNext}
+          />
         );
 
       case STEPS.FOLDER:
         return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.icon}>📁</Text>
-            <Text style={styles.title}>{t('onboarding', 'folderTitle')}</Text>
-            <Text style={styles.description}>{t('onboarding', 'folderDesc')}</Text>
+          <FolderStep
+            folderName={folderName}
+            showFolderPicker={showFolderPicker}
+            setShowFolderPicker={setShowFolderPicker}
+            onFolderSelect={handleFolderSelect}
+            onNext={handleNext}
+          />
+        );
 
-            <View style={styles.folderSelection}>
-              <Text style={styles.folderLabel}>{t('onboarding', 'currentFolder')}</Text>
-              <Text style={styles.folderName}>{folderName}</Text>
-            </View>
-
-            <SyncButton
-              onPress={() => setShowFolderPicker(true)}
-              isLoading={false}
-              label={t('onboarding', 'changeFolder')}
-              icon="✏️"
-              variant="secondary"
-            />
-
-            <View style={styles.spacer} />
-
-            <SyncButton
-              onPress={handleNext}
-              isLoading={false}
-              label={t('onboarding', 'next')}
-              icon="➡️"
-              variant="primary"
-            />
-
-            <FolderPickerModal
-              visible={showFolderPicker}
-              initialFolderName={folderName}
-              onClose={() => setShowFolderPicker(false)}
-              onSelect={handleFolderSelect}
-            />
-          </View>
+      case STEPS.EXPORT:
+        return (
+          <ExportStep
+            isUploading={isUploading}
+            uploadError={uploadError}
+            onRetry={() => {
+              clearUploadError();
+              handleExport();
+            }}
+          />
         );
 
       case STEPS.COMPLETED:
-        return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.icon}>🎉</Text>
-            <Text style={styles.title}>{t('onboarding', 'completedTitle')}</Text>
-            <Text style={styles.description}>{t('onboarding', 'completedDesc')}</Text>
-            <SyncButton
-              onPress={handleNext}
-              isLoading={false}
-              label={t('onboarding', 'goToDashboard')}
-              icon="🚀"
-              variant="primary"
-            />
-          </View>
-        );
+        return <CompletedStep onNext={handleNext} />;
     }
   };
 
@@ -319,69 +332,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24
-  },
-  stepContainer: {
-    alignItems: 'center',
-    gap: 24
-  },
-  icon: {
-    fontSize: 64,
-    marginBottom: 16
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center'
-  },
-  description: {
-    fontSize: 16,
-    color: '#9ca3af',
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 300
-  },
-  completedState: {
-    alignItems: 'center',
-    gap: 16,
-    width: '100%'
-  },
-  successText: {
-    color: '#10b981',
-    fontSize: 16,
-    fontWeight: '500'
-  },
-  folderSelection: {
-    backgroundColor: '#1e1e2e',
-    padding: 16,
-    borderRadius: 12,
-    width: '100%',
-    alignItems: 'center',
-    gap: 8
-  },
-  folderLabel: {
-    color: '#6b7280',
-    fontSize: 14
-  },
-  folderName: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600'
-  },
-  spacer: {
-    height: 24
-  },
-  actionContainer: {
-    width: '100%',
-    gap: 12,
-    alignItems: 'center'
-  },
-  warningText: {
-    color: '#ef4444',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 8,
-    maxWidth: 280,
-    lineHeight: 20
   }
 });

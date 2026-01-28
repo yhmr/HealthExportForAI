@@ -5,11 +5,11 @@ import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
-import { addToExportQueue, processExportQueue } from '../services/export/service';
+import { processExportQueue } from '../services/export/service';
 import { configureGoogleSignIn, getAccessToken } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
-import { filterHealthDataByTags, useHealthStore, type DataTagKey } from '../stores/healthStore';
+import { useHealthStore, type DataTagKey } from '../stores/healthStore';
 import { getCurrentISOString } from '../utils/formatters';
 
 export function useGoogleDrive() {
@@ -69,29 +69,14 @@ export function useGoogleDrive() {
         return { success: false };
       }
 
-      // 選択されたタグでデータをフィルタリング
-      const dataToExport = selectedTags
-        ? filterHealthDataByTags(healthData, selectedTags)
-        : healthData;
-
-      // syncDateRangeを取得（取得期間の全日付）
-      const { syncDateRange } = useHealthStore.getState();
-      const dateRange = syncDateRange ?? new Set<string>();
-
       setIsUploading(true);
       setUploadError(null);
 
       try {
-        // 1. まずキューに追加（永続化）
-        // 手動実行時はその時点の設定(Default)を使用するためconfig引数は省略
-        const queued = await addToExportQueue(dataToExport, dateRange);
+        // Queueへの追加はSyncServiceで行われている前提
+        // ここでは処理のみを行う
 
-        if (!queued) {
-          setUploadError('キューへの追加に失敗しました');
-          return { success: false };
-        }
-
-        // 2. オンラインなら即時処理
+        // オンラインなら即時処理
         const networkStatus = await getNetworkStatus();
         if (networkStatus === 'online') {
           await addDebugLog('[useGoogleDrive] Online: Processing queue immediately', 'info');
@@ -102,16 +87,19 @@ export function useGoogleDrive() {
             await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
             return { success: true };
           } else if (result.errors.length > 0) {
-            setUploadError(`エクスポート失敗: ${result.errors[0]}`);
-            return { success: false };
+            // エラーがあったが、部分成功している可能性もある
+            if (result.successCount === 0) {
+              setUploadError(`エクスポート失敗: ${result.errors[0]}`);
+              return { success: false };
+            }
+            return { success: true };
           } else {
-            // 成功0, エラー0 の場合は「処理すべきものがなかった」だが、
-            // addToQueueした直後なので通常はありえない。
-            // 他のプロセスが同時に処理した可能性がある。
+            // キューが空だった場合（SyncServiceで追加されなかった、または既に処理された）
+            await addDebugLog('[useGoogleDrive] Queue empty or processed elsewhere', 'info');
             return { success: true };
           }
         } else {
-          await addDebugLog('[useGoogleDrive] Offline: Added to queue', 'info');
+          await addDebugLog('[useGoogleDrive] Offline: Queue processing deferred', 'info');
           return { success: true, queued: true };
         }
       } catch (err) {

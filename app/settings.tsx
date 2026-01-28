@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,14 +7,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AboutModal } from '../src/components/AboutModal';
 import { FolderPickerModal } from '../src/components/FolderPickerModal';
 import { LicenseModal } from '../src/components/LicenseModal';
-
 // Section Components
 import { AboutSection } from '../src/components/Settings/AboutSection';
 import { AccountSection } from '../src/components/Settings/AccountSection';
 import { AppearanceSection } from '../src/components/Settings/AppearanceSection';
 import { AutoSyncSection } from '../src/components/Settings/AutoSyncSection';
+import { DataTypesSection } from '../src/components/Settings/DataTypesSection';
 import { DriveSection } from '../src/components/Settings/DriveSection';
 import { ExportSection } from '../src/components/Settings/ExportSection';
+
+// Services/Stores
+import { saveSelectedDataTags } from '../src/services/config/exportConfig';
+import { useHealthStore } from '../src/stores/healthStore';
 
 // Hooks
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -31,6 +35,10 @@ export default function SettingsScreen() {
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
   const [isAboutModalVisible, setAboutModalVisible] = useState(false);
+  const [showAutoSyncModal, setShowAutoSyncModal] = useState(false);
+
+  // ストアからデータタグ関連を取得
+  const { selectedDataTags, toggleDataTag } = useHealthStore();
 
   // Back Handler
   const handleBack = () => {
@@ -43,6 +51,11 @@ export default function SettingsScreen() {
     }
     router.back();
   };
+
+  // selectedDataTagsが変更されたら保存
+  useEffect(() => {
+    saveSelectedDataTags(Array.from(selectedDataTags));
+  }, [selectedDataTags]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,6 +80,8 @@ export default function SettingsScreen() {
           folderName={state.folderName}
           onOpenFolderPicker={() => setPickerVisible(true)}
         />
+
+        <DataTypesSection selectedTags={selectedDataTags} onToggleTag={toggleDataTag} />
 
         <ExportSection
           exportFormats={state.exportFormats}

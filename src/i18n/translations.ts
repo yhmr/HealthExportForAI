@@ -22,7 +22,9 @@ export const translations = {
       emptyState2: 'Health Connectからデータを取得してください',
       exportButton: 'エクスポート',
       exportSuccess: 'データをエクスポートしました',
-      uploadError: 'アップロードエラー'
+      uploadError: 'アップロードエラー',
+      statusReady: '準備完了',
+      statusSetupRequired: '設定が必要です'
     },
     // 設定画面
     settings: {
@@ -57,9 +59,6 @@ export const translations = {
       sectionAppInfo: 'アプリ情報',
       about: 'About App',
       licenses: 'サードパーティライセンス',
-      // ホームステータス
-      statusReady: '準備完了',
-      statusSetupRequired: '設定が必要です',
       // 言語
       sectionLanguage: '言語',
       languageJa: '日本語',
@@ -70,6 +69,7 @@ export const translations = {
         'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
       goBackAnyway: 'このまま戻る',
       permissionRequired: '権限が必要です',
+      // 通知
       notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
     },
     // データタグ
@@ -150,7 +150,19 @@ export const translations = {
       next: '次へ',
       authRequired: 'Google Driveへファイルを保存するため、Googleアカウント連携が必須です。',
       permissionRequired: 'データの取得にはHealth Connectの権限が必須です。',
-      exitApp: 'アプリを終了'
+      exitApp: 'アプリを終了',
+      setupTitle: '初期設定',
+      setupDesc: '初期エクスポート設定を行います。\nこれらは後で変更可能です。',
+      setupInitialPeriod: '初期取得期間',
+      setupDataTypes: 'データ種別',
+      setupExportFormats: 'エクスポート形式',
+      setupPdfOption: 'PDFとしても出力',
+      fetchData: 'データを取得',
+      fetchDescription: '指定した期間のデータを取得して確認します',
+      dataFetchRequired: '次へ進むにはデータの取得が必要です',
+      exportingTitle: 'エクスポート中',
+      exportingDesc: '初期データをGoogle Driveに保存しています。\nそのままお待ちください...',
+      exportRetry: '再試行'
     }
   },
   en: {
@@ -171,7 +183,9 @@ export const translations = {
       emptyState2: 'retrieve data from Health Connect',
       exportButton: 'Export',
       exportSuccess: 'Data exported successfully',
-      uploadError: 'Upload Error'
+      uploadError: 'Upload Error',
+      statusReady: 'Ready',
+      statusSetupRequired: 'Setup Required'
     },
     // Settings screen
     settings: {
@@ -215,6 +229,7 @@ export const translations = {
       noFormatSelected: 'No export format selected. Please select at least one format.',
       goBackAnyway: 'Go Back Anyway',
       permissionRequired: 'Permission Required',
+      // Notifications
       notificationPermissionDesc: 'Notification permission is required to run background sync.'
     },
     // Data tag list
@@ -295,7 +310,19 @@ export const translations = {
       next: 'Next',
       authRequired: 'Linking your Google account is required to save files to Google Drive.',
       permissionRequired: 'Health Connect permissions are required to retrieve data.',
-      exitApp: 'Exit App'
+      exitApp: 'Exit App',
+      setupTitle: 'Initial Setup',
+      setupDesc: 'Configure your initial export settings.\nThese can be changed later.',
+      setupInitialPeriod: 'Initial Period',
+      setupDataTypes: 'Data Types',
+      setupExportFormats: 'Export Formats',
+      setupPdfOption: 'Export as PDF too',
+      fetchData: 'Fetch Data',
+      fetchDescription: 'Fetch data for the selected period to verify',
+      dataFetchRequired: 'Data fetch is required to proceed',
+      exportingTitle: 'Exporting...',
+      exportingDesc: 'Saving initial data to Google Drive.\nPlease wait...',
+      exportRetry: 'Retry'
     }
   }
 } as const;

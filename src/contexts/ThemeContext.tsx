@@ -12,10 +12,9 @@ import React, {
   useState
 } from 'react';
 import { useColorScheme } from 'react-native';
+import { STORAGE_KEYS } from '../config/storageKeys';
 import { darkColors, lightColors } from '../theme/colors';
 import { ThemeColors, ThemeMode } from '../theme/types';
-
-const THEME_KEY = 'app_theme';
 
 interface ThemeContextType {
   themeMode: ThemeMode; // 設定値 (light/dark/system)
@@ -39,7 +38,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const savedTheme = await AsyncStorage.getItem(THEME_KEY);
+        const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.APP_THEME);
         if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
           setThemeModeState(savedTheme as ThemeMode);
         }
@@ -56,7 +55,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setThemeMode = useCallback(async (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {
-      await AsyncStorage.setItem(THEME_KEY, mode);
+      await AsyncStorage.setItem(STORAGE_KEYS.APP_THEME, mode);
     } catch (error) {
       console.error('[ThemeContext] Failed to save theme:', error);
     }
