@@ -151,9 +151,9 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: 'transparent'
     },
     iconImage: {
-      width: 96,
-      height: 96,
-      marginBottom: 8
+      width: 112,
+      height: 112,
+      marginBottom: 4
     },
     label: {
       fontSize: 18,
