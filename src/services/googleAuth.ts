@@ -131,17 +131,3 @@ export async function getOrRefreshAccessToken(): Promise<string | null> {
 
   return tokenRefreshPromise;
 }
-
-/**
- * トークンを更新
- */
-export async function refreshTokens(): Promise<string | null> {
-  try {
-    await GoogleSignin.clearCachedAccessToken((await GoogleSignin.getTokens()).accessToken);
-    const tokens = await GoogleSignin.getTokens();
-    return tokens.accessToken;
-  } catch (error) {
-    await addDebugLog(`トークン更新エラー: ${error}`, 'error');
-    return null;
-  }
-}

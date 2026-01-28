@@ -68,7 +68,7 @@ export const SyncService = {
       await addDebugLog('[SyncService] Starting sync...', 'info');
 
       // 1. 取得期間の決定
-      const fetchTimeRange = await this.calculateFetchTimeRange(periodDays, forceFullSync);
+      const fetchTimeRange = await calculateFetchTimeRange(periodDays, forceFullSync);
       const { startTime, endTime } = fetchTimeRange;
 
       await addDebugLog(
@@ -133,52 +133,6 @@ export const SyncService = {
   },
 
   /**
-   * 取得期間の計算
-   */
-  async calculateFetchTimeRange(
-    periodDays?: number,
-    forceFullSync?: boolean
-  ): Promise<{ startTime: Date; endTime: Date }> {
-    const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
-
-    // 明示的に日数が指定された場合、または強制フル同期の場合
-    if (periodDays !== undefined || forceFullSync) {
-      const days = periodDays ?? (await loadExportPeriodDays());
-      const startTime = getDateDaysAgo(days);
-      return { startTime, endTime };
-    }
-
-    // 差分更新判定
-    const lastSyncTimeStr = await loadLastSyncTime();
-
-    if (lastSyncTimeStr) {
-      // 前回同期がある場合はそこから
-      // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
-      // ここでは前回同期時刻をそのまま採用
-      const lastSyncDate = new Date(lastSyncTimeStr);
-      // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
-      // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
-
-      // 経過日数を計算
-      const daysSinceLastSync = Math.ceil(
-        (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
-      // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
-      const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
-      const startTime = getDateDaysAgo(fetchDays);
-
-      return { startTime, endTime };
-    } else {
-      // 初回同期（LastSyncTimeなし）
-      const days = await loadExportPeriodDays();
-      const startTime = getDateDaysAgo(days);
-      return { startTime, endTime };
-    }
-  },
-
-  /**
    * 同期とアップロードを一括実行 (Facade)
    * 1. データの取得とキューイング (Phase 1)
    * 2. 成功したらアップロード試行 (Phase 2)
@@ -205,3 +159,49 @@ export const SyncService = {
     };
   }
 };
+
+/**
+ * 取得期間の計算 (内部利用)
+ */
+async function calculateFetchTimeRange(
+  periodDays?: number,
+  forceFullSync?: boolean
+): Promise<{ startTime: Date; endTime: Date }> {
+  const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
+
+  // 明示的に日数が指定された場合、または強制フル同期の場合
+  if (periodDays !== undefined || forceFullSync) {
+    const days = periodDays ?? (await loadExportPeriodDays());
+    const startTime = getDateDaysAgo(days);
+    return { startTime, endTime };
+  }
+
+  // 差分更新判定
+  const lastSyncTimeStr = await loadLastSyncTime();
+
+  if (lastSyncTimeStr) {
+    // 前回同期がある場合はそこから
+    // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
+    // ここでは前回同期時刻をそのまま採用
+    const lastSyncDate = new Date(lastSyncTimeStr);
+    // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
+    // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
+
+    // 経過日数を計算
+    const daysSinceLastSync = Math.ceil(
+      (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
+    // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
+    const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
+    const startTime = getDateDaysAgo(fetchDays);
+
+    return { startTime, endTime };
+  } else {
+    // 初回同期（LastSyncTimeなし）
+    const days = await loadExportPeriodDays();
+    const startTime = getDateDaysAgo(days);
+    return { startTime, endTime };
+  }
+}
