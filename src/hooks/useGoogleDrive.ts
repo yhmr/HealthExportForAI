@@ -9,7 +9,7 @@ import { processExportQueue } from '../services/export/service';
 import { configureGoogleSignIn, getAccessToken } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
-import { useHealthStore, type DataTagKey } from '../stores/healthStore';
+import { type DataTagKey } from '../types/health';
 import { getCurrentISOString } from '../utils/formatters';
 
 export function useGoogleDrive() {
@@ -21,8 +21,6 @@ export function useGoogleDrive() {
 
   // 認証状態はAuthContextから取得
   const { isAuthenticated, currentUser, authError, signIn, signOut } = useAuth();
-
-  const { healthData } = useHealthStore();
 
   /**
    * Drive設定を読み込み
@@ -109,7 +107,7 @@ export function useGoogleDrive() {
         setIsUploading(false);
       }
     },
-    [healthData, isConfigValid]
+    [isConfigValid]
   );
 
   /**

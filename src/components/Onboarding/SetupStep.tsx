@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { DataTagKey } from '../../stores/healthStore';
+import { DataTagKey } from '../../types/health';
 import { DataTagList } from '../DataTagList';
 import { PeriodPicker } from '../PeriodPicker';
 import { SyncButton } from '../SyncButton';
@@ -33,8 +33,6 @@ export const SetupStep: React.FC<SetupStepProps> = ({
   onNext
 }) => {
   const { t } = useLanguage();
-
-  const colors = { primary: '#6366f1' };
 
   return (
     <ScrollView

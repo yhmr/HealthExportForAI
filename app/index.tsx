@@ -18,7 +18,6 @@ import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
-import { useHealthStore } from '../src/stores/healthStore';
 import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
@@ -29,7 +28,6 @@ export default function HomeScreen() {
     isInitialized,
     isAvailable,
     hasPermissions,
-    healthData,
     lastSyncTime,
     isLoading,
     error,
@@ -39,9 +37,6 @@ export default function HomeScreen() {
 
   // 認証状態
   const { isAuthenticated } = useAuth();
-
-  // ストアから選択状態とアクションを取得
-  const { selectedDataTags, toggleDataTag } = useHealthStore();
 
   // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
@@ -115,11 +110,7 @@ export default function HomeScreen() {
   }, [error, uploadError, clearUploadError, t]);
 
   // 同期操作Hook
-  const {
-    isSyncing: isOperationSyncing,
-    syncError: operationError,
-    syncAndUpload
-  } = useSyncOperation();
+  const { isSyncing: isOperationSyncing, syncAndUpload } = useSyncOperation();
 
   // 統合ハンドラ: 同期してエクスポート
   const handleSyncAndExport = async () => {
