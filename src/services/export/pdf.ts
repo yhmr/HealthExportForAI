@@ -21,33 +21,46 @@ export async function exportSpreadsheetAsPDF(
 ): Promise<{ success: boolean; fileId?: string; error?: string }> {
   try {
     // 1. PDFをBase64形式で取得
-    const pdfBase64 = await spreadsheetAdapter.fetchPDF(spreadsheetId);
+    const pdfResult = await spreadsheetAdapter.fetchPDF(spreadsheetId);
 
-    if (!pdfBase64) {
-      return { success: false, error: 'PDFデータの取得に失敗しました' };
+    if (pdfResult.isErr()) {
+      return {
+        success: false,
+        error: `PDFデータの取得に失敗しました: ${pdfResult.unwrapErr().message}`
+      };
     }
+    const pdfBase64 = pdfResult.unwrap();
 
     // 2. ファイル名を生成
     const targetYear = year || new Date().getFullYear();
     const pdfFileName = getExportFileName(targetYear, 'pdf', true);
 
     // 3. 既存のPDFファイルを検索
-    const existingFile = await fileOps.findFile(pdfFileName, 'application/pdf', folderId);
+    const findResult = await fileOps.findFile(pdfFileName, 'application/pdf', folderId);
+    const existingFile = findResult.isOk() ? findResult.unwrap() : null;
 
     // 4. アップロードまたは更新
     if (existingFile) {
       // 既存ファイルを更新（上書き）
       // isBase64: true を指定してBase64コンテンツの更新を行う
-      const success = await fileOps.updateFile(existingFile.id, pdfBase64, 'application/pdf', true);
+      const updateResult = await fileOps.updateFile(
+        existingFile.id,
+        pdfBase64,
+        'application/pdf',
+        true
+      );
 
-      if (success) {
+      if (updateResult.isOk()) {
         return { success: true, fileId: existingFile.id };
       } else {
-        return { success: false, error: 'PDF更新に失敗しました' };
+        return {
+          success: false,
+          error: `PDF更新に失敗しました: ${updateResult.unwrapErr().message}`
+        };
       }
     } else {
       // 新規作成
-      const fileId = await fileOps.uploadFile(
+      const uploadResult = await fileOps.uploadFile(
         pdfBase64,
         pdfFileName,
         'application/pdf',
@@ -55,10 +68,13 @@ export async function exportSpreadsheetAsPDF(
         true // isBase64
       );
 
-      if (fileId) {
-        return { success: true, fileId };
+      if (uploadResult.isOk()) {
+        return { success: true, fileId: uploadResult.unwrap() };
       } else {
-        return { success: false, error: 'PDF作成に失敗しました' };
+        return {
+          success: false,
+          error: `PDF作成に失敗しました: ${uploadResult.unwrapErr().message}`
+        };
       }
     }
   } catch (error) {

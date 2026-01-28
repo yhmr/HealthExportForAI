@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
 import type { FileOperations } from '../../../src/services/storage/interfaces';
+import { ok } from '../../../src/types/result';
 
 // Mock debugLogService to prevent AsyncStorage usage
 vi.mock('../../../src/services/debugLogService', () => ({
@@ -35,8 +36,8 @@ beforeEach(() => {
 describe('JSON Export Service', () => {
   it('should create a new JSON file if it does not exist', async () => {
     // Setup: File does not exist, upload succeeds
-    (mockFileOps.findFile as any).mockResolvedValue(null);
-    (mockFileOps.uploadFile as any).mockResolvedValue('new-file-id');
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(ok('new-file-id'));
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
@@ -62,7 +63,7 @@ describe('JSON Export Service', () => {
 
   it('should update and merge with existing JSON file', async () => {
     // Setup: File exists with previous data
-    (mockFileOps.findFile as any).mockResolvedValue({ id: 'existing-file-id' });
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
 
     const existingData = {
       year: 2025,
@@ -71,8 +72,8 @@ describe('JSON Export Service', () => {
         { date: '2024-12-31', steps: 2000 }
       ]
     };
-    (mockFileOps.downloadFileContent as any).mockResolvedValue(JSON.stringify(existingData));
-    (mockFileOps.updateFile as any).mockResolvedValue(true);
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(ok(JSON.stringify(existingData)));
+    (mockFileOps.updateFile as any).mockResolvedValue(ok(true));
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
@@ -104,9 +105,9 @@ describe('JSON Export Service', () => {
   });
 
   it('should handle invalid existing JSON gracefuly', async () => {
-    (mockFileOps.findFile as any).mockResolvedValue({ id: 'existing-file-id' });
-    (mockFileOps.downloadFileContent as any).mockResolvedValue('invalid-json'); // Corrupt file
-    (mockFileOps.updateFile as any).mockResolvedValue(true);
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(ok('invalid-json')); // Corrupt file
+    (mockFileOps.updateFile as any).mockResolvedValue(ok(true));
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 

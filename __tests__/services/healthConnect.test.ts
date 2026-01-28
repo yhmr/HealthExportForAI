@@ -155,7 +155,8 @@ describe('Health Connect Service', () => {
 
       const result = await requestHealthPermissions();
 
-      expect(result).toBe(true);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(true);
       expect(HealthConnect.requestPermission).toHaveBeenCalledWith(REQUIRED_PERMISSIONS);
       expect(DebugLogService.addDebugLog).not.toHaveBeenCalledWith(
         expect.stringContaining('Permissions missing'),
@@ -170,7 +171,8 @@ describe('Health Connect Service', () => {
 
       const result = await requestHealthPermissions();
 
-      expect(result).toBe(false);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(false);
       expect(DebugLogService.addDebugLog).toHaveBeenCalledWith(
         expect.stringContaining('[HealthConnect] Permissions missing'),
         'warn'
@@ -182,7 +184,8 @@ describe('Health Connect Service', () => {
 
       const result = await requestHealthPermissions();
 
-      expect(result).toBe(false);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(false);
     });
 
     it('should return false and log error when requestPermission throws', async () => {
@@ -190,7 +193,7 @@ describe('Health Connect Service', () => {
 
       const result = await requestHealthPermissions();
 
-      expect(result).toBe(false);
+      expect(result.isErr()).toBe(true);
       expect(DebugLogService.addDebugLog).toHaveBeenCalledWith(
         expect.stringContaining('Permission Request Error'),
         'error'

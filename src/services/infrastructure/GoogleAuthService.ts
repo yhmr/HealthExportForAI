@@ -1,5 +1,7 @@
 import { GoogleSignin, statusCodes, type User } from '@react-native-google-signin/google-signin';
-import { addDebugLog } from '../debugLogService';
+import { AuthError } from '../../types/errors';
+import { Result, err, ok } from '../../types/result';
+import { logError } from '../debugLogService';
 import { IAuthService } from '../interfaces/IAuthService';
 
 // Google Drive APIとGoogle Sheets APIのスコープ
@@ -10,7 +12,7 @@ const SCOPES = [
 
 export class GoogleAuthService implements IAuthService {
   /** トークン取得のPromiseを保持（重複実行防止用） */
-  private tokenRefreshPromise: Promise<string | null> | null = null;
+  private tokenRefreshPromise: Promise<Result<string, AuthError>> | null = null;
 
   configure(webClientId: string): void {
     GoogleSignin.configure({
@@ -33,58 +35,73 @@ export class GoogleAuthService implements IAuthService {
     }
   }
 
-  async signIn(): Promise<{
-    success: boolean;
-    user?: User;
-    error?: string;
-  }> {
+  async signIn(): Promise<Result<User, AuthError>> {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      return { success: true, user: userInfo.data ?? undefined };
+      if (userInfo.data) {
+        return ok(userInfo.data);
+      } else {
+        return err(new AuthError('ユーザーデータが取得できませんでした', 'NO_USER_DATA'));
+      }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        return { success: false, error: 'サインインがキャンセルされました' };
+        return err(new AuthError('サインインがキャンセルされました', 'SIGN_IN_CANCELLED'));
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        return { success: false, error: 'サインイン処理中です' };
+        return err(new AuthError('サインイン処理中です', 'IN_PROGRESS'));
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        return { success: false, error: 'Google Play Servicesが利用できません' };
+        return err(
+          new AuthError('Google Play Servicesが利用できません', 'PLAY_SERVICES_NOT_AVAILABLE')
+        );
       } else {
-        return { success: false, error: error.message || '不明なエラー' };
+        const message = error.message || '不明なエラー';
+        await logError(error);
+        return err(new AuthError(message, 'UNKNOWN_SIGN_IN_ERROR', error));
       }
     }
   }
 
-  async signOut(): Promise<void> {
+  async signOut(): Promise<Result<void, AuthError>> {
     try {
       await GoogleSignin.signOut();
+      return ok(undefined);
     } catch (error) {
-      await addDebugLog(`サインアウトエラー: ${error}`, 'error');
+      const authError = new AuthError('サインアウトに失敗しました', 'SIGN_OUT_ERROR', error);
+      await logError(authError);
+      return err(authError);
     }
   }
 
-  async getOrRefreshAccessToken(): Promise<string | null> {
+  async getOrRefreshAccessToken(): Promise<Result<string, AuthError>> {
     // すでに実行中のトークン取得処理があれば、その結果を待つ
     if (this.tokenRefreshPromise) {
       return this.tokenRefreshPromise;
     }
 
-    this.tokenRefreshPromise = (async () => {
+    this.tokenRefreshPromise = (async (): Promise<Result<string, AuthError>> => {
       try {
         // 既存のトークン取得を試みる
         const tokens = await GoogleSignin.getTokens();
-        return tokens.accessToken;
+        return ok(tokens.accessToken);
       } catch (error: any) {
-        await addDebugLog(`トークン取得エラー(1回目): ${error}`, 'error');
+        await logError(
+          new AuthError(`トークン取得エラー(1回目): ${error}`, 'TOKEN_FETCH_ERROR_1', error)
+        );
 
         // "previous promise did not settle" エラーなどの場合、少し待って再試行
         if (error.message && error.message.includes('previous promise')) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           try {
             const retryTokens = await GoogleSignin.getTokens();
-            return retryTokens.accessToken;
+            return ok(retryTokens.accessToken);
           } catch (retryError) {
-            await addDebugLog(`トークン取得エラー(リトライ): ${retryError}`, 'error');
+            await logError(
+              new AuthError(
+                `トークン取得エラー(リトライ): ${retryError}`,
+                'TOKEN_FETCH_ERROR_RETRY',
+                retryError
+              )
+            );
           }
         }
 
@@ -94,13 +111,19 @@ export class GoogleAuthService implements IAuthService {
           if (userInfo.data) {
             // サイレントサインイン成功後、再度トークン取得
             const refreshedTokens = await GoogleSignin.getTokens();
-            return refreshedTokens.accessToken;
+            return ok(refreshedTokens.accessToken);
           }
         } catch (silentError) {
-          await addDebugLog(`サイレントサインインエラー: ${silentError}`, 'error');
+          await logError(
+            new AuthError(
+              `サイレントサインインエラー: ${silentError}`,
+              'SILENT_SIGN_IN_ERROR',
+              silentError
+            )
+          );
         }
 
-        return null;
+        return err(new AuthError('アクセストークンの取得に失敗しました', 'TOKEN_FETCH_FAILED'));
       } finally {
         // 処理完了後にPromiseをクリア
         this.tokenRefreshPromise = null;

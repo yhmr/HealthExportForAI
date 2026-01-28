@@ -66,13 +66,15 @@ export async function exportToSpreadsheet(
     for (const [year, yearData] of dataByYear) {
       const fileName = getExportFileName(year);
       // ファイル名を渡す
-      let spreadsheetId = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
+      const findResult = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
+      let spreadsheetId = findResult.isOk() ? findResult.unwrap() : null;
       let existingHeaders: string[] = [];
       let existingRows: string[][] = [];
 
       if (spreadsheetId) {
-        const sheetData = await spreadsheetAdapter.getSheetData(spreadsheetId);
-        if (sheetData) {
+        const sheetDataResult = await spreadsheetAdapter.getSheetData(spreadsheetId);
+        if (sheetDataResult.isOk()) {
+          const sheetData = sheetDataResult.unwrap();
           existingHeaders = sheetData.headers;
           existingRows = sheetData.rows;
         }
@@ -91,20 +93,29 @@ export async function exportToSpreadsheet(
       // スプレッドシートが存在しない場合は新規作成
       if (!spreadsheetId) {
         // ファイル名を渡す
-        spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, folderId);
-        if (!spreadsheetId) {
+        const createResult = await spreadsheetAdapter.createSpreadsheet(
+          fileName,
+          newHeaders,
+          folderId
+        );
+        if (createResult.isErr()) {
+          const err = createResult.unwrapErr();
           return {
             success: false,
             exportedSheets: [],
-            error: `${year}年のスプレッドシート作成に失敗しました`
+            error: `${year}年のスプレッドシート作成に失敗しました: ${err.message}`
           };
         }
+        spreadsheetId = createResult.unwrap();
       } else {
         // ヘッダーが変更された場合は更新
         if (newHeaders.length > existingHeaders.length) {
           const updateResult = await spreadsheetAdapter.updateHeaders(spreadsheetId, newHeaders);
-          if (!updateResult) {
-            await addDebugLog('ヘッダー更新に失敗しました', 'error');
+          if (updateResult.isErr()) {
+            await addDebugLog(
+              `ヘッダー更新に失敗しました: ${updateResult.unwrapErr().message}`,
+              'error'
+            );
           }
         }
       }
@@ -148,9 +159,12 @@ export async function exportToSpreadsheet(
 
       // 全データを一括で書き込み
       if (allRows.length > 0) {
-        const success = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
-        if (!success) {
-          await addDebugLog('データ書き込みに失敗しました', 'error');
+        const updateRowsResult = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
+        if (updateRowsResult.isErr()) {
+          await addDebugLog(
+            `データ書き込みに失敗しました: ${updateRowsResult.unwrapErr().message}`,
+            'error'
+          );
         }
       }
 

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
 import type { FileOperations } from '../../../src/services/storage/interfaces';
+import { StorageError } from '../../../src/types/errors';
+import { err, ok } from '../../../src/types/result';
 
 // Mock StorageAdapter
 const mockFileOps = {
@@ -35,8 +37,8 @@ vi.mock('../../../src/services/debugLogService', () => ({
 describe('CSV Export Service', () => {
   it('should create a new CSV file if it does not exist', async () => {
     // Setup: File does not exist, upload succeeds
-    (mockFileOps.findFile as any).mockResolvedValue(null);
-    (mockFileOps.uploadFile as any).mockResolvedValue('new-file-id');
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(ok('new-file-id'));
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 
@@ -52,11 +54,11 @@ describe('CSV Export Service', () => {
 
   it('should update an existing CSV file if it exists', async () => {
     // Setup: File exists
-    (mockFileOps.findFile as any).mockResolvedValue({ id: 'existing-file-id' });
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
     (mockFileOps.downloadFileContent as any).mockResolvedValue(
-      '"Date","Day of Week","Steps"\n"2025-01-01","Wednesday","1000"' // Previous data
+      ok('"Date","Day of Week","Steps"\n"2025-01-01","Wednesday","1000"') // Previous data
     );
-    (mockFileOps.updateFile as any).mockResolvedValue(true);
+    (mockFileOps.updateFile as any).mockResolvedValue(ok(true));
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 
@@ -74,8 +76,8 @@ describe('CSV Export Service', () => {
   // Note: Storage initialization test removed - responsibility moved to controller.ts
 
   it('should handle upload failure', async () => {
-    (mockFileOps.findFile as any).mockResolvedValue(null);
-    (mockFileOps.uploadFile as any).mockResolvedValue(null); // Failure
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(err(new StorageError('アップロードに失敗'))); // Failure
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 

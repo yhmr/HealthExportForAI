@@ -92,18 +92,23 @@ export async function exportToCSV(
       const fileName = getExportFileName(year, 'csv', true);
 
       // 既存ファイルを検索
-      const existingFile = await fileOps.findFile(fileName, 'text/csv', folderId);
+      const findResult = await fileOps.findFile(fileName, 'text/csv', folderId);
+      const existingFile = findResult.isOk() ? findResult.unwrap() : null;
       let existingRowMap = new Map<string, string[]>();
 
       if (existingFile) {
         // 既存ファイルの内容をダウンロード
-        const existingContent = await fileOps.downloadFileContent(existingFile.id);
-        if (existingContent) {
-          existingRowMap = parseCSV(existingContent);
+        const downloadResult = await fileOps.downloadFileContent(existingFile.id);
+        if (downloadResult.isOk()) {
+          const existingContent = downloadResult.unwrap();
+          if (existingContent) {
+            existingRowMap = parseCSV(existingContent);
+          }
         }
       }
 
       // 新規データをマージ（日付で上書き）
+      // ... (no changes needed for logic here, just context) ...
       // 新しいデータの日付範囲を取得
       const newDates = [...newRowsMap.keys()]
         .filter((date) => new Date(date).getFullYear() === year)
@@ -112,7 +117,6 @@ export async function exportToCSV(
       const maxNewDate = newDates.length > 0 ? newDates[newDates.length - 1] : null;
 
       // 新しいデータの日付範囲内にある既存データを削除
-      // （取得期間内のデータは完全に新しいデータで置き換える）
       if (minNewDate && maxNewDate) {
         for (const existingDate of existingRowMap.keys()) {
           if (existingDate >= minNewDate && existingDate <= maxNewDate) {
@@ -156,20 +160,26 @@ export async function exportToCSV(
 
       // アップロード or 更新
       if (existingFile) {
-        const success = await fileOps.updateFile(existingFile.id, csvContent, 'text/csv');
-        if (success) {
+        const updateResult = await fileOps.updateFile(existingFile.id, csvContent, 'text/csv');
+        if (updateResult.isOk()) {
           await addDebugLog(`[CSV Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
-          return { success: false, error: 'CSVファイルの更新に失敗しました' };
+          return {
+            success: false,
+            error: `CSVファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`
+          };
         }
       } else {
-        const fileId = await fileOps.uploadFile(csvContent, fileName, 'text/csv', folderId);
-        if (fileId) {
+        const uploadResult = await fileOps.uploadFile(csvContent, fileName, 'text/csv', folderId);
+        if (uploadResult.isOk()) {
           await addDebugLog(`[CSV Export] Created: ${fileName}`, 'success');
-          lastFileId = fileId;
+          lastFileId = uploadResult.unwrap();
         } else {
-          return { success: false, error: 'CSVファイルのアップロードに失敗しました' };
+          return {
+            success: false,
+            error: `CSVファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
+          };
         }
       }
     }

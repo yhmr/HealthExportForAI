@@ -87,12 +87,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       configureGoogleSignIn(WEB_CLIENT_ID);
       const result = await signIn();
 
-      if (result.success && result.user) {
+      if (result.isOk()) {
+        const user = result.unwrap();
         setIsAuthenticated(true);
-        setCurrentUser(result.user);
+        setCurrentUser(user);
         return true;
       } else {
-        setAuthError(result.error || 'サインインに失敗しました');
+        const error = result.unwrapErr();
+        setAuthError(error.message);
         return false;
       }
     } catch (error) {
@@ -107,7 +109,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const handleSignOut = useCallback(async () => {
     try {
-      await signOut();
+      const result = await signOut();
+      if (result.isErr()) {
+        console.error('[AuthContext] signOut warning:', result.unwrapErr().toString());
+        // 失敗してもクライアント側はサインアウト扱いにする
+      }
       setIsAuthenticated(false);
       setCurrentUser(null);
     } catch (error) {

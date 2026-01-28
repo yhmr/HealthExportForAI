@@ -13,6 +13,7 @@ import {
   createStorageAdapter
 } from '../../../src/services/storage/adapterFactory';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
+import { ok } from '../../../src/types/result';
 
 // Mocks
 vi.mock('../../../src/services/networkService', () => ({
@@ -75,18 +76,18 @@ describe('ExportService - processExportQueue', () => {
 
     // アダプタのモック
     vi.mocked(createStorageAdapter).mockReturnValue({
-      initialize: vi.fn().mockResolvedValue(true),
-      findOrCreateFolder: vi.fn().mockResolvedValue('folder-id'),
+      initialize: vi.fn().mockResolvedValue(ok(true)),
+      findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       defaultFolderName: 'ConnectHealth'
     } as any);
 
     vi.mocked(createInitializer).mockReturnValue({
-      initialize: vi.fn().mockResolvedValue(true)
+      initialize: vi.fn().mockResolvedValue(ok(true))
     });
 
     vi.mocked(createFolderOperations).mockReturnValue({
-      findOrCreateFolder: vi.fn().mockResolvedValue('folder-id'),
-      checkFolderExists: vi.fn().mockResolvedValue(true),
+      findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
+      checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
       defaultFolderName: 'ConnectHealth'
     });
 

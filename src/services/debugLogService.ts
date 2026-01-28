@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../config/storageKeys';
 
+import { AppError } from '../types/errors';
+
 /** デバッグログの型 */
 export interface DebugLogEntry {
   timestamp: string;
@@ -58,4 +60,19 @@ export async function addDebugLog(
  */
 export async function clearDebugLogs(): Promise<void> {
   await AsyncStorage.removeItem(STORAGE_KEYS.DEBUG_LOG);
+}
+
+/**
+ * エラーをログに記録するヘルパー
+ */
+export async function logError(error: unknown): Promise<void> {
+  let message: string;
+  if (error instanceof AppError) {
+    message = error.toString();
+  } else if (error instanceof Error) {
+    message = error.message;
+  } else {
+    message = String(error);
+  }
+  await addDebugLog(message, 'error');
 }

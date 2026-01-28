@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import type { SpreadsheetAdapter } from '../../../src/services/storage/interfaces';
+import { StorageError } from '../../../src/types/errors';
+import { err, ok } from '../../../src/types/result';
 
 // Mock Adapters
 const mockSpreadsheetAdapter = {
@@ -39,9 +41,9 @@ vi.mock('../../../src/services/debugLogService', () => ({
 describe('Sheets Export Service', () => {
   it('should create a new spreadsheet if it does not exist', async () => {
     // Setup: Spreadsheet does not exist
-    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(null);
-    (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue('new-sheet-id');
-    (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(true);
+    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok(null));
+    (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(ok('new-sheet-id'));
+    (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(ok(true));
 
     const result = await exportToSpreadsheet(
       mockHealthData,
@@ -66,12 +68,15 @@ describe('Sheets Export Service', () => {
 
   it('should update an existing spreadsheet', async () => {
     // Setup: Spreadsheet exists
-    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue('existing-sheet-id');
-    (mockSpreadsheetAdapter.getSheetData as any).mockResolvedValue({
-      headers: ['Date', 'Day of Week', 'Steps'],
-      rows: [['2025-01-01', 'Wednesday', '1000']]
-    });
-    (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(true);
+    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok('existing-sheet-id'));
+    (mockSpreadsheetAdapter.getSheetData as any).mockResolvedValue(
+      ok({
+        headers: ['Date', 'Day of Week', 'Steps'],
+        rows: [['2025-01-01', 'Wednesday', '1000']]
+      })
+    );
+    (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(ok(true));
+    (mockSpreadsheetAdapter.updateHeaders as any).mockResolvedValue(ok(true));
 
     const result = await exportToSpreadsheet(
       mockHealthData,
@@ -96,8 +101,10 @@ describe('Sheets Export Service', () => {
   // Note: Folder fallback test removed - responsibility moved to controller.ts
 
   it('should handle spreadsheet creation failure', async () => {
-    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(null);
-    (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(null); // Failure
+    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok(null));
+    (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(
+      err(new StorageError('作成に失敗しました'))
+    ); // Failure
 
     const result = await exportToSpreadsheet(
       mockHealthData,

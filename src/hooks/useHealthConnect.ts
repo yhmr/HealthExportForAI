@@ -39,7 +39,13 @@ export function useHealthConnect() {
 
     try {
       // SDKの利用可否をチェック
-      const availability = await checkHealthConnectAvailability();
+      const availabilityResult = await checkHealthConnectAvailability();
+      if (!availabilityResult.isOk()) {
+        setError(`Health Connect Check Error: ${availabilityResult.unwrapErr()}`);
+        setIsInitialized(true);
+        return false;
+      }
+      const availability = availabilityResult.unwrap();
       setIsAvailable(availability.available);
 
       if (!availability.available) {
@@ -50,12 +56,20 @@ export function useHealthConnect() {
       }
 
       // 初期化
-      const initialized = await initializeHealthConnect();
+      const initResult = await initializeHealthConnect();
+      if (!initResult.isOk()) {
+        setError(`Health Connect Init Error: ${initResult.unwrapErr()}`);
+        setIsInitialized(true);
+        return false;
+      }
+
+      const initialized = initResult.unwrap();
       setIsInitialized(initialized);
 
       if (initialized) {
         // 初期化成功時に権限状態もチェックする
-        const hasPerms = await checkHealthPermissions();
+        const permResult = await checkHealthPermissions();
+        const hasPerms = permResult.unwrapOr(false);
         setHasPermissions(hasPerms);
 
         // 保存されたデータタグ設定を読み込む
@@ -70,15 +84,12 @@ export function useHealthConnect() {
         if (savedTime) {
           setLastSyncTime(savedTime);
         }
-      }
-
-      if (!initialized) {
+        return true;
+      } else {
         setError('Health Connectの初期化に失敗しました');
         setIsInitialized(true);
         return false;
       }
-
-      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : '初期化エラー');
       setIsInitialized(true);
@@ -96,7 +107,8 @@ export function useHealthConnect() {
     setError(null);
 
     try {
-      const granted = await requestHealthPermissions();
+      const result = await requestHealthPermissions();
+      const granted = result.unwrapOr(false);
       setHasPermissions(granted);
 
       if (!granted) {
@@ -128,10 +140,15 @@ export function useHealthConnect() {
         // 第2引数は forceFullSync (false), 第3引数にタグを渡す
         const result = await SyncService.fetchAndQueueNewData(periodDays, false, tags);
 
-        if (result.success) {
-          setAllData(result.data, result.dateRange);
-          setLastSyncTime(result.endTime);
-          return true;
+        if (result.isOk()) {
+          const syncData = result.unwrap();
+          if (syncData.success) {
+            setAllData(syncData.data, syncData.dateRange);
+            setLastSyncTime(syncData.endTime);
+            return true;
+          }
+        } else {
+          setError(`Sync failed: ${result.unwrapErr()}`);
         }
         return false;
       } catch (err) {
@@ -149,7 +166,8 @@ export function useHealthConnect() {
     setError(null);
 
     try {
-      const granted = await requestBackgroundHealthPermission();
+      const result = await requestBackgroundHealthPermission();
+      const granted = result.unwrapOr(false);
       // バックグラウンド権限の結果のみで全体の権限状態を更新してよいかは
       // アプリの仕様によりますが、ここではユーザー実装に合わせて更新します
       if (granted) {

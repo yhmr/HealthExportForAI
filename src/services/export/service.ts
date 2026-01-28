@@ -306,8 +306,17 @@ async function prepareContext(
   let targetFolderId = folderId;
 
   if (!targetFolderId) {
-    const id = await folderOps.findOrCreateFolder(targetFolderName);
-    targetFolderId = id ?? undefined;
+    const result = await folderOps.findOrCreateFolder(targetFolderName);
+    if (result.isOk()) {
+      targetFolderId = result.unwrap();
+    } else {
+      await addDebugLog(
+        `[ExportService] Failed to find/create folder: ${result.unwrapErr().message}`,
+        'error'
+      );
+      // フォルダ作成失敗時はnullを返す（コンテキスト作成失敗）
+      return null;
+    }
   }
 
   return { folderId: targetFolderId, folderName: targetFolderName };

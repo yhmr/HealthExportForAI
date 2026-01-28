@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExportConfigService } from '../../src/services/config/ExportConfigService';
 import { SyncServiceImpl } from '../../src/services/syncService';
 import { HealthData } from '../../src/types/health';
+import { ok } from '../../src/types/result';
 
 // 外部モジュールのモック
 vi.mock('../../src/services/health/AccessChecker');
@@ -35,9 +36,9 @@ describe('SyncServiceImpl', () => {
 
     // モックオブジェクトの作成
     mockAccessChecker = {
-      checkAvailability: vi.fn().mockResolvedValue({ available: true }),
-      initialize: vi.fn().mockResolvedValue(true),
-      hasPermissions: vi.fn().mockResolvedValue(true)
+      checkAvailability: vi.fn().mockResolvedValue(ok({ available: true })),
+      initialize: vi.fn().mockResolvedValue(ok(true)),
+      hasPermissions: vi.fn().mockResolvedValue(ok(true))
     };
 
     mockFetcher = {
@@ -130,11 +131,12 @@ describe('SyncServiceImpl', () => {
     });
 
     it('should return false if not available', async () => {
-      mockAccessChecker.checkAvailability.mockResolvedValue({ available: false });
+      mockAccessChecker.checkAvailability.mockResolvedValue(ok({ available: false }));
 
       const result = await syncService.initialize();
 
-      expect(result.available).toBe(false);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap().available).toBe(false);
       expect(mockAccessChecker.initialize).not.toHaveBeenCalled();
     });
   });

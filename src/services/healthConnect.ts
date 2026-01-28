@@ -9,6 +9,7 @@ import {
   requestPermission,
   SdkAvailabilityStatus
 } from 'react-native-health-connect';
+import { HealthConnectError } from '../types/errors';
 import type {
   BasalMetabolicRateData,
   BodyFatData,
@@ -20,6 +21,7 @@ import type {
   StepsData,
   WeightData
 } from '../types/health';
+import { err, ok, Result } from '../types/result';
 import { formatDate } from '../utils/formatters';
 import { addDebugLog } from './debugLogService';
 
@@ -40,41 +42,53 @@ const REQUIRED_PERMISSIONS = [
 /**
  * Health Connectの初期化
  */
-export async function initializeHealthConnect(): Promise<boolean> {
+/**
+ * Health Connectの初期化
+ */
+export async function initializeHealthConnect(): Promise<Result<boolean, HealthConnectError>> {
   try {
     const isInitialized = await initialize();
-    return isInitialized;
+    return ok(isInitialized);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Init Error: ${error}`, 'error');
-    return false;
+    const msg = `Init Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'INIT_FAILED', error));
   }
 }
 
 /**
  * Health Connect SDKの利用可否をチェック
  */
-export async function checkHealthConnectAvailability(): Promise<{
-  available: boolean;
-  status: number;
-}> {
+/**
+ * Health Connect SDKの利用可否をチェック
+ */
+export async function checkHealthConnectAvailability(): Promise<
+  Result<{ available: boolean; status: number }, HealthConnectError>
+> {
   try {
     const status = await getSdkStatus();
-    return {
+    return ok({
       available: status === SdkAvailabilityStatus.SDK_AVAILABLE,
       status
-    };
-  } catch {
-    return {
-      available: false,
-      status: SdkAvailabilityStatus.SDK_UNAVAILABLE
-    };
+    });
+  } catch (error) {
+    return err(
+      new HealthConnectError(
+        `Availability Check Error: ${error}`,
+        'CHECK_AVAILABILITY_FAILED',
+        error
+      )
+    );
   }
 }
 
 /**
  * 権限状態を確認（UI表示なし）
  */
-export async function checkHealthPermissions(): Promise<boolean> {
+/**
+ * 権限状態を確認（UI表示なし）
+ */
+export async function checkHealthPermissions(): Promise<Result<boolean, HealthConnectError>> {
   try {
     const grantedPermissions = await getGrantedPermissions();
 
@@ -85,17 +99,21 @@ export async function checkHealthPermissions(): Promise<boolean> {
       )
     );
 
-    return allGranted;
+    return ok(allGranted);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Check Permission Error: ${error}`, 'error');
-    return false;
+    const msg = `Check Permission Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'CHECK_PERMISSIONS_FAILED', error));
   }
 }
 
 /**
  * 権限をリクエスト
  */
-export async function requestHealthPermissions(): Promise<boolean> {
+/**
+ * 権限をリクエスト
+ */
+export async function requestHealthPermissions(): Promise<Result<boolean, HealthConnectError>> {
   try {
     // 1. Health Connect のデータ読み取り権限をリクエスト
     const grantedPermissions = await requestPermission(REQUIRED_PERMISSIONS as any);
@@ -123,20 +141,26 @@ export async function requestHealthPermissions(): Promise<boolean> {
         `[HealthConnect] Permissions missing: ${JSON.stringify(missingPermissions)}`,
         'warn'
       );
-      return false;
+      return ok(false);
     }
 
-    return true;
+    return ok(true);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Permission Request Error: ${error}`, 'error');
-    return false;
+    const msg = `Permission Request Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'REQUEST_PERMISSIONS_FAILED', error));
   }
 }
 
 /**
  * バックグラウンド読み取り権限をリクエスト (Android 14+)
  */
-export async function requestBackgroundHealthPermission(): Promise<boolean> {
+/**
+ * バックグラウンド読み取り権限をリクエスト (Android 14+)
+ */
+export async function requestBackgroundHealthPermission(): Promise<
+  Result<boolean, HealthConnectError>
+> {
   try {
     if (Platform.OS === 'android' && Platform.Version >= 34) {
       const backgroundPermission =
@@ -148,18 +172,19 @@ export async function requestBackgroundHealthPermission(): Promise<boolean> {
         const granted = await PermissionsAndroid.request(backgroundPermission);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           await addDebugLog('[HealthConnect] Background permission denied', 'error');
-          return false;
+          return ok(false);
         } else {
           await addDebugLog('[HealthConnect] Background permission granted', 'success');
-          return true;
+          return ok(true);
         }
       }
-      return true; // 既に許可されている
+      return ok(true); // 既に許可されている
     }
-    return true; // 対象外のOSバージョンは常に許可扱い
+    return ok(true); // 対象外のOSバージョンは常に許可扱い
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Background Permission Request Error: ${error}`, 'error');
-    return false;
+    const msg = `Background Permission Request Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'REQUEST_BG_PERMISSION_FAILED', error));
   }
 }
 
@@ -195,7 +220,10 @@ function getExerciseTypeName(typeId: number): string {
  * 1. aggregateGroupByPeriodを使用して日ごとの集計データを取得
  * 2. Health Connectが内部で重複除去を行うため、複数ソースからのデータが正しく集計される
  */
-export async function fetchStepsData(startTime: Date, endTime: Date): Promise<StepsData[]> {
+export async function fetchStepsData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<StepsData[], HealthConnectError>> {
   try {
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
@@ -217,10 +245,11 @@ export async function fetchStepsData(startTime: Date, endTime: Date): Promise<St
       count: item.result.COUNT_TOTAL ?? 0
     }));
 
-    return stepsData.sort((a, b) => a.date.localeCompare(b.date));
+    return ok(stepsData.sort((a, b) => a.date.localeCompare(b.date)));
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Steps Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Steps Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_STEPS_FAILED', error));
   }
 }
 
@@ -231,7 +260,10 @@ export async function fetchStepsData(startTime: Date, endTime: Date): Promise<St
  * 2. レコードを日付ごとにグループ化
  * 3. 同じ日に複数の記録がある場合、計測時刻(time)が最も遅いデータを採用
  */
-export async function fetchWeightData(startTime: Date, endTime: Date): Promise<WeightData[]> {
+export async function fetchWeightData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<WeightData[], HealthConnectError>> {
   try {
     const result = await readRecords('Weight', {
       timeRangeFilter: {
@@ -241,19 +273,21 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
       }
     });
 
-    return aggregateByLatestPerDay(
+    const data = aggregateByLatestPerDay(
       result.records,
       (record) => record.time,
       (record, date) => ({
         date,
         value: record.weight.inKilograms,
-        unit: 'kg',
+        unit: 'kg' as const,
         time: record.time
       })
     );
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Weight Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Weight Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_WEIGHT_FAILED', error));
   }
 }
 
@@ -263,7 +297,10 @@ export async function fetchWeightData(startTime: Date, endTime: Date): Promise<W
  * 1. 指定期間の体脂肪レコードを取得
  * 2. 日付ごとにグループ化し、計測時刻が最も遅いデータを採用
  */
-export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<BodyFatData[]> {
+export async function fetchBodyFatData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<BodyFatData[], HealthConnectError>> {
   try {
     const result = await readRecords('BodyFat', {
       timeRangeFilter: {
@@ -273,7 +310,7 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
       }
     });
 
-    return aggregateByLatestPerDay(
+    const data = aggregateByLatestPerDay(
       result.records,
       (record) => record.time,
       (record, date) => ({
@@ -282,9 +319,11 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
         time: record.time
       })
     );
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch BodyFat Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch BodyFat Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_BODY_FAT_FAILED', error));
   }
 }
 
@@ -297,7 +336,7 @@ export async function fetchBodyFatData(startTime: Date, endTime: Date): Promise<
 export async function fetchTotalCaloriesData(
   startTime: Date,
   endTime: Date
-): Promise<CaloriesData[]> {
+): Promise<Result<CaloriesData[], HealthConnectError>> {
   try {
     // aggregateGroupByDurationを使用して24時間ごとに集計（重複除去される）
     const result = await aggregateGroupByDuration({
@@ -320,10 +359,11 @@ export async function fetchTotalCaloriesData(
       unit: 'kcal' as const
     }));
 
-    return caloriesData.sort((a, b) => a.date.localeCompare(b.date));
+    return ok(caloriesData.sort((a, b) => a.date.localeCompare(b.date)));
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Calories Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Calories Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_CALORIES_FAILED', error));
   }
 }
 
@@ -336,7 +376,7 @@ export async function fetchTotalCaloriesData(
 export async function fetchBasalMetabolicRateData(
   startTime: Date,
   endTime: Date
-): Promise<BasalMetabolicRateData[]> {
+): Promise<Result<BasalMetabolicRateData[], HealthConnectError>> {
   try {
     const result = await readRecords('BasalMetabolicRate', {
       timeRangeFilter: {
@@ -346,19 +386,21 @@ export async function fetchBasalMetabolicRateData(
       }
     });
 
-    return aggregateByLatestPerDay(
+    const data = aggregateByLatestPerDay(
       result.records,
       (record) => record.time,
       (record, date) => ({
         date,
         value: record.basalMetabolicRate.inKilocaloriesPerDay,
-        unit: 'kcal/day',
+        unit: 'kcal/day' as const,
         time: record.time
       })
     );
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch BMR Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch BMR Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_BMR_FAILED', error));
   }
 }
 
@@ -369,7 +411,10 @@ export async function fetchBasalMetabolicRateData(
  * 2. 日付ごとに睡眠時間（分）と「深い眠り」の時間を集計
  * 3. 割合を計算して返却
  */
-export async function fetchSleepData(startTime: Date, endTime: Date): Promise<SleepData[]> {
+export async function fetchSleepData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<SleepData[], HealthConnectError>> {
   try {
     const result = await readRecords('SleepSession', {
       timeRangeFilter: {
@@ -378,6 +423,10 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
         endTime: endTime.toISOString()
       }
     });
+
+    // ... (aggregation logic unchanged except wrapper) ...
+    // Note: I will just paste the logic inside try block to be safe, or just use the whole function replacement.
+    // Logic is long, so I'll preserve it.
 
     // 集計用の一時型
     type SleepAggregation = SleepData & { totalDeepSleepMinutes: number };
@@ -391,12 +440,9 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
       const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
 
       // 深い眠りの時間を計算
-      // Health Connect のステージ定数 (一般的に 5 が Deep Sleep)
       let deepSleepMinutes = 0;
       if (record.stages) {
         for (const stage of record.stages) {
-          // stage.stage の型によって比較方法を変える
-          // 型エラーを防ぐため any キャスト等で柔軟に対応
           const sType = stage.stage as any;
           if (sType === 5 || sType === 'DEEP') {
             const sStart = new Date(stage.startTime);
@@ -418,7 +464,7 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
       aggregation[date].totalDeepSleepMinutes += deepSleepMinutes;
     }
 
-    return Object.values(aggregation)
+    const data = Object.values(aggregation)
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((item) => {
         const { totalDeepSleepMinutes, ...rest } = item;
@@ -431,9 +477,12 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
           deepSleepPercentage: percentage
         };
       });
+
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Sleep Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Sleep Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_SLEEP_FAILED', error));
   }
 }
 
@@ -444,7 +493,10 @@ export async function fetchSleepData(startTime: Date, endTime: Date): Promise<Sl
  * 2. (日付 + 運動種別) をキーとしてグルーピング
  * 3. 継続時間を合計（カロリーは集計しない）
  */
-export async function fetchExerciseData(startTime: Date, endTime: Date): Promise<ExerciseData[]> {
+export async function fetchExerciseData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<ExerciseData[], HealthConnectError>> {
   try {
     const result = await readRecords('ExerciseSession', {
       timeRangeFilter: {
@@ -477,10 +529,12 @@ export async function fetchExerciseData(startTime: Date, endTime: Date): Promise
       aggregation[key].durationMinutes += durationMinutes;
     }
 
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    const data = Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Exercise Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Exercise Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_EXERCISE_FAILED', error));
   }
 }
 
@@ -497,7 +551,10 @@ export async function fetchExerciseData(startTime: Date, endTime: Date): Promise
  *    - 食物繊維 (dietaryFiber)
  *    - 飽和脂肪 (saturatedFat)
  */
-export async function fetchNutritionData(startTime: Date, endTime: Date): Promise<NutritionData[]> {
+export async function fetchNutritionData(
+  startTime: Date,
+  endTime: Date
+): Promise<Result<NutritionData[], HealthConnectError>> {
   try {
     const result = await readRecords('Nutrition', {
       timeRangeFilter: {
@@ -545,10 +602,12 @@ export async function fetchNutritionData(startTime: Date, endTime: Date): Promis
       );
     }
 
-    return Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    const data = Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    return ok(data);
   } catch (error) {
-    await addDebugLog(`[HealthConnect] Fetch Nutrition Error: ${error}`, 'error');
-    return [];
+    const msg = `Fetch Nutrition Error: ${error}`;
+    await addDebugLog(`[HealthConnect] ${msg}`, 'error');
+    return err(new HealthConnectError(msg, 'FETCH_NUTRITION_FAILED', error));
   }
 }
 
@@ -557,14 +616,14 @@ export async function fetchNutritionData(startTime: Date, endTime: Date): Promis
  */
 export async function fetchAllHealthData(startTime: Date, endTime: Date): Promise<HealthData> {
   const [
-    steps,
-    weight,
-    bodyFat,
-    totalCaloriesBurned,
-    basalMetabolicRate,
-    sleep,
-    exercise,
-    nutrition
+    stepsResult,
+    weightResult,
+    bodyFatResult,
+    totalCaloriesBurnedResult,
+    basalMetabolicRateResult,
+    sleepResult,
+    exerciseResult,
+    nutritionResult
   ] = await Promise.all([
     fetchStepsData(startTime, endTime),
     fetchWeightData(startTime, endTime),
@@ -577,13 +636,13 @@ export async function fetchAllHealthData(startTime: Date, endTime: Date): Promis
   ]);
 
   return {
-    steps,
-    weight,
-    bodyFat,
-    totalCaloriesBurned,
-    basalMetabolicRate,
-    sleep,
-    exercise,
-    nutrition
+    steps: stepsResult.unwrapOr([]),
+    weight: weightResult.unwrapOr([]),
+    bodyFat: bodyFatResult.unwrapOr([]),
+    totalCaloriesBurned: totalCaloriesBurnedResult.unwrapOr([]),
+    basalMetabolicRate: basalMetabolicRateResult.unwrapOr([]),
+    sleep: sleepResult.unwrapOr([]),
+    exercise: exerciseResult.unwrapOr([]),
+    nutrition: nutritionResult.unwrapOr([])
   };
 }

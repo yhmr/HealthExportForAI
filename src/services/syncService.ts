@@ -1,4 +1,6 @@
+import { AppError } from '../types/errors';
 import { HealthData } from '../types/health';
+import { err, ok, Result } from '../types/result';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
 import {
   createDefaultExportConfig,
@@ -43,23 +45,61 @@ export class SyncServiceImpl {
   /**
    * Health Connectの状態確認と初期化
    */
-  async initialize(): Promise<{
-    available: boolean;
-    initialized: boolean;
-    hasPermissions: boolean;
-  }> {
-    const availability = await this.accessChecker.checkAvailability();
+  async initialize(): Promise<
+    Result<
+      {
+        available: boolean;
+        initialized: boolean;
+        hasPermissions: boolean;
+      },
+      AppError
+    >
+  > {
+    const availabilityResult = await this.accessChecker.checkAvailability();
+    if (!availabilityResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Availability check failed: ${availabilityResult.unwrapErr()}`,
+        'error'
+      );
+      // Return specific error
+      return err(availabilityResult.unwrapErr());
+    }
+    const availability = availabilityResult.unwrap();
+
     if (!availability.available) {
-      return { available: false, initialized: false, hasPermissions: false };
+      return ok({ available: false, initialized: false, hasPermissions: false });
     }
 
-    const initialized = await this.accessChecker.initialize();
+    const initResult = await this.accessChecker.initialize();
+    if (!initResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Initialization check failed: ${initResult.unwrapErr()}`,
+        'error'
+      );
+      // If init fails, maybe we still return Ok but with initialized=false?
+      // But AccessChecker returns error only if exception.
+      // The original code treated false as just "not initialized".
+      // HealthConnect.initialize throws if failed.
+      // So err is appropriate.
+      return err(initResult.unwrapErr());
+    }
+    const initialized = initResult.unwrap();
+
     if (!initialized) {
-      return { available: true, initialized: false, hasPermissions: false };
+      return ok({ available: true, initialized: false, hasPermissions: false });
     }
 
-    const hasPermissions = await this.accessChecker.hasPermissions();
-    return { available: true, initialized: true, hasPermissions };
+    const permResult = await this.accessChecker.hasPermissions();
+    if (!permResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Permission check failed: ${permResult.unwrapErr()}`,
+        'error'
+      );
+      return err(permResult.unwrapErr());
+    }
+    const hasPermissions = permResult.unwrap();
+
+    return ok({ available: true, initialized: true, hasPermissions });
   }
 
   /**
@@ -72,7 +112,7 @@ export class SyncServiceImpl {
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<SyncResult> {
+  ): Promise<Result<SyncResult, AppError>> {
     try {
       await addDebugLog('[SyncService] Starting sync...', 'info');
 
@@ -86,29 +126,27 @@ export class SyncServiceImpl {
       );
 
       // 2. データの取得 (Fetcher利用)
+      // fetcher.fetchAllData currently throws or returns empty.
+      // If we refactor fetcher to Result, we can use it here.
+      // But currently it returns HealthData.
       const healthData = await this.fetcher.fetchAllData(startTime, endTime);
 
-      // データが存在するか確認
+      // ... (logic) ...
       const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
-
-      // 取得期間の全日付セット生成
       const dateRange = generateDateRange(startTime, endTime);
-
       let queued = false;
 
       if (hasData) {
-        // 成功時のみ同期時刻を更新（永続化）
+        // ...
         const now = getCurrentISOString();
         await this.configService.saveLastSyncTime(now);
         await addDebugLog(`[SyncService] Sync success. LastSyncTime updated: ${now}`, 'success');
 
-        // タグフィルタリング (Filter利用)
         let dataToQueue = healthData;
         if (selectedTags && selectedTags.length > 0) {
           dataToQueue = this.filter.filterByTags(healthData, selectedTags);
         }
 
-        // 3. エクスポートキューへの追加 (QueueManager利用)
         const exportConfig = await createDefaultExportConfig();
         const tags = Object.keys(dataToQueue) as string[];
 
@@ -120,7 +158,6 @@ export class SyncServiceImpl {
         });
 
         queued = !!queueId;
-
         if (queued) {
           await addDebugLog('[SyncService] Data automatically added to export queue', 'info');
         } else {
@@ -130,19 +167,20 @@ export class SyncServiceImpl {
         await addDebugLog('[SyncService] No data found in range', 'info');
       }
 
-      return {
-        success: true,
+      return ok({
+        success: true, // We can keep success:true for backward compat inside SyncResult if needed, or remove it.
         data: healthData,
         dateRange,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         isNewData: hasData,
         queued
-      };
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       await addDebugLog(`[SyncService] Sync failed: ${errorMessage}`, 'error');
-      throw error;
+      // Return AppError. Convert unknown error.
+      return err(new AppError(`Sync failed: ${errorMessage}`, 'SYNC_FAILED', error));
     }
   }
 
@@ -155,22 +193,34 @@ export class SyncServiceImpl {
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }> {
+  ): Promise<
+    Result<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }, AppError>
+  > {
     // 1. データ取得 & キューイング
-    const syncResult = await this.fetchAndQueueNewData(periodDays, forceFullSync, selectedTags);
+    const syncResultOrErr = await this.fetchAndQueueNewData(
+      periodDays,
+      forceFullSync,
+      selectedTags
+    );
+
+    if (!syncResultOrErr.isOk()) {
+      return err(syncResultOrErr.unwrapErr());
+    }
+    const syncResult = syncResultOrErr.unwrap();
 
     let exportResult = null;
 
     // 2. 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
     if (syncResult.success) {
+      // success is always true if Ok, but keeping property check logic
       // オフライン判定等は processExportQueue 側で行われるため、ここでは単に呼び出す
       exportResult = await processExportQueue();
     }
 
-    return {
+    return ok({
       syncResult,
       exportResult
-    };
+    });
   }
 
   /**

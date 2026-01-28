@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
 import { formatHealthDataToRows } from '../../../src/services/export/utils';
 import type { FileOperations } from '../../../src/services/storage/interfaces';
+import { ok } from '../../../src/types/result';
 
 // Mock dependencies
 vi.mock('../../../src/services/export/utils', () => ({
@@ -36,8 +37,8 @@ describe('CSV Escaping', () => {
     });
 
     // Mock no existing file, triggering uploadFile
-    (mockFileOps.findFile as any).mockResolvedValue(null);
-    (mockFileOps.uploadFile as any).mockResolvedValue('new-id');
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(ok('new-id'));
 
     await exportToCSV({} as any, 'folder-id', mockFileOps);
 

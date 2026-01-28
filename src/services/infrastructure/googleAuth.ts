@@ -3,6 +3,9 @@
 import { User } from '@react-native-google-signin/google-signin';
 import { GoogleAuthService } from './GoogleAuthService';
 
+import { AuthError } from '../../types/errors';
+import { Result } from '../../types/result';
+
 // シングルトンインスタンスの作成
 const googleAuthService = new GoogleAuthService();
 
@@ -30,25 +33,21 @@ export async function getCurrentUser(): Promise<User | null> {
 /**
  * Googleアカウントでサインイン
  */
-export async function signIn(): Promise<{
-  success: boolean;
-  user?: User;
-  error?: string;
-}> {
+export async function signIn(): Promise<Result<User, AuthError>> {
   return googleAuthService.signIn();
 }
 
 /**
  * サインアウト
  */
-export async function signOut(): Promise<void> {
+export async function signOut(): Promise<Result<void, AuthError>> {
   return googleAuthService.signOut();
 }
 
 /**
  * アクセストークンを取得
  */
-export async function getOrRefreshAccessToken(): Promise<string | null> {
+export async function getOrRefreshAccessToken(): Promise<Result<string, AuthError>> {
   return googleAuthService.getOrRefreshAccessToken();
 }
 

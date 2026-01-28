@@ -1,3 +1,5 @@
+import { NetworkError, StorageError } from '../../types/errors';
+import { err, Result } from '../../types/result';
 import { IAuthService } from '../interfaces/IAuthService';
 import {
   checkFolderExists,
@@ -20,35 +22,47 @@ export class GoogleDriveAdapter implements Initializable, FolderOperations, File
     // すでにサインインしているか確認
     const signedIn = await this.authService.isSignedIn();
     if (signedIn) {
-      this.accessToken = await this.authService.getOrRefreshAccessToken();
-      return !!this.accessToken;
+      const result = await this.authService.getOrRefreshAccessToken();
+      if (result.isOk()) {
+        this.accessToken = result.unwrap();
+        return !!this.accessToken;
+      }
     }
     return false;
   }
 
-  private async ensureAccessToken(): Promise<string> {
-    if (!this.accessToken) {
-      this.accessToken = await this.authService.getOrRefreshAccessToken();
+  // Helper to run auth-protected operation
+  private async runWithAuth<T>(
+    operation: (token: string) => Promise<Result<T, StorageError | NetworkError>>
+  ): Promise<Result<T, StorageError | NetworkError>> {
+    const tokenResult = await this.authService.getOrRefreshAccessToken();
+    if (tokenResult.isErr()) {
+      const authErr = tokenResult.unwrapErr();
+      return err(
+        new StorageError(`Auth failed: ${authErr.message}`, 'AUTH_FAILED_ADAPTER', authErr)
+      );
     }
-    if (!this.accessToken) {
-      throw new Error('Google Drive access token is missing. Please sign in.');
-    }
-    return this.accessToken;
+    const token = tokenResult.unwrap();
+    this.accessToken = token;
+    return operation(token);
   }
 
-  async findOrCreateFolder(folderName: string): Promise<string | null> {
-    const token = await this.ensureAccessToken();
-    return findOrCreateFolder(folderName, token);
+  async findOrCreateFolder(
+    folderName: string
+  ): Promise<Result<string, StorageError | NetworkError>> {
+    return this.runWithAuth((token) => findOrCreateFolder(folderName, token));
   }
 
-  async checkFolderExists(folderId: string): Promise<boolean> {
-    const token = await this.ensureAccessToken();
-    return checkFolderExists(folderId, token);
+  async checkFolderExists(folderId: string): Promise<Result<boolean, StorageError | NetworkError>> {
+    return this.runWithAuth((token) => checkFolderExists(folderId, token));
   }
 
-  async findFile(fileName: string, mimeType: string, folderId?: string): Promise<FileInfo | null> {
-    const token = await this.ensureAccessToken();
-    return findFile(fileName, mimeType, token, folderId);
+  async findFile(
+    fileName: string,
+    mimeType: string,
+    folderId?: string
+  ): Promise<Result<FileInfo | null, StorageError | NetworkError>> {
+    return this.runWithAuth((token) => findFile(fileName, mimeType, token, folderId));
   }
 
   async uploadFile(
@@ -57,9 +71,10 @@ export class GoogleDriveAdapter implements Initializable, FolderOperations, File
     mimeType: string,
     folderId?: string,
     isBase64?: boolean
-  ): Promise<string | null> {
-    const token = await this.ensureAccessToken();
-    return uploadFile(content, fileName, mimeType, token, folderId, isBase64);
+  ): Promise<Result<string, StorageError | NetworkError>> {
+    return this.runWithAuth((token) =>
+      uploadFile(content, fileName, mimeType, token, folderId, isBase64)
+    );
   }
 
   async updateFile(
@@ -67,13 +82,11 @@ export class GoogleDriveAdapter implements Initializable, FolderOperations, File
     content: string,
     mimeType: string,
     isBase64?: boolean
-  ): Promise<boolean> {
-    const token = await this.ensureAccessToken();
-    return updateFile(fileId, content, mimeType, token, isBase64);
+  ): Promise<Result<boolean, StorageError | NetworkError>> {
+    return this.runWithAuth((token) => updateFile(fileId, content, mimeType, token, isBase64));
   }
 
-  async downloadFileContent(fileId: string): Promise<string | null> {
-    const token = await this.ensureAccessToken();
-    return downloadFileContent(fileId, token);
+  async downloadFileContent(fileId: string): Promise<Result<string, StorageError | NetworkError>> {
+    return this.runWithAuth((token) => downloadFileContent(fileId, token));
   }
 }
