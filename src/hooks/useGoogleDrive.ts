@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
-import { configureGoogleSignIn, getAccessToken } from '../services/googleAuth';
+import { configureGoogleSignIn, getOrRefreshAccessToken } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { getCurrentISOString } from '../utils/formatters';
@@ -127,7 +127,7 @@ export function useGoogleDrive() {
           return driveConfig.folderName;
         }
 
-        const token = await getAccessToken();
+        const token = await getOrRefreshAccessToken();
         if (!token) return DEFAULT_FOLDER_NAME;
 
         const folder = await getFolder(folderId, token);

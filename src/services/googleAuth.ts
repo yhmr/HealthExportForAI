@@ -82,8 +82,9 @@ let tokenRefreshPromise: Promise<string | null> | null = null;
 
 /**
  * アクセストークンを取得（重複実行防止とリトライロジック付き）
+ * 必要に応じてリフレッシュやサイレントサインインを試みる
  */
-export async function getAccessToken(): Promise<string | null> {
+export async function getOrRefreshAccessToken(): Promise<string | null> {
   // すでに実行中のトークン取得処理があれば、その結果を待つ
   if (tokenRefreshPromise) {
     return tokenRefreshPromise;
