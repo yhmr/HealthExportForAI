@@ -1,7 +1,8 @@
 // healthStore のテスト
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { filterHealthDataByTags, useHealthStore } from '../../src/stores/healthStore';
+import { useHealthStore } from '../../src/stores/healthStore';
+import { filterHealthDataByTags } from '../../src/utils/dataHelpers';
 
 describe('healthStore', () => {
   beforeEach(() => {

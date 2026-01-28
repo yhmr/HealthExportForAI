@@ -9,7 +9,6 @@ import { processExportQueue } from '../services/export/service';
 import { configureGoogleSignIn, getAccessToken } from '../services/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
-import { type DataTagKey } from '../types/health';
 import { getCurrentISOString } from '../utils/formatters';
 
 export function useGoogleDrive() {
@@ -60,55 +59,52 @@ export function useGoogleDrive() {
    * @param selectedTags エクスポートするデータタグのセット
    * @returns { success: boolean, queued?: boolean } 成功/キュー追加の結果
    */
-  const exportAndUpload = useCallback(
-    async (selectedTags?: Set<DataTagKey>) => {
-      if (!isConfigValid()) {
-        setUploadError('サインインしてください');
-        return { success: false };
-      }
+  const exportAndUpload = useCallback(async () => {
+    if (!isConfigValid()) {
+      setUploadError('サインインしてください');
+      return { success: false };
+    }
 
-      setIsUploading(true);
-      setUploadError(null);
+    setIsUploading(true);
+    setUploadError(null);
 
-      try {
-        // Queueへの追加はSyncServiceで行われている前提
-        // ここでは処理のみを行う
+    try {
+      // Queueへの追加はSyncServiceで行われている前提
+      // ここでは処理のみを行う
 
-        // オンラインなら即時処理
-        const networkStatus = await getNetworkStatus();
-        if (networkStatus === 'online') {
-          await addDebugLog('[useGoogleDrive] Online: Processing queue immediately', 'info');
-          const result = await processExportQueue();
+      // オンラインなら即時処理
+      const networkStatus = await getNetworkStatus();
+      if (networkStatus === 'online') {
+        await addDebugLog('[useGoogleDrive] Online: Processing queue immediately', 'info');
+        const result = await processExportQueue();
 
-          if (result.successCount > 0) {
-            setLastUploadTime(getCurrentISOString());
-            await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
-            return { success: true };
-          } else if (result.errors.length > 0) {
-            // エラーがあったが、部分成功している可能性もある
-            if (result.successCount === 0) {
-              setUploadError(`エクスポート失敗: ${result.errors[0]}`);
-              return { success: false };
-            }
-            return { success: true };
-          } else {
-            // キューが空だった場合（SyncServiceで追加されなかった、または既に処理された）
-            await addDebugLog('[useGoogleDrive] Queue empty or processed elsewhere', 'info');
-            return { success: true };
+        if (result.successCount > 0) {
+          setLastUploadTime(getCurrentISOString());
+          await addDebugLog('[useGoogleDrive] Export completed successfully', 'success');
+          return { success: true };
+        } else if (result.errors.length > 0) {
+          // エラーがあったが、部分成功している可能性もある
+          if (result.successCount === 0) {
+            setUploadError(`エクスポート失敗: ${result.errors[0]}`);
+            return { success: false };
           }
+          return { success: true };
         } else {
-          await addDebugLog('[useGoogleDrive] Offline: Queue processing deferred', 'info');
-          return { success: true, queued: true };
+          // キューが空だった場合（SyncServiceで追加されなかった、または既に処理された）
+          await addDebugLog('[useGoogleDrive] Queue empty or processed elsewhere', 'info');
+          return { success: true };
         }
-      } catch (err) {
-        setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');
-        return { success: false };
-      } finally {
-        setIsUploading(false);
+      } else {
+        await addDebugLog('[useGoogleDrive] Offline: Queue processing deferred', 'info');
+        return { success: true, queued: true };
       }
-    },
-    [isConfigValid]
-  );
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'エクスポートエラー');
+      return { success: false };
+    } finally {
+      setIsUploading(false);
+    }
+  }, [isConfigValid]);
 
   /**
    * アップロードエラーをクリア

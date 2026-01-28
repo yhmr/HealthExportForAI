@@ -23,17 +23,13 @@ interface Folder {
 interface FolderPickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelect: (folderId: string, folderName: string) => void;
-  initialFolderId?: string;
-  initialFolderName?: string;
+  onSelect: (folderId: string, folderName: string) => Promise<void> | void;
 }
 
 export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   visible,
   onClose,
-  onSelect,
-  initialFolderId,
-  initialFolderName
+  onSelect
 }) => {
   const [currentPath, setCurrentPath] = useState<{ id: string; name: string }[]>([
     { id: 'root', name: 'マイドライブ' }

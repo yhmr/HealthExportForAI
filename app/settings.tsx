@@ -112,8 +112,6 @@ export default function SettingsScreen() {
       <FolderPickerModal
         visible={isPickerVisible}
         onClose={() => setPickerVisible(false)}
-        initialFolderId={state.folderId}
-        initialFolderName={state.folderName}
         onSelect={async (id, name) => {
           await actions.updateFolder(id, name);
           setPickerVisible(false);

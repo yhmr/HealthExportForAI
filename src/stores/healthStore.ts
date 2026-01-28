@@ -46,7 +46,7 @@ export const initialHealthData: HealthData = {
   nutrition: []
 };
 
-export const useHealthStore = create<HealthStore>((set, get) => ({
+export const useHealthStore = create<HealthStore>((set) => ({
   healthData: initialHealthData,
   lastSyncTime: null,
   isLoading: false,

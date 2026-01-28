@@ -10,7 +10,8 @@ import {
   requestHealthPermissions
 } from '../services/healthConnect';
 import { SyncService } from '../services/syncService';
-import { DataTagKey, useHealthStore } from '../stores/healthStore';
+import { useHealthStore } from '../stores/healthStore';
+import { DataTagKey } from '../types/health';
 
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);

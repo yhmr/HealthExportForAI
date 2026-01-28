@@ -80,8 +80,22 @@ describe('offlineStore', () => {
     it('キューから件数を再読み込みして設定する', async () => {
       // モックの実装
       vi.mocked(queueStorage.getQueue).mockResolvedValue([
-        { id: '1', type: 'json' as any, data: {}, timestamp: Date.now() },
-        { id: '2', type: 'json' as any, data: {}, timestamp: Date.now() }
+        {
+          id: '1',
+          healthData: {} as any,
+          createdAt: new Date().toISOString(),
+          retryCount: 0,
+          selectedTags: [],
+          syncDateRange: null
+        },
+        {
+          id: '2',
+          healthData: {} as any,
+          createdAt: new Date().toISOString(),
+          retryCount: 0,
+          selectedTags: [],
+          syncDateRange: null
+        }
       ]);
 
       await useOfflineStore.getState().refreshPendingCount();

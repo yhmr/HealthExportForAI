@@ -53,7 +53,6 @@ export const FolderStep: React.FC<FolderStepProps> = ({
 
       <FolderPickerModal
         visible={showFolderPicker}
-        initialFolderName={folderName}
         onClose={() => setShowFolderPicker(false)}
         onSelect={onFolderSelect}
       />
