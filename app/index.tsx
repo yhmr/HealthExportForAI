@@ -110,7 +110,7 @@ export default function HomeScreen() {
   }, [error, uploadError, clearUploadError, t]);
 
   // 同期操作Hook
-  const { isSyncing: isOperationSyncing, syncAndUpload } = useSyncOperation();
+  const { isSyncing: isOperationSyncing, triggerFullSync } = useSyncOperation();
 
   // 統合ハンドラ: 同期してエクスポート
   const handleSyncAndExport = async () => {
@@ -125,7 +125,7 @@ export default function HomeScreen() {
     }
 
     // 新しい統合メソッドを使用
-    const result = await syncAndUpload(); // 引数なしで差分更新または設定値に基づく初期取得
+    const result = await triggerFullSync(); // 引数なしで差分更新または設定値に基づく初期取得
 
     if (result.success) {
       if (result.uploaded) {

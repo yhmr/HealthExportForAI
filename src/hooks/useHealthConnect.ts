@@ -126,7 +126,7 @@ export function useHealthConnect() {
         const tags = Array.from(selectedDataTags || []);
 
         // 第2引数は forceFullSync (false), 第3引数にタグを渡す
-        const result = await SyncService.performSync(periodDays, false, tags);
+        const result = await SyncService.fetchAndQueueNewData(periodDays, false, tags);
 
         if (result.success) {
           setAllData(result.data, result.dateRange);

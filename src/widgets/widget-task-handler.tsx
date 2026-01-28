@@ -54,7 +54,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
         // 4. データ取得 & エクスポート (一括実行)
         // 前回同期からの差分を取得
-        const { syncResult } = await SyncService.syncAndUpload();
+        const { syncResult } = await SyncService.executeFullSync();
 
         if (!syncResult.success || !syncResult.isNewData) {
           const lastTime = await loadLastSyncTime();

@@ -36,7 +36,7 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
 
     // === 同期実行（取得〜エクスポートまで一括） ===
     try {
-      const { syncResult, exportResult } = await SyncService.syncAndUpload();
+      const { syncResult, exportResult } = await SyncService.executeFullSync();
 
       if (!syncResult.success) {
         // 同期自体に失敗

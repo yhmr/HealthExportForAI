@@ -59,7 +59,7 @@ export const SyncService = {
    * @param forceFullSync 差分更新ではなく、全期間の再取得を強制するか
    * @param selectedTags エクスポート対象のデータタグ（指定された場合のみフィルタリング）
    */
-  async performSync(
+  async fetchAndQueueNewData(
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
@@ -183,13 +183,13 @@ export const SyncService = {
    * 1. データの取得とキューイング (Phase 1)
    * 2. 成功したらアップロード試行 (Phase 2)
    */
-  async syncAndUpload(
+  async executeFullSync(
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
   ): Promise<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }> {
     // 1. データ取得 & キューイング
-    const syncResult = await this.performSync(periodDays, forceFullSync, selectedTags);
+    const syncResult = await this.fetchAndQueueNewData(periodDays, forceFullSync, selectedTags);
 
     let exportResult = null;
 
