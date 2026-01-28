@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View, BackHandler } from 'react-native';
+import { BackHandler, Text, View } from 'react-native';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 interface PermissionsStepProps {
   hasPermissions: boolean;

@@ -29,11 +29,7 @@ export function SyncWidgetSmall({ status = 'idle' }: SyncWidgetSmallProps) {
       }}
       clickAction="SYNC_CLICKED"
     >
-      <ImageWidget
-        image={WIDGET_ICON_BASE64}
-        imageWidth={40}
-        imageHeight={40}
-      />
+      <ImageWidget image={WIDGET_ICON_BASE64} imageWidth={40} imageHeight={40} />
     </FlexWidget>
   );
 }

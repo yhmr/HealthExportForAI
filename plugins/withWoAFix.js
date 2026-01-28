@@ -11,7 +11,8 @@ const withWoAFix = (config) => {
 
 function applyHermesPatch(buildGradle) {
   // 置換対象の元のコード
-  const pattern = /reactNativeDir\s*=\s*new\s+File\(\["node",\s*"--print",\s*"require\.resolve\('react-native\/package\.json'\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\.getParentFile\(\)\.getAbsoluteFile\(\)\s*hermesCommand\s*=\s*new\s+File\(\["node",\s*"--print",\s*"require\.resolve\('react-native\/package\.json'\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\.getParentFile\(\)\.getAbsolutePath\(\)\s*\+\s*"\/sdks\/hermesc\/%OS-BIN%\/hermesc"/;
+  const pattern =
+    /reactNativeDir\s*=\s*new\s+File\(\["node",\s*"--print",\s*"require\.resolve\('react-native\/package\.json'\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\.getParentFile\(\)\.getAbsoluteFile\(\)\s*hermesCommand\s*=\s*new\s+File\(\["node",\s*"--print",\s*"require\.resolve\('react-native\/package\.json'\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\.getParentFile\(\)\.getAbsolutePath\(\)\s*\+\s*"\/sdks\/hermesc\/%OS-BIN%\/hermesc"/;
 
   const replacement = `
     // [WoA Fix] Patch Hermes path for Windows on Arm / WSL

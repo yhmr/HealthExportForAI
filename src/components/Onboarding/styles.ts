@@ -4,7 +4,7 @@ export const onboardingStyles = StyleSheet.create({
   stepContainer: {
     alignItems: 'center',
     gap: 24,
-    width: '100%',
+    width: '100%'
   },
   icon: {
     fontSize: 64,

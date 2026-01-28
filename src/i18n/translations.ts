@@ -20,11 +20,14 @@ export const translations = {
       lastSync: '最終取得:',
       emptyState1: '「データを取得」ボタンを押して',
       emptyState2: 'Health Connectからデータを取得してください',
-      exportButton: 'エクスポート',
+      exportButton: 'Sync Now',
       exportSuccess: 'データをエクスポートしました',
       uploadError: 'アップロードエラー',
       statusReady: '準備完了',
-      statusSetupRequired: '設定が必要です'
+      statusSetupRequired: '設定が必要です',
+      widgetTipsTitle: 'ウィジェットを活用しよう',
+      widgetTipsDesc:
+        'ホーム画面にウィジェットを追加すると、最新の歩数や同期状態をひと目で確認できます。'
     },
     // 設定画面
     settings: {
@@ -181,11 +184,14 @@ export const translations = {
       lastSync: 'Last sync:',
       emptyState1: 'Press "Fetch Data" to',
       emptyState2: 'retrieve data from Health Connect',
-      exportButton: 'Export',
+      exportButton: 'Sync Now',
       exportSuccess: 'Data exported successfully',
       uploadError: 'Upload Error',
       statusReady: 'Ready',
-      statusSetupRequired: 'Setup Required'
+      statusSetupRequired: 'Setup Required',
+      widgetTipsTitle: 'Use Widgets',
+      widgetTipsDesc:
+        'Add widgets to your home screen to check your latest steps and sync status at a glance.'
     },
     // Settings screen
     settings: {

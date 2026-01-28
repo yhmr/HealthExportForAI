@@ -5,9 +5,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
+import { ExportCircleButton } from '../src/components/Home/ExportCircleButton';
 import { StatusCard } from '../src/components/Home/StatusCard';
+import { WidgetTips } from '../src/components/Home/WidgetTips';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { SyncButton } from '../src/components/SyncButton';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -165,25 +166,33 @@ export default function HomeScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Status Card */}
-        <StatusCard
-          lastSyncTime={lastSyncTime}
-          isHealthConnectConnected={isAvailable && hasPermissions}
-          isDriveConnected={!!driveConfig}
-          isSetupCompleted={isSetupCompleted}
-          autoSyncEnabled={autoSyncEnabled}
-          t={t}
-          language={language as 'ja' | 'en'}
-        />
-
-        {/* Main Actions */}
-        <View style={styles.syncButtons}>
-          <SyncButton
-            onPress={handleSyncAndExport}
-            isLoading={isLoading || isOperationSyncing}
-            label={t('home', 'exportButton')} // "Sync & Export" 的な文言に変えるべきだが、一旦既存キーを使用
-            icon="📤"
-            variant="primary" // メインアクションなのでPrimaryに
+        <View style={styles.statusSection}>
+          <StatusCard
+            lastSyncTime={lastSyncTime}
+            isHealthConnectConnected={isAvailable && hasPermissions}
+            isDriveConnected={!!driveConfig}
+            isSetupCompleted={isSetupCompleted}
+            autoSyncEnabled={autoSyncEnabled}
+            t={t}
+            language={language as 'ja' | 'en'}
           />
+        </View>
+
+        {/* Main Area: Button & Tips */}
+        <View style={styles.mainContainer}>
+          {/* Button Area (Center of remaining space) */}
+          <View style={styles.buttonArea}>
+            <ExportCircleButton
+              onPress={handleSyncAndExport}
+              isLoading={isLoading || isOperationSyncing}
+              label={t('home', 'exportButton')}
+            />
+          </View>
+
+          {/* Tips Area (Bottom/Below Button) */}
+          <View style={styles.tipsArea}>
+            <WidgetTips />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -197,39 +206,30 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background
     },
     content: {
-      flex: 1,
-      paddingHorizontal: 16
+      flex: 1
     },
     scrollContent: {
-      paddingBottom: 32,
-      paddingTop: 16
+      flexGrow: 1,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32
     },
-    actionGrid: {
-      marginBottom: 16
+    statusSection: {
+      marginBottom: 0
     },
-    actionItem: {
-      marginBottom: 8
+    mainContainer: {
+      flex: 1,
+      flexDirection: 'column'
     },
-    syncButtons: {
-      gap: 12,
-      marginBottom: 24
-    },
-    dataSection: {
-      marginTop: 8
-    },
-    sectionTitle: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 8,
-      fontWeight: '600',
-      textTransform: 'uppercase'
-    },
-    emptyState: {
+    buttonArea: {
+      flex: 3,
+      justifyContent: 'center',
       alignItems: 'center',
-      paddingVertical: 24
+      minHeight: 250
     },
-    emptyText: {
-      color: colors.textTertiary,
-      fontSize: 14
+    tipsArea: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingBottom: 20
     }
   });
