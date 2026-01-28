@@ -1,23 +1,26 @@
 // Google Drive設定サービス
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_DRIVE_CONFIG, DriveConfig } from '../../config/driveConfig';
-import { STORAGE_KEYS } from '../../config/storageKeys';
+import { DriveConfig } from '../../config/driveConfig';
+import { AsyncStorageAdapter } from '../infrastructure/AsyncStorageAdapter';
+import { DriveConfigService } from './DriveConfigService';
+
+// シングルトンインスタンスの作成
+const storageAdapter = new AsyncStorageAdapter();
+const driveConfigService = new DriveConfigService(storageAdapter);
 
 /**
  * Drive設定を保存
  */
-export async function saveDriveConfig(config: DriveConfig): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.DRIVE_CONFIG, JSON.stringify(config));
+export function saveDriveConfig(config: DriveConfig): Promise<void> {
+  return driveConfigService.saveDriveConfig(config);
 }
 
 /**
  * Drive設定を取得
  */
-export async function loadDriveConfig(): Promise<DriveConfig> {
-  const json = await AsyncStorage.getItem(STORAGE_KEYS.DRIVE_CONFIG);
-  if (json) {
-    return JSON.parse(json);
-  }
-  return DEFAULT_DRIVE_CONFIG;
+export function loadDriveConfig(): Promise<DriveConfig> {
+  return driveConfigService.loadDriveConfig();
 }
+
+// DI注入用（SyncService等）にサービスインスタンスをエクスポート
+export { driveConfigService };

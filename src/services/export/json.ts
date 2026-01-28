@@ -4,7 +4,7 @@
 
 import type { HealthData } from '../../types/health';
 import { addDebugLog } from '../debugLogService';
-import type { StorageAdapter } from '../storage/interfaces';
+import type { FileOperations } from '../storage/interfaces';
 import type { ExportResult } from './csv';
 import { getExportFileName } from './utils';
 
@@ -117,7 +117,7 @@ function healthDataToDailyRecords(healthData: HealthData): Map<string, DailyReco
 export async function exportToJSON(
   healthData: HealthData,
   folderId: string | undefined,
-  storageAdapter: StorageAdapter
+  fileOps: FileOperations
 ): Promise<ExportResult> {
   try {
     // データを日付ごとのレコードに変換
@@ -137,25 +137,29 @@ export async function exportToJSON(
       const fileName = getExportFileName(year, 'json', true);
 
       // 既存ファイルを検索
-      const existingFile = await storageAdapter.findFile(fileName, 'application/json', folderId);
+      const findResult = await fileOps.findFile(fileName, 'application/json', folderId);
+      const existingFile = findResult.isOk() ? findResult.unwrap() : null;
       let existingRecordsMap = new Map<string, DailyRecord>();
 
       if (existingFile) {
         // 既存ファイルの内容をダウンロード
-        const existingContent = await storageAdapter.downloadFileContent(existingFile.id);
-        if (existingContent) {
-          try {
-            const existingData = JSON.parse(existingContent);
-            if (existingData.records && Array.isArray(existingData.records)) {
-              existingData.records.forEach((record: DailyRecord) => {
-                existingRecordsMap.set(record.date, record);
-              });
+        const downloadResult = await fileOps.downloadFileContent(existingFile.id);
+        if (downloadResult.isOk()) {
+          const existingContent = downloadResult.unwrap();
+          if (existingContent) {
+            try {
+              const existingData = JSON.parse(existingContent);
+              if (existingData.records && Array.isArray(existingData.records)) {
+                existingData.records.forEach((record: DailyRecord) => {
+                  existingRecordsMap.set(record.date, record);
+                });
+              }
+            } catch {
+              await addDebugLog(
+                '[JSON Export] Failed to parse existing file, starting fresh',
+                'info'
+              );
             }
-          } catch {
-            await addDebugLog(
-              '[JSON Export] Failed to parse existing file, starting fresh',
-              'info'
-            );
           }
         }
       }
@@ -192,29 +196,35 @@ export async function exportToJSON(
 
       // アップロード or 更新
       if (existingFile) {
-        const success = await storageAdapter.updateFile(
+        const updateResult = await fileOps.updateFile(
           existingFile.id,
           jsonContent,
           'application/json'
         );
-        if (success) {
+        if (updateResult.isOk()) {
           await addDebugLog(`[JSON Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
-          return { success: false, error: 'JSONファイルの更新に失敗しました' };
+          return {
+            success: false,
+            error: `JSONファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`
+          };
         }
       } else {
-        const fileId = await storageAdapter.uploadFile(
+        const uploadResult = await fileOps.uploadFile(
           jsonContent,
           fileName,
           'application/json',
           folderId
         );
-        if (fileId) {
+        if (uploadResult.isOk()) {
           await addDebugLog(`[JSON Export] Created: ${fileName}`, 'success');
-          lastFileId = fileId;
+          lastFileId = uploadResult.unwrap();
         } else {
-          return { success: false, error: 'JSONファイルのアップロードに失敗しました' };
+          return {
+            success: false,
+            error: `JSONファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
+          };
         }
       }
     }

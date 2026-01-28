@@ -1,11 +1,13 @@
 // offlineStore のテスト
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as queueStorage from '../../src/services/export/queue-storage';
+import { queueManager } from '../../src/services/export/QueueManager';
 import { useOfflineStore } from '../../src/stores/offlineStore';
 
 // getQueue のモック
-vi.mock('../../src/services/export/queue-storage', () => ({
-  getQueue: vi.fn()
+vi.mock('../../src/services/export/QueueManager', () => ({
+  queueManager: {
+    getQueue: vi.fn()
+  }
 }));
 
 describe('offlineStore', () => {
@@ -79,7 +81,7 @@ describe('offlineStore', () => {
   describe('refreshPendingCount', () => {
     it('キューから件数を再読み込みして設定する', async () => {
       // モックの実装
-      vi.mocked(queueStorage.getQueue).mockResolvedValue([
+      vi.mocked(queueManager.getQueue).mockResolvedValue([
         {
           id: '1',
           healthData: {} as any,
@@ -100,19 +102,21 @@ describe('offlineStore', () => {
 
       await useOfflineStore.getState().refreshPendingCount();
 
-      expect(queueStorage.getQueue).toHaveBeenCalled();
+      expect(queueManager.getQueue).toHaveBeenCalled();
       expect(useOfflineStore.getState().pendingCount).toBe(2);
     });
 
     it('エラー時はコンソールエラーを出力し、件数は変更しない', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      vi.mocked(queueStorage.getQueue).mockRejectedValue(new Error('Queue Error'));
+      vi.mocked(queueManager.getQueue).mockRejectedValue(new Error('Queue Error'));
 
       useOfflineStore.getState().setPendingCount(10); // 初期値を設定
 
       await useOfflineStore.getState().refreshPendingCount();
 
-      expect(queueStorage.getQueue).toHaveBeenCalled();
+      await useOfflineStore.getState().refreshPendingCount();
+
+      expect(queueManager.getQueue).toHaveBeenCalled();
       expect(useOfflineStore.getState().pendingCount).toBe(10); // 変更なし
       expect(consoleSpy).toHaveBeenCalledWith(
         '[OfflineStore] Failed to refresh pending count:',

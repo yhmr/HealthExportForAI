@@ -6,7 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
-import { configureGoogleSignIn, getOrRefreshAccessToken } from '../services/googleAuth';
+import {
+  configureGoogleSignIn,
+  getOrRefreshAccessToken
+} from '../services/infrastructure/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { getCurrentISOString } from '../utils/formatters';
@@ -127,22 +130,33 @@ export function useGoogleDrive() {
           return driveConfig.folderName;
         }
 
-        const token = await getOrRefreshAccessToken();
-        if (!token) return DEFAULT_FOLDER_NAME;
-
-        const folder = await getFolder(folderId, token);
-        if (folder) {
-          const newConfig = { folderId, folderName: folder.name };
-          await saveDriveConfig(newConfig);
-          setDriveConfigState(newConfig);
-          return folder.name;
-        } else {
-          // 見つからない場合は設定をクリア
-          const emptyConfig = { folderId: '', folderName: '' };
-          await saveDriveConfig(emptyConfig);
-          setDriveConfigState(emptyConfig);
+        const tokenResult = await getOrRefreshAccessToken();
+        if (tokenResult.isErr()) {
+          console.error('[useGoogleDrive] Failed to get token:', tokenResult.unwrapErr());
           return DEFAULT_FOLDER_NAME;
         }
+
+        const token = tokenResult.unwrap();
+        if (!token) return DEFAULT_FOLDER_NAME;
+
+        const folderResult = await getFolder(folderId, token);
+        if (folderResult.isOk()) {
+          const folder = folderResult.unwrap();
+          if (folder) {
+            const newConfig = { folderId, folderName: folder.name };
+            await saveDriveConfig(newConfig);
+            setDriveConfigState(newConfig);
+            return folder.name;
+          }
+        } else {
+          console.error('[useGoogleDrive] getFolder error:', folderResult.unwrapErr());
+        }
+
+        // 見つからない場合やエラーの場合は設定をクリア
+        const emptyConfig = { folderId: '', folderName: '' };
+        await saveDriveConfig(emptyConfig);
+        setDriveConfigState(emptyConfig);
+        return DEFAULT_FOLDER_NAME;
       } catch (error) {
         console.error('[useGoogleDrive] resolveFolder error:', error);
         return DEFAULT_FOLDER_NAME;

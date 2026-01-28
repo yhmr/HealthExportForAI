@@ -3,7 +3,7 @@ import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { loadLastSyncTime } from '../services/config/exportConfig';
 import { addDebugLog } from '../services/debugLogService';
-import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
+import { configureGoogleSignIn, isSignedIn, signIn } from '../services/infrastructure/googleAuth';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
 import { SyncWidgetSmall } from './SyncWidgetSmall';
@@ -38,7 +38,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         let authenticated = await isSignedIn();
         if (!authenticated) {
           const result = await signIn(); // Headlessでのsilent sign-inを期待
-          authenticated = result.success;
+          authenticated = result.isOk();
         }
 
         if (!authenticated) {
@@ -54,7 +54,12 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
         // 4. データ取得 & エクスポート (一括実行)
         // 前回同期からの差分を取得
-        const { syncResult } = await SyncService.executeFullSync();
+        const fullSyncResult = await SyncService.executeFullSync();
+
+        if (!fullSyncResult.isOk()) {
+          throw new Error(fullSyncResult.unwrapErr().message);
+        }
+        const { syncResult } = fullSyncResult.unwrap();
 
         if (!syncResult.success || !syncResult.isNewData) {
           const lastTime = await loadLastSyncTime();
