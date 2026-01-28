@@ -1,9 +1,10 @@
 // バックグラウンド同期実行ロジック
 // スケジューラから呼び出され、データ取得とエクスポート処理の開始を担当する
 
+import { useHealthStore } from '../../stores/healthStore';
 import { AutoSyncConfig, ExportConfig } from '../../types/exportTypes';
 import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../../utils/formatters';
-import { loadLastBackgroundSync, saveLastBackgroundSync } from '../config/backgroundSyncConfig';
+import { loadLastSyncTime } from '../config/exportConfig';
 import { addDebugLog } from '../debugLogService';
 import {
   addToExportQueue,
@@ -35,7 +36,7 @@ export interface SyncExecutionResult {
  * 前回同期からの経過日数と最小値の大きい方を返す（最大値で制限）
  */
 export async function calculateFetchDays(): Promise<number> {
-  const lastSync = await loadLastBackgroundSync();
+  const lastSync = await loadLastSyncTime();
 
   if (!lastSync) {
     return MIN_FETCH_DAYS;
@@ -141,7 +142,9 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
     // 同期成功時刻を記録
     // データがエクスポートされたか、キューが処理された場合に更新
     if (result.hasNewData || result.hasQueueProcessed) {
-      await saveLastBackgroundSync(new Date().toISOString());
+      // ストアのアクションを呼び出して状態更新と永続化を行う
+      // （コンポーネント外からの呼び出し）
+      useHealthStore.getState().setLastSyncTime(new Date().toISOString());
     }
 
     return result;

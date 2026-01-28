@@ -11,9 +11,8 @@ import React, {
   useEffect,
   useState
 } from 'react';
+import { STORAGE_KEYS } from '../config/storageKeys';
 import { Language, translations } from '../i18n/translations';
-
-const LANGUAGE_KEY = 'app_language';
 
 type Translations = typeof translations.ja;
 
@@ -37,7 +36,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
+        const savedLanguage = await AsyncStorage.getItem(STORAGE_KEYS.APP_LANGUAGE);
         if (savedLanguage === 'ja' || savedLanguage === 'en') {
           setLanguageState(savedLanguage);
         } else {
@@ -65,7 +64,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     try {
-      await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+      await AsyncStorage.setItem(STORAGE_KEYS.APP_LANGUAGE, lang);
     } catch (error) {
       console.error('[LanguageContext] Failed to save language:', error);
     }

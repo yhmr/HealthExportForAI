@@ -1,5 +1,6 @@
 // キューへのアクセス（永続化）レイヤー
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 import type { OfflineQueueData, PendingExport } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
 
@@ -13,7 +14,7 @@ function generateUUID(): string {
   });
 }
 
-const STORAGE_KEY = 'offline_export_queue';
+const STORAGE_KEY = STORAGE_KEYS.OFFLINE_EXPORT_QUEUE;
 export const MAX_RETRY_COUNT = 3;
 
 /**

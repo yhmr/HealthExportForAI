@@ -1,16 +1,12 @@
 // バックグラウンド同期設定サービス
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/exportTypes';
 
 // ===== UI用のヘルパー関数と定数 =====
 
 import type { SyncInterval } from '../../types/exportTypes';
-
-const STORAGE_KEYS = {
-  BACKGROUND_SYNC_CONFIG: '@background_sync_config',
-  LAST_BACKGROUND_SYNC: '@last_background_sync'
-} as const;
 
 /**
  * バックグラウンド同期設定を保存
@@ -28,20 +24,6 @@ export async function loadBackgroundSyncConfig(): Promise<AutoSyncConfig> {
     return JSON.parse(json);
   }
   return DEFAULT_AUTO_SYNC_CONFIG;
-}
-
-/**
- * 最後のバックグラウンド同期時刻を保存
- */
-export async function saveLastBackgroundSync(time: string): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.LAST_BACKGROUND_SYNC, time);
-}
-
-/**
- * 最後のバックグラウンド同期時刻を取得
- */
-export async function loadLastBackgroundSync(): Promise<string | null> {
-  return AsyncStorage.getItem(STORAGE_KEYS.LAST_BACKGROUND_SYNC);
 }
 
 /** 利用可能な同期間隔一覧 */

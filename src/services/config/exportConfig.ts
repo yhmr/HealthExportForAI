@@ -2,15 +2,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
-
-const STORAGE_KEYS = {
-  LAST_SYNC_TIME: '@last_sync_time',
-  EXPORT_PERIOD_DAYS: '@export_period_days',
-  EXPORT_FORMATS: '@export_formats',
-  EXPORT_SHEET_AS_PDF: '@export_sheet_as_pdf',
-  SELECTED_DATA_TAGS: '@selected_data_tags',
-  IS_SETUP_COMPLETED: '@is_setup_completed'
-} as const;
+import { STORAGE_KEYS } from '../../config/storageKeys';
 
 /**
  * 初期設定完了フラグを保存
@@ -28,14 +20,8 @@ export async function loadIsSetupCompleted(): Promise<boolean> {
 }
 
 /**
- * 最後の同期時刻を保存
- */
-export async function saveLastSyncTime(time: string): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time);
-}
-
-/**
  * 最後の同期時刻を取得
+ * (初期表示用。保存はHealthStoreで行うためsaveLastSyncTimeは削除)
  */
 export async function loadLastSyncTime(): Promise<string | null> {
   return AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME);
@@ -92,15 +78,9 @@ export async function loadExportSheetAsPdf(): Promise<boolean> {
 }
 
 /**
- * 選択されたデータタグを保存
- */
-export async function saveSelectedDataTags(tags: string[]): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags));
-}
-
-/**
  * 選択されたデータタグを取得
  * 保存されていない場合はnullを返し、呼び出し元でデフォルト値を使用させる
+ * (保存はHealthStoreで行うためsaveSelectedDataTagsは削除)
  */
 export async function loadSelectedDataTags(): Promise<string[] | null> {
   const json = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);

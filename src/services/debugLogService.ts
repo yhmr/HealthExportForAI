@@ -1,8 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const STORAGE_KEYS = {
-  DEBUG_LOG: '@background_sync_debug_log'
-} as const;
+import { STORAGE_KEYS } from '../config/storageKeys';
 
 /** デバッグログの型 */
 export interface DebugLogEntry {

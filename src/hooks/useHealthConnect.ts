@@ -3,8 +3,8 @@
 import { useCallback, useState } from 'react';
 import {
   loadExportPeriodDays,
-  loadSelectedDataTags,
-  saveLastSyncTime
+  loadLastSyncTime,
+  loadSelectedDataTags
 } from '../services/config/exportConfig';
 import {
   checkHealthConnectAvailability,
@@ -14,13 +14,9 @@ import {
   requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
-import { useHealthStore, DataTagKey } from '../stores/healthStore';
-import {
-  generateDateRange,
-  getCurrentISOString,
-  getDateDaysAgo,
-  getEndOfToday
-} from '../utils/formatters';
+import { DataTagKey, useHealthStore } from '../stores/healthStore';
+import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
+
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -69,23 +65,19 @@ export function useHealthConnect() {
         // 保存されたデータタグ設定を読み込む
         const savedTags = await loadSelectedDataTags();
         if (savedTags) {
-          // 保存された設定があれば反映（バリデーションとしてHealthDataのキーに含まれるか確認してもよいが、一旦そのままキャスト）
+          // 保存された設定があれば反映
           setSelectedDataTags(savedTags as DataTagKey[]);
+        }
+
+        // 保存された最終同期時刻を読み込む
+        const savedTime = await loadLastSyncTime();
+        if (savedTime) {
+          setLastSyncTime(savedTime);
         }
       }
 
       if (!initialized) {
         setError('Health Connectの初期化に失敗しました');
-        // 初期化失敗時はリトライ可能にするため false のままにするか、
-        // あるいはエラーを表示して完了とするか。
-        // ここでは false のままにしておき、呼び出し元でエラーハンドリングさせるのが筋だが、
-        // 初期化待ちでブロックする実装の場合は true にしないと進まない。
-        // UI側で error があれば isInitialized が false でも表示するようにするか、
-        // ここで true にしてしまうか。
-        // 今回は initialized の結果をそのまま入れているので、失敗なら false。
-        // これだと index.tsx で詰む。
-        // なので、initialized (SDKの初期化成功) と isInitialized (アプリの準備完了) を分けるべきだが、
-        // 修正範囲を抑えるため、失敗時も isInitialized = true にして、エラーで判断させる。
         setIsInitialized(true);
         return false;
       }
@@ -93,13 +85,12 @@ export function useHealthConnect() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : '初期化エラー');
-      // エラー時もチェック完了とする
       setIsInitialized(true);
       return false;
     } finally {
       setLoading(false);
     }
-  }, [setLoading, setError, setSelectedDataTags]);
+  }, [setLoading, setError, setSelectedDataTags, setLastSyncTime]);
 
   /**
    * 権限をリクエスト
@@ -170,7 +161,6 @@ export function useHealthConnect() {
 
         const syncTime = getCurrentISOString();
         setLastSyncTime(syncTime);
-        await saveLastSyncTime(syncTime);
 
         return true;
       } catch (err) {
