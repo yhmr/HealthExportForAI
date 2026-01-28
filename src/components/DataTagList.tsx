@@ -3,8 +3,9 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../contexts/LanguageContext';
-import { type DataTagKey, ALL_DATA_TAGS, DATA_TAG_ICONS } from '../stores/healthStore';
+import { DATA_TAG_ICONS } from '../stores/healthStore';
 import type { HealthData } from '../types/health';
+import { ALL_DATA_TAGS, type DataTagKey } from '../types/health';
 
 interface DataTagListProps {
   healthData: HealthData;

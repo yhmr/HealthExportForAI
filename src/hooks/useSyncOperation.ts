@@ -5,14 +5,14 @@ import { useHealthStore } from '../stores/healthStore';
 export interface UseSyncOperationResult {
   isSyncing: boolean;
   syncError: string | null;
-  syncAndUpload: (
+  triggerFullSync: (
     periodDays?: number
   ) => Promise<{ success: boolean; queued: boolean; uploaded: boolean }>;
 }
 
 /**
  * 同期・アップロード操作をUIから実行するためのフック
- * SyncService.syncAndUpload をラップし、Loading/Error状態を管理する
+ * SyncService.executeFullSync をラップし、Loading/Error状態を管理する
  */
 export function useSyncOperation(): UseSyncOperationResult {
   const [isSyncing, setIsSyncing] = useState(false);
@@ -20,7 +20,7 @@ export function useSyncOperation(): UseSyncOperationResult {
 
   const { setLastSyncTime, setAllData } = useHealthStore();
 
-  const handleSyncAndUpload = useCallback(
+  const handleTriggerFullSync = useCallback(
     async (periodDays?: number) => {
       setIsSyncing(true);
       setSyncError(null);
@@ -30,7 +30,7 @@ export function useSyncOperation(): UseSyncOperationResult {
         const tags = Array.from(selectedDataTags || []);
 
         // SyncServiceに集約されたメソッドを呼び出す
-        const { syncResult, exportResult } = await SyncService.syncAndUpload(
+        const { syncResult, exportResult } = await SyncService.executeFullSync(
           periodDays,
           false, // forceFullSync
           tags
@@ -75,6 +75,6 @@ export function useSyncOperation(): UseSyncOperationResult {
   return {
     isSyncing,
     syncError,
-    syncAndUpload: handleSyncAndUpload
+    triggerFullSync: handleTriggerFullSync
   };
 }

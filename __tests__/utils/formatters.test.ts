@@ -1,12 +1,8 @@
 // formatters ユーティリティのテスト
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   formatDate,
-  formatDateTime,
-  formatDuration,
-  formatNumber,
-  formatRelativeTime,
   generateDateRange,
   getCurrentISOString,
   getDateDaysAgo,
@@ -26,34 +22,6 @@ describe('formatters', () => {
     });
   });
 
-  describe('formatDuration', () => {
-    it('分のみの場合は分だけ表示する', () => {
-      expect(formatDuration(45)).toBe('45m');
-    });
-
-    it('時間と分を正しくフォーマットする', () => {
-      expect(formatDuration(90)).toBe('1h 30m');
-    });
-
-    it('複数時間を正しくフォーマットする', () => {
-      expect(formatDuration(450)).toBe('7h 30m');
-    });
-
-    it('0分を正しく処理する', () => {
-      expect(formatDuration(0)).toBe('0m');
-    });
-  });
-
-  describe('formatNumber', () => {
-    it('数値をカンマ区切りにフォーマットする', () => {
-      expect(formatNumber(1234567)).toContain('1');
-    });
-
-    it('小さな数値はそのまま返す', () => {
-      expect(formatNumber(123)).toBe('123');
-    });
-  });
-
   describe('getDateDaysAgo', () => {
     it('指定日数前の日付を返す', () => {
       const today = new Date();
@@ -69,25 +37,6 @@ describe('formatters', () => {
       expect(result.getHours()).toBe(0);
       expect(result.getMinutes()).toBe(0);
       expect(result.getSeconds()).toBe(0);
-    });
-  });
-
-  describe('formatDateTime', () => {
-    it('日時をローカルフォーマットに変換する', () => {
-      const isoString = '2026-01-16T17:30:00+09:00';
-      const result = formatDateTime(isoString);
-
-      // 実行環境のタイムゾーンに合わせた期待値を生成
-      const date = new Date(isoString);
-      const expected = date.toLocaleString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      expect(result).toBe(expected);
     });
   });
 
@@ -139,42 +88,6 @@ describe('formatters', () => {
       const result = generateDateRange(date, date);
       expect(result.size).toBe(1);
       expect(result.has('2026-01-01')).toBe(true);
-    });
-  });
-
-  describe('formatRelativeTime', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-      const mockNow = new Date('2026-01-01T12:00:00Z');
-      vi.setSystemTime(mockNow);
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it('空文字列の場合は空文字を返す', () => {
-      expect(formatRelativeTime('')).toBe('');
-    });
-
-    it('1分未満の場合は"Just now"を返す', () => {
-      const justNow = new Date('2026-01-01T11:59:30Z').toISOString();
-      expect(formatRelativeTime(justNow)).toBe('Just now');
-    });
-
-    it('60分未満の場合は"X mins ago"を返す', () => {
-      const tenMinsAgo = new Date('2026-01-01T11:50:00Z').toISOString();
-      expect(formatRelativeTime(tenMinsAgo)).toBe('10 mins ago');
-    });
-
-    it('24時間未満の場合は"X hours ago"を返す', () => {
-      const twoHoursAgo = new Date('2026-01-01T10:00:00Z').toISOString();
-      expect(formatRelativeTime(twoHoursAgo)).toBe('2 hours ago');
-    });
-
-    it('24時間以上の場合は"X days ago"を返す', () => {
-      const twoDaysAgo = new Date('2025-12-30T12:00:00Z').toISOString();
-      expect(formatRelativeTime(twoDaysAgo)).toBe('2 days ago');
     });
   });
 });

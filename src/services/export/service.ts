@@ -2,11 +2,10 @@
 // エクスポート機能のメインエントリーポイント
 
 import type { ExportFormat } from '../../config/driveConfig';
-import type { DataTagKey } from '../../stores/healthStore';
-import { filterHealthDataByTags } from '../../stores/healthStore';
 import { useOfflineStore } from '../../stores/offlineStore';
 import type { ExportConfig, PendingExport } from '../../types/exportTypes';
-import type { HealthData } from '../../types/health';
+import type { DataTagKey, HealthData } from '../../types/health';
+import { filterHealthDataByTags } from '../../utils/dataHelpers';
 import { loadDriveConfig } from '../config/driveConfig';
 import { loadExportFormats, loadExportSheetAsPdf } from '../config/exportConfig';
 import { addDebugLog } from '../debugLogService';

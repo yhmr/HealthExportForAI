@@ -10,7 +10,8 @@ import {
   requestHealthPermissions
 } from '../services/healthConnect';
 import { SyncService } from '../services/syncService';
-import { DataTagKey, useHealthStore } from '../stores/healthStore';
+import { useHealthStore } from '../stores/healthStore';
+import { DataTagKey } from '../types/health';
 
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -125,7 +126,7 @@ export function useHealthConnect() {
         const tags = Array.from(selectedDataTags || []);
 
         // 第2引数は forceFullSync (false), 第3引数にタグを渡す
-        const result = await SyncService.performSync(periodDays, false, tags);
+        const result = await SyncService.fetchAndQueueNewData(periodDays, false, tags);
 
         if (result.success) {
           setAllData(result.data, result.dateRange);

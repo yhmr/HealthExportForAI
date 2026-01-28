@@ -1,9 +1,8 @@
 import React from 'react';
-import { Text, View, BackHandler } from 'react-native';
+import { BackHandler, Text, View } from 'react-native';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
-import { useLanguage } from '../../contexts/LanguageContext';
-
 
 interface AuthStepProps {
   isAuthenticated: boolean;
@@ -30,10 +29,7 @@ export const AuthStep: React.FC<AuthStepProps> = ({
       {isAuthenticated ? (
         <View style={styles.completedState}>
           <Text style={styles.successText}>
-            {t('onboarding', 'signedInAs').replace(
-              '{{email}}',
-              currentUser?.user.email || ''
-            )}
+            {t('onboarding', 'signedInAs').replace('{{email}}', currentUser?.user.email || '')}
           </Text>
           <SyncButton
             onPress={onNext}

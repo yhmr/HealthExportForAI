@@ -5,9 +5,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../src/components/Header';
+import { ExportCircleButton } from '../src/components/Home/ExportCircleButton';
 import { StatusCard } from '../src/components/Home/StatusCard';
+import { WidgetTips } from '../src/components/Home/WidgetTips';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { SyncButton } from '../src/components/SyncButton';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
@@ -17,7 +18,6 @@ import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
 import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
 import { checkHealthPermissions } from '../src/services/healthConnect';
-import { useHealthStore } from '../src/stores/healthStore';
 import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
@@ -28,7 +28,6 @@ export default function HomeScreen() {
     isInitialized,
     isAvailable,
     hasPermissions,
-    healthData,
     lastSyncTime,
     isLoading,
     error,
@@ -38,9 +37,6 @@ export default function HomeScreen() {
 
   // 認証状態
   const { isAuthenticated } = useAuth();
-
-  // ストアから選択状態とアクションを取得
-  const { selectedDataTags, toggleDataTag } = useHealthStore();
 
   // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
@@ -57,8 +53,6 @@ export default function HomeScreen() {
       let isMounted = true;
 
       const setup = async () => {
-        console.log('[HomeScreen] Setup started');
-
         // 並列で初期化と設定読み込みを実行
         const [initResult, configResult, setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
@@ -80,23 +74,12 @@ export default function HomeScreen() {
         const bgConfig = await loadBackgroundSyncConfig();
         setAutoSyncEnabled(bgConfig.enabled);
 
-        console.log('[HomeScreen] Setup completed');
-
         // オンボーディング判定
         const needsOnboarding =
           !isAuthenticated ||
           (initResult && !currentHealthPermissions) ||
           !configResult ||
           !setupCompletedResult;
-
-        console.log('[HomeScreen] Check Onboarding:', {
-          isAuthenticated,
-          initResult,
-          currentHealthPermissions,
-          hasConfig: !!configResult,
-          isSetupCompleted: setupCompletedResult,
-          needsOnboarding
-        });
 
         if (needsOnboarding) {
           router.replace('/onboarding');
@@ -127,11 +110,7 @@ export default function HomeScreen() {
   }, [error, uploadError, clearUploadError, t]);
 
   // 同期操作Hook
-  const {
-    isSyncing: isOperationSyncing,
-    syncError: operationError,
-    syncAndUpload
-  } = useSyncOperation();
+  const { isSyncing: isOperationSyncing, triggerFullSync } = useSyncOperation();
 
   // 統合ハンドラ: 同期してエクスポート
   const handleSyncAndExport = async () => {
@@ -146,7 +125,7 @@ export default function HomeScreen() {
     }
 
     // 新しい統合メソッドを使用
-    const result = await syncAndUpload(); // 引数なしで差分更新または設定値に基づく初期取得
+    const result = await triggerFullSync(); // 引数なしで差分更新または設定値に基づく初期取得
 
     if (result.success) {
       if (result.uploaded) {
@@ -165,25 +144,33 @@ export default function HomeScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         {/* Status Card */}
-        <StatusCard
-          lastSyncTime={lastSyncTime}
-          isHealthConnectConnected={isAvailable && hasPermissions}
-          isDriveConnected={!!driveConfig}
-          isSetupCompleted={isSetupCompleted}
-          autoSyncEnabled={autoSyncEnabled}
-          t={t}
-          language={language as 'ja' | 'en'}
-        />
-
-        {/* Main Actions */}
-        <View style={styles.syncButtons}>
-          <SyncButton
-            onPress={handleSyncAndExport}
-            isLoading={isLoading || isOperationSyncing}
-            label={t('home', 'exportButton')} // "Sync & Export" 的な文言に変えるべきだが、一旦既存キーを使用
-            icon="📤"
-            variant="primary" // メインアクションなのでPrimaryに
+        <View style={styles.statusSection}>
+          <StatusCard
+            lastSyncTime={lastSyncTime}
+            isHealthConnectConnected={isAvailable && hasPermissions}
+            isDriveConnected={!!driveConfig}
+            isSetupCompleted={isSetupCompleted}
+            autoSyncEnabled={autoSyncEnabled}
+            t={t}
+            language={language as 'ja' | 'en'}
           />
+        </View>
+
+        {/* Main Area: Button & Tips */}
+        <View style={styles.mainContainer}>
+          {/* Button Area (Center of remaining space) */}
+          <View style={styles.buttonArea}>
+            <ExportCircleButton
+              onPress={handleSyncAndExport}
+              isLoading={isLoading || isOperationSyncing}
+              label={t('home', 'exportButton')}
+            />
+          </View>
+
+          {/* Tips Area (Bottom/Below Button) */}
+          <View style={styles.tipsArea}>
+            <WidgetTips />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -197,39 +184,30 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background
     },
     content: {
-      flex: 1,
-      paddingHorizontal: 16
+      flex: 1
     },
     scrollContent: {
-      paddingBottom: 32,
-      paddingTop: 16
+      flexGrow: 1,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 32
     },
-    actionGrid: {
-      marginBottom: 16
+    statusSection: {
+      marginBottom: 0
     },
-    actionItem: {
-      marginBottom: 8
+    mainContainer: {
+      flex: 1,
+      flexDirection: 'column'
     },
-    syncButtons: {
-      gap: 12,
-      marginBottom: 24
-    },
-    dataSection: {
-      marginTop: 8
-    },
-    sectionTitle: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 8,
-      fontWeight: '600',
-      textTransform: 'uppercase'
-    },
-    emptyState: {
+    buttonArea: {
+      flex: 3,
+      justifyContent: 'center',
       alignItems: 'center',
-      paddingVertical: 24
+      minHeight: 250
     },
-    emptyText: {
-      color: colors.textTertiary,
-      fontSize: 14
+    tipsArea: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingBottom: 20
     }
   });

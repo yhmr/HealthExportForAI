@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ExportStepProps {
   isUploading: boolean;
@@ -10,11 +10,7 @@ interface ExportStepProps {
   onRetry: () => void;
 }
 
-export const ExportStep: React.FC<ExportStepProps> = ({
-  isUploading,
-  uploadError,
-  onRetry
-}) => {
+export const ExportStep: React.FC<ExportStepProps> = ({ isUploading, uploadError, onRetry }) => {
   const { t } = useLanguage();
 
   return (

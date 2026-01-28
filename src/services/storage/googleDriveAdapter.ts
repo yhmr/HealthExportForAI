@@ -1,4 +1,4 @@
-import { getAccessToken, isSignedIn } from '../googleAuth';
+import { getOrRefreshAccessToken, isSignedIn } from '../googleAuth';
 import {
   checkFolderExists,
   DEFAULT_FOLDER_NAME,
@@ -18,7 +18,7 @@ export class GoogleDriveAdapter implements StorageAdapter {
     // すでにサインインしているか確認
     const signedIn = await isSignedIn();
     if (signedIn) {
-      this.accessToken = await getAccessToken();
+      this.accessToken = await getOrRefreshAccessToken();
       return !!this.accessToken;
     }
     return false;
@@ -26,7 +26,7 @@ export class GoogleDriveAdapter implements StorageAdapter {
 
   private async ensureAccessToken(): Promise<string> {
     if (!this.accessToken) {
-      this.accessToken = await getAccessToken();
+      this.accessToken = await getOrRefreshAccessToken();
     }
     if (!this.accessToken) {
       throw new Error('Google Drive access token is missing. Please sign in.');

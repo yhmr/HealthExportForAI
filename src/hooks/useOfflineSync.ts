@@ -6,9 +6,8 @@ import { addDebugLog } from '../services/debugLogService';
 import { addToQueue, getQueue } from '../services/export/queue-storage';
 import { processExportQueue } from '../services/export/service';
 import { getNetworkStatus, subscribeToNetworkChanges } from '../services/networkService';
-import type { DataTagKey } from '../stores/healthStore';
 import { useOfflineStore } from '../stores/offlineStore';
-import type { HealthData } from '../types/health';
+import type { DataTagKey, HealthData } from '../types/health';
 
 /**
  * オフライン同期フック

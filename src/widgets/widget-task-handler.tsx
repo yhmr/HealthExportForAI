@@ -2,19 +2,13 @@ import React from 'react';
 import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { loadLastSyncTime } from '../services/config/exportConfig';
+import { addDebugLog } from '../services/debugLogService';
 import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
 import { SyncWidgetSmall } from './SyncWidgetSmall';
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
-  console.log(
-    '[Widget] Handler called with action:',
-    props.widgetAction,
-    'Widget:',
-    props.widgetInfo?.widgetName
-  );
-
   // ウィジェット名に応じてレンダリングする関数
   const renderCurrentWidget = (
     status: 'idle' | 'syncing' | 'success' | 'error',
@@ -33,8 +27,6 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'SYNC_CLICKED':
     case 'WIDGET_CLICK':
       try {
-        console.log('[Widget] Starting sync process...');
-
         // 1. 即座に「Syncing...」状態を表示
         const now = new Date().toISOString();
         renderCurrentWidget('syncing', now);
@@ -45,13 +37,12 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         // 3. 認証状態チェック
         let authenticated = await isSignedIn();
         if (!authenticated) {
-          console.log('[Widget] Not signed in, attempting silent sign-in...');
           const result = await signIn(); // Headlessでのsilent sign-inを期待
           authenticated = result.success;
         }
 
         if (!authenticated) {
-          console.error('[Widget] Auth failed');
+          await addDebugLog('[Widget] Auth failed', 'error');
           renderCurrentWidget('error', null);
           // 数秒後にアイドルに戻す
           await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -62,31 +53,20 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         }
 
         // 4. データ取得 & エクスポート (一括実行)
-        console.log('[Widget] Starting sync and upload...');
-
-        // 0を指定して「今日のみ」を取得
-        // syncAndUploadはData new -> Queued -> Uploadを内部で処理する
-        const { syncResult, exportResult } = await SyncService.syncAndUpload(0);
+        // 前回同期からの差分を取得
+        const { syncResult } = await SyncService.executeFullSync();
 
         if (!syncResult.success || !syncResult.isNewData) {
-          console.log('[Widget] No new data found or sync failed');
           const lastTime = await loadLastSyncTime();
           renderCurrentWidget('idle', lastTime);
           return;
-        }
-
-        if (exportResult && exportResult.successCount > 0) {
-          console.log('[Widget] Sync success!');
-          // アップロード成功時は SyncService が saveLastSyncTime しているので、それをロードすれば最新になる
-        } else {
-          console.log('[Widget] Data queued but upload not finished (or other state)');
         }
 
         // 常に保存されている最終同期時刻を表示してアイドルに戻る
         const lastTime = await loadLastSyncTime();
         renderCurrentWidget('idle', lastTime);
       } catch (error) {
-        console.error('Widget sync error:', error);
+        await addDebugLog(`[Widget] Sync error: ${error}`, 'error');
         renderCurrentWidget('error', null);
         await new Promise((resolve) => setTimeout(resolve, 3000));
 

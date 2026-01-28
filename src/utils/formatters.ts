@@ -13,39 +13,6 @@ export function formatDate(isoString: string): string {
 }
 
 /**
- * 分数を時間と分の文字列に変換
- */
-export function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0) {
-    return `${hours}h ${mins}m`;
-  }
-  return `${mins}m`;
-}
-
-/**
- * 数値をカンマ区切りでフォーマット
- */
-export function formatNumber(value: number): string {
-  return value.toLocaleString('ja-JP');
-}
-
-/**
- * 日時をローカルフォーマットに変換
- */
-export function formatDateTime(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleString('ja-JP', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-/**
  * 現在のISO日時文字列を取得
  */
 export function getCurrentISOString(): string {
@@ -91,26 +58,4 @@ export function generateDateRange(startDate: Date, endDate: Date): Set<string> {
   }
 
   return dates;
-}
-
-/**
- * 相対時間を取得（例: "2分前", "1時間前"）
- * 簡易的な実装
- */
-export function formatRelativeTime(isoString: string): string {
-  if (!isoString) return '';
-
-  const now = new Date();
-  const date = new Date(isoString);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} mins ago`;
-
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} hours ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} days ago`;
 }

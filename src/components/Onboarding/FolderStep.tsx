@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { SyncButton } from '../SyncButton';
-import { FolderPickerModal } from '../FolderPickerModal';
-import { onboardingStyles as styles } from './styles';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { FolderPickerModal } from '../FolderPickerModal';
+import { SyncButton } from '../SyncButton';
+import { onboardingStyles as styles } from './styles';
 
 interface FolderStepProps {
   folderName: string;
@@ -53,7 +53,6 @@ export const FolderStep: React.FC<FolderStepProps> = ({
 
       <FolderPickerModal
         visible={showFolderPicker}
-        initialFolderName={folderName}
         onClose={() => setShowFolderPicker(false)}
         onSelect={onFolderSelect}
       />

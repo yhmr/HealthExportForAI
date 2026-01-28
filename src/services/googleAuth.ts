@@ -1,6 +1,7 @@
 // Google認証サービス
 
 import { GoogleSignin, statusCodes, type User } from '@react-native-google-signin/google-signin';
+import { addDebugLog } from './debugLogService';
 
 // Google Drive APIとGoogle Sheets APIのスコープ
 const SCOPES = [
@@ -70,7 +71,7 @@ export async function signOut(): Promise<void> {
   try {
     await GoogleSignin.signOut();
   } catch (error) {
-    console.error('サインアウトエラー:', error);
+    await addDebugLog(`サインアウトエラー: ${error}`, 'error');
   }
 }
 
@@ -81,8 +82,9 @@ let tokenRefreshPromise: Promise<string | null> | null = null;
 
 /**
  * アクセストークンを取得（重複実行防止とリトライロジック付き）
+ * 必要に応じてリフレッシュやサイレントサインインを試みる
  */
-export async function getAccessToken(): Promise<string | null> {
+export async function getOrRefreshAccessToken(): Promise<string | null> {
   // すでに実行中のトークン取得処理があれば、その結果を待つ
   if (tokenRefreshPromise) {
     return tokenRefreshPromise;
@@ -94,7 +96,7 @@ export async function getAccessToken(): Promise<string | null> {
       const tokens = await GoogleSignin.getTokens();
       return tokens.accessToken;
     } catch (error: any) {
-      console.error('トークン取得エラー(1回目):', error);
+      await addDebugLog(`トークン取得エラー(1回目): ${error}`, 'error');
 
       // "previous promise did not settle" エラーなどの場合、少し待って再試行
       if (error.message && error.message.includes('previous promise')) {
@@ -103,22 +105,21 @@ export async function getAccessToken(): Promise<string | null> {
           const retryTokens = await GoogleSignin.getTokens();
           return retryTokens.accessToken;
         } catch (retryError) {
-          console.error('トークン取得エラー(リトライ):', retryError);
+          await addDebugLog(`トークン取得エラー(リトライ): ${retryError}`, 'error');
         }
       }
 
       // トークンが無効な場合、サイレントサインインを試みてトークンをリフレッシュ
       try {
-        console.log('サイレントサインインを試みます...');
         const userInfo = await GoogleSignin.signInSilently();
         if (userInfo.data) {
           // サイレントサインイン成功後、再度トークン取得
           const refreshedTokens = await GoogleSignin.getTokens();
-          console.log('サイレントサインインでトークン取得成功');
+
           return refreshedTokens.accessToken;
         }
       } catch (silentError) {
-        console.error('サイレントサインインエラー:', silentError);
+        await addDebugLog(`サイレントサインインエラー: ${silentError}`, 'error');
       }
 
       return null;
@@ -129,18 +130,4 @@ export async function getAccessToken(): Promise<string | null> {
   })();
 
   return tokenRefreshPromise;
-}
-
-/**
- * トークンを更新
- */
-export async function refreshTokens(): Promise<string | null> {
-  try {
-    await GoogleSignin.clearCachedAccessToken((await GoogleSignin.getTokens()).accessToken);
-    const tokens = await GoogleSignin.getTokens();
-    return tokens.accessToken;
-  } catch (error) {
-    console.error('トークン更新エラー:', error);
-    return null;
-  }
 }

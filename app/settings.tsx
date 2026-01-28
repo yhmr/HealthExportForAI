@@ -35,7 +35,6 @@ export default function SettingsScreen() {
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [isLicenseModalVisible, setLicenseModalVisible] = useState(false);
   const [isAboutModalVisible, setAboutModalVisible] = useState(false);
-  const [showAutoSyncModal, setShowAutoSyncModal] = useState(false);
 
   // ストアからデータタグ関連を取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
@@ -113,8 +112,6 @@ export default function SettingsScreen() {
       <FolderPickerModal
         visible={isPickerVisible}
         onClose={() => setPickerVisible(false)}
-        initialFolderId={state.folderId}
-        initialFolderName={state.folderName}
         onSelect={async (id, name) => {
           await actions.updateFolder(id, name);
           setPickerVisible(false);

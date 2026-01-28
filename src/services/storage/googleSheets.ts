@@ -106,50 +106,6 @@ export async function createSpreadsheet(
 }
 
 /**
- * ファイルを指定フォルダに移動
- */
-export async function moveToFolder(
-  fileId: string,
-  folderId: string,
-  accessToken: string
-): Promise<boolean> {
-  try {
-    // 現在の親フォルダを取得
-    const fileResponse = await fetch(`${DRIVE_API_URL}/${fileId}?fields=parents`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!fileResponse.ok) {
-      return false;
-    }
-
-    const fileData = await fileResponse.json();
-    const previousParents = fileData.parents?.join(',') || '';
-
-    // 新しいフォルダに移動
-    const moveResponse = await fetch(
-      `${DRIVE_API_URL}/${fileId}?addParents=${folderId}&removeParents=${previousParents}`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    return moveResponse.ok;
-  } catch (error: any) {
-    if (error?.message === 'Network request failed') {
-      await addDebugLog('[GoogleSheets] Network request failed (MoveToFolder)', 'info');
-    } else {
-      await addDebugLog(`[GoogleSheets] Move file error: ${error}`, 'error');
-    }
-    return false;
-  }
-}
-
-/**
  * スプレッドシートの既存データを取得
  */
 export async function getSheetData(
@@ -295,7 +251,7 @@ export async function fetchPDF(spreadsheetId: string, accessToken: string): Prom
 /**
  * 列番号を列文字に変換（1 -> A, 27 -> AA）
  */
-export function columnToLetter(column: number): string {
+function columnToLetter(column: number): string {
   let temp = column;
   let letter = '';
   while (temp > 0) {
@@ -304,4 +260,48 @@ export function columnToLetter(column: number): string {
     temp = Math.floor((temp - mod - 1) / 26);
   }
   return letter;
+}
+
+/**
+ * ファイルを指定フォルダに移動 (内部利用のみ)
+ */
+async function moveToFolder(
+  fileId: string,
+  folderId: string,
+  accessToken: string
+): Promise<boolean> {
+  try {
+    // 現在の親フォルダを取得
+    const fileResponse = await fetch(`${DRIVE_API_URL}/${fileId}?fields=parents`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!fileResponse.ok) {
+      return false;
+    }
+
+    const fileData = await fileResponse.json();
+    const previousParents = fileData.parents?.join(',') || '';
+
+    // 新しいフォルダに移動
+    const moveResponse = await fetch(
+      `${DRIVE_API_URL}/${fileId}?addParents=${folderId}&removeParents=${previousParents}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return moveResponse.ok;
+  } catch (error: any) {
+    if (error?.message === 'Network request failed') {
+      await addDebugLog('[GoogleSheets] Network request failed (MoveToFolder)', 'info');
+    } else {
+      await addDebugLog(`[GoogleSheets] Move file error: ${error}`, 'error');
+    }
+    return false;
+  }
 }

@@ -27,7 +27,8 @@ import {
   saveSelectedDataTags
 } from '../src/services/config/exportConfig';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
-import { ALL_DATA_TAGS, DataTagKey, useHealthStore } from '../src/stores/healthStore';
+import { useHealthStore } from '../src/stores/healthStore';
+import { ALL_DATA_TAGS, DataTagKey } from '../src/types/health';
 
 // ステップ定義
 const STEPS = {
@@ -106,7 +107,7 @@ export default function OnboardingScreen() {
   // エクスポート実行
   const handleExport = async () => {
     // 選択されたタグでエクスポート
-    const result = await exportAndUpload(selectedTags);
+    const result = await exportAndUpload();
     if (result.success) {
       setCurrentStep(STEPS.COMPLETED);
     }

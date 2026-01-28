@@ -1,8 +1,9 @@
-import { HealthData } from '../types/health';
+import { DataTagKey, HealthData } from '../types/health';
+import { filterHealthDataByTags } from '../utils/dataHelpers';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
 import { loadExportPeriodDays, loadLastSyncTime, saveLastSyncTime } from './config/exportConfig';
 import { addDebugLog } from './debugLogService';
-import { addToExportQueue, processExportQueue } from './export/service';
+import { addToExportQueue, processExportQueue, ProcessQueueResult } from './export/service';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
@@ -58,7 +59,7 @@ export const SyncService = {
    * @param forceFullSync 差分更新ではなく、全期間の再取得を強制するか
    * @param selectedTags エクスポート対象のデータタグ（指定された場合のみフィルタリング）
    */
-  async performSync(
+  async fetchAndQueueNewData(
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
@@ -67,7 +68,7 @@ export const SyncService = {
       await addDebugLog('[SyncService] Starting sync...', 'info');
 
       // 1. 取得期間の決定
-      const fetchTimeRange = await this.calculateFetchTimeRange(periodDays, forceFullSync);
+      const fetchTimeRange = await calculateFetchTimeRange(periodDays, forceFullSync);
       const { startTime, endTime } = fetchTimeRange;
 
       await addDebugLog(
@@ -97,33 +98,12 @@ export const SyncService = {
 
         // タグフィルタリング (selectedTagsが指定されている場合)
         let dataToQueue = healthData;
-        /* Note: filterHealthDataByTags is in healthStore, creating circular dependency potentially if moved to service.
-           Instead of filtering here, we can pass exportConfig with specific tags to addToExportQueue if that supported it,
-           but addToExportQueue takes HealthData.
-           
-           Simplest approach: If selectedTags is provided, we filter the keys manually or use a helper.
-           Since we don't want to depend on store logic here if possible. 
-           But wait, addToExportQueue takes data and *config*.
-           The queue processing logic re-reads config. 
-           Actually, the queue entry stores `selectedTags`. 
-           
-           addToExportQueue source:
-             const tags = Object.keys(healthData) as string[]; 
-             // ...
-             selectedTags: tags,
-           
-           It infers tags from the data keys. So we should filter the data.
-        */
+        // Note: filterHealthDataByTagsを使わずに手動でフィルタリング（循環参照回避のため）
 
         if (selectedTags && selectedTags.length > 0) {
-          const filteredData: any = {};
-          selectedTags.forEach((tag) => {
-            if ((healthData as any)[tag]) {
-              filteredData[tag] = (healthData as any)[tag];
-            }
-          });
-          // 他のキーは含めない
-          dataToQueue = filteredData as HealthData;
+          // Utilを使ってフィルタリング
+          const tagSet = new Set<DataTagKey>(selectedTags as DataTagKey[]);
+          dataToQueue = filterHealthDataByTags(healthData, tagSet);
         }
 
         queued = await addToExportQueue(dataToQueue, dateRange);
@@ -153,63 +133,17 @@ export const SyncService = {
   },
 
   /**
-   * 取得期間の計算
-   */
-  async calculateFetchTimeRange(
-    periodDays?: number,
-    forceFullSync?: boolean
-  ): Promise<{ startTime: Date; endTime: Date }> {
-    const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
-
-    // 明示的に日数が指定された場合、または強制フル同期の場合
-    if (periodDays !== undefined || forceFullSync) {
-      const days = periodDays ?? (await loadExportPeriodDays());
-      const startTime = getDateDaysAgo(days);
-      return { startTime, endTime };
-    }
-
-    // 差分更新判定
-    const lastSyncTimeStr = await loadLastSyncTime();
-
-    if (lastSyncTimeStr) {
-      // 前回同期がある場合はそこから
-      // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
-      // ここでは前回同期時刻をそのまま採用
-      const lastSyncDate = new Date(lastSyncTimeStr);
-      // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
-      // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
-
-      // 経過日数を計算
-      const daysSinceLastSync = Math.ceil(
-        (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
-      // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
-      const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
-      const startTime = getDateDaysAgo(fetchDays);
-
-      return { startTime, endTime };
-    } else {
-      // 初回同期（LastSyncTimeなし）
-      const days = await loadExportPeriodDays();
-      const startTime = getDateDaysAgo(days);
-      return { startTime, endTime };
-    }
-  },
-
-  /**
    * 同期とアップロードを一括実行 (Facade)
    * 1. データの取得とキューイング (Phase 1)
    * 2. 成功したらアップロード試行 (Phase 2)
    */
-  async syncAndUpload(
+  async executeFullSync(
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<{ syncResult: SyncResult; exportResult?: any }> {
+  ): Promise<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }> {
     // 1. データ取得 & キューイング
-    const syncResult = await this.performSync(periodDays, forceFullSync, selectedTags);
+    const syncResult = await this.fetchAndQueueNewData(periodDays, forceFullSync, selectedTags);
 
     let exportResult = null;
 
@@ -225,3 +159,49 @@ export const SyncService = {
     };
   }
 };
+
+/**
+ * 取得期間の計算 (内部利用)
+ */
+async function calculateFetchTimeRange(
+  periodDays?: number,
+  forceFullSync?: boolean
+): Promise<{ startTime: Date; endTime: Date }> {
+  const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
+
+  // 明示的に日数が指定された場合、または強制フル同期の場合
+  if (periodDays !== undefined || forceFullSync) {
+    const days = periodDays ?? (await loadExportPeriodDays());
+    const startTime = getDateDaysAgo(days);
+    return { startTime, endTime };
+  }
+
+  // 差分更新判定
+  const lastSyncTimeStr = await loadLastSyncTime();
+
+  if (lastSyncTimeStr) {
+    // 前回同期がある場合はそこから
+    // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
+    // ここでは前回同期時刻をそのまま採用
+    const lastSyncDate = new Date(lastSyncTimeStr);
+    // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
+    // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
+
+    // 経過日数を計算
+    const daysSinceLastSync = Math.ceil(
+      (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
+    // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
+    const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
+    const startTime = getDateDaysAgo(fetchDays);
+
+    return { startTime, endTime };
+  } else {
+    // 初回同期（LastSyncTimeなし）
+    const days = await loadExportPeriodDays();
+    const startTime = getDateDaysAgo(days);
+    return { startTime, endTime };
+  }
+}

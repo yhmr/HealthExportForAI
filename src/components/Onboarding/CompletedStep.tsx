@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 interface CompletedStepProps {
   onNext: () => void;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { DataTagKey, initialHealthData } from '../../stores/healthStore';
+import { initialHealthData } from '../../stores/healthStore';
+import { DataTagKey } from '../../types/health';
 import { DataTagList } from '../DataTagList';
 import { SettingsSection } from './SettingsSection';
 

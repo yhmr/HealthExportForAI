@@ -1,4 +1,4 @@
-import { getAccessToken } from '../googleAuth';
+import { getOrRefreshAccessToken } from '../googleAuth';
 import {
   createSpreadsheet,
   fetchPDF,
@@ -14,7 +14,7 @@ export class GoogleSheetsAdapter implements SpreadsheetAdapter {
 
   private async ensureAccessToken(): Promise<string> {
     if (!this.accessToken) {
-      this.accessToken = await getAccessToken();
+      this.accessToken = await getOrRefreshAccessToken();
     }
     if (!this.accessToken) {
       throw new Error('Google Sheets access token is missing. Please sign in.');
