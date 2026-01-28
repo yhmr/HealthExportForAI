@@ -1,7 +1,7 @@
 // healthStore のテスト
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useHealthStore } from '../../src/stores/healthStore';
+import { filterHealthDataByTags, useHealthStore } from '../../src/stores/healthStore';
 
 describe('healthStore', () => {
   beforeEach(() => {
@@ -84,5 +84,66 @@ describe('healthStore', () => {
     expect(state.isLoading).toBe(false);
     expect(state.error).toBeNull();
     expect(state.lastSyncTime).toBeNull();
+  });
+
+  it('toggleDataTagでタグの選択状態を切り替えられる', () => {
+    // 初期状態は全て選択済み
+    useHealthStore.getState().toggleDataTag('steps');
+    expect(useHealthStore.getState().selectedDataTags.has('steps')).toBe(false);
+
+    useHealthStore.getState().toggleDataTag('steps');
+    expect(useHealthStore.getState().selectedDataTags.has('steps')).toBe(true);
+  });
+
+  it('setAllDataTagsSelectedで全選択・全解除ができる', () => {
+    // 全解除
+    useHealthStore.getState().setAllDataTagsSelected(false);
+    expect(useHealthStore.getState().selectedDataTags.size).toBe(0);
+
+    // 全選択
+    useHealthStore.getState().setAllDataTagsSelected(true);
+    // ALL_DATA_TAGSの数と同じはず
+    const allTagsCount = 8; // steps, weight, bodyFat, totalCaloriesBurned, basalMetabolicRate, sleep, exercise, nutrition
+    expect(useHealthStore.getState().selectedDataTags.size).toBe(allTagsCount);
+  });
+
+  it('setSelectedDataTagsで特定のタグセットを設定できる', () => {
+    useHealthStore.getState().setSelectedDataTags(['steps', 'sleep']);
+    expect(useHealthStore.getState().selectedDataTags.size).toBe(2);
+    expect(useHealthStore.getState().selectedDataTags.has('steps')).toBe(true);
+    expect(useHealthStore.getState().selectedDataTags.has('sleep')).toBe(true);
+    expect(useHealthStore.getState().selectedDataTags.has('weight')).toBe(false);
+  });
+});
+
+describe('filterHealthDataByTags', () => {
+  it('選択されていないタグのデータを空配列にする', () => {
+    const healthData = {
+      steps: [{ date: '2026-01-16', count: 8000 }],
+      weight: [
+        { date: '2026-01-16', value: 70, unit: 'kg' as const, time: '2026-01-16T00:00:00Z' }
+      ],
+      bodyFat: [],
+      totalCaloriesBurned: [],
+      basalMetabolicRate: [],
+      sleep: [],
+      exercise: [],
+      nutrition: []
+    };
+
+    const selectedTags = new Set<
+      | 'steps'
+      | 'weight'
+      | 'bodyFat'
+      | 'totalCaloriesBurned'
+      | 'basalMetabolicRate'
+      | 'sleep'
+      | 'exercise'
+      | 'nutrition'
+    >(['steps']);
+    const filtered = filterHealthDataByTags(healthData, selectedTags);
+
+    expect(filtered.steps.length).toBe(1);
+    expect(filtered.weight.length).toBe(0); // weightは選択されていないので空になるはず
   });
 });
