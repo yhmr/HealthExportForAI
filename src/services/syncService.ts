@@ -7,12 +7,12 @@ import {
   ExportConfigService,
   exportConfigService
 } from './config/exportConfig';
-import { Filter } from './data/Filter';
 import { addDebugLog } from './debugLogService';
 import { queueManager, QueueManager } from './export/QueueManager';
 import { processExportQueue, ProcessQueueResult } from './export/service';
 import { AccessChecker } from './health/AccessChecker';
 import { Fetcher } from './health/Fetcher';
+import { Filter } from './health/Filter';
 
 /** 最小取得日数 */
 const MIN_FETCH_DAYS = 7;

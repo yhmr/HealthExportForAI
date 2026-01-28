@@ -7,7 +7,7 @@ import { ok } from '../../src/types/result';
 // 外部モジュールのモック
 vi.mock('../../src/services/health/AccessChecker');
 vi.mock('../../src/services/health/Fetcher');
-vi.mock('../../src/services/data/Filter');
+vi.mock('../../src/services/health/Filter');
 vi.mock('../../src/services/export/QueueManager');
 vi.mock('../../src/services/config/exportConfig', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/services/config/exportConfig')>();
