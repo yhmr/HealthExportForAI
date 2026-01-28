@@ -76,12 +76,18 @@ describe('formatters', () => {
     it('日時をローカルフォーマットに変換する', () => {
       const isoString = '2026-01-16T17:30:00+09:00';
       const result = formatDateTime(isoString);
-      // ロケールによってフォーマットが変わる可能性があるため、基本的な要素が含まれているか確認
-      expect(result).toContain('2026');
-      expect(result).toContain('01');
-      expect(result).toContain('16');
-      expect(result).toContain('17');
-      expect(result).toContain('30');
+
+      // 実行環境のタイムゾーンに合わせた期待値を生成
+      const date = new Date(isoString);
+      const expected = date.toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      expect(result).toBe(expected);
     });
   });
 
