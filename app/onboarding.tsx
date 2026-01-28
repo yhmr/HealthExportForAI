@@ -53,7 +53,12 @@ export default function OnboardingScreen() {
   const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
 
   // Health Connect state
-  const { hasPermissions, requestPermissions, syncData, isLoading: isSyncing } = useHealthConnect();
+  const {
+    hasPermissions,
+    requestPermissions,
+    fetchHealthData,
+    isLoading: isSyncing
+  } = useHealthConnect();
   const { healthData } = useHealthStore();
   const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
 
@@ -179,7 +184,7 @@ export default function OnboardingScreen() {
 
   // データ取得ハンドラ
   const handleFetch = async () => {
-    const success = await syncData(initialDays);
+    const success = await fetchHealthData(initialDays);
     if (success) {
       setHasFetched(true);
     }

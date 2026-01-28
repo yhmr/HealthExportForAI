@@ -112,10 +112,10 @@ export function useHealthConnect() {
   }, [setLoading, setError]);
 
   /**
-   * データを同期
+   * データを取得
    * @param periodDays 取得する日数（指定がなければ設定から読み込み）
    */
-  const syncData = useCallback(
+  const fetchHealthData = useCallback(
     async (periodDays?: number) => {
       setLoading(true);
       setError(null);
@@ -134,7 +134,7 @@ export function useHealthConnect() {
         }
         return false;
       } catch (err) {
-        setError(err instanceof Error ? err.message : '同期エラー');
+        setError(err instanceof Error ? err.message : '取得エラー');
         return false;
       } finally {
         setLoading(false);
@@ -178,7 +178,7 @@ export function useHealthConnect() {
     // アクション
     initialize,
     requestPermissions,
-    syncData,
+    fetchHealthData,
     /** Android 14+ 向けのバックグラウンド権限リクエスト */
     requestBackgroundPermissions
   };
