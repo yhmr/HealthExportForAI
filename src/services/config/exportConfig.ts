@@ -1,111 +1,103 @@
-// エクスポート設定サービス
+// エクスポート設定サービス (Adapter/Facade)
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
-import { STORAGE_KEYS } from '../../config/storageKeys';
+import { ExportFormat } from '../../config/driveConfig';
+import { AsyncStorageAdapter } from '../infrastructure/AsyncStorageAdapter';
+import { ExportConfigService } from './ExportConfigService';
+
+// シングルトンインスタンスの作成（デフォルトでAsyncStorageAdapterを使用）
+const storageAdapter = new AsyncStorageAdapter();
+const exportConfigService = new ExportConfigService(storageAdapter);
 
 /**
  * 初期設定完了フラグを保存
  */
-export async function saveIsSetupCompleted(completed: boolean): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.IS_SETUP_COMPLETED, completed ? 'true' : 'false');
+export function saveIsSetupCompleted(completed: boolean): Promise<void> {
+  return exportConfigService.saveIsSetupCompleted(completed);
 }
 
 /**
  * 初期設定完了フラグを取得
  */
-export async function loadIsSetupCompleted(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(STORAGE_KEYS.IS_SETUP_COMPLETED);
-  return value === 'true';
+export function loadIsSetupCompleted(): Promise<boolean> {
+  return exportConfigService.loadIsSetupCompleted();
 }
 
 /**
  * 最後の同期時刻を取得
  */
-export async function loadLastSyncTime(): Promise<string | null> {
-  return AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME);
+export function loadLastSyncTime(): Promise<string | null> {
+  return exportConfigService.loadLastSyncTime();
 }
 
 /**
  * 最後の同期時刻を保存
  */
-export async function saveLastSyncTime(time: string): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time);
+export function saveLastSyncTime(time: string): Promise<void> {
+  return exportConfigService.saveLastSyncTime(time);
 }
 
 /**
  * エクスポート期間（日数）を保存
  */
-export async function saveExportPeriodDays(days: number): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.EXPORT_PERIOD_DAYS, days.toString());
+export function saveExportPeriodDays(days: number): Promise<void> {
+  return exportConfigService.saveExportPeriodDays(days);
 }
 
 /**
  * エクスポート期間（日数）を取得（デフォルト7日）
  */
-export async function loadExportPeriodDays(): Promise<number> {
-  const value = await AsyncStorage.getItem(STORAGE_KEYS.EXPORT_PERIOD_DAYS);
-  return value ? parseInt(value, 10) : 7;
+export function loadExportPeriodDays(): Promise<number> {
+  return exportConfigService.loadExportPeriodDays();
 }
 
 /**
  * エクスポート形式を保存
  */
-export async function saveExportFormats(formats: ExportFormat[]): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.EXPORT_FORMATS, JSON.stringify(formats));
+export function saveExportFormats(formats: ExportFormat[]): Promise<void> {
+  return exportConfigService.saveExportFormats(formats);
 }
 
 /**
  * エクスポート形式を取得（デフォルト: googleSheets）
  */
-export async function loadExportFormats(): Promise<ExportFormat[]> {
-  const json = await AsyncStorage.getItem(STORAGE_KEYS.EXPORT_FORMATS);
-  if (json) {
-    // 古い'pdf'形式が含まれていたら除外
-    const formats = JSON.parse(json) as string[];
-    return formats.filter((f) => f !== 'pdf') as ExportFormat[];
-  }
-  return DEFAULT_EXPORT_FORMATS;
+export function loadExportFormats(): Promise<ExportFormat[]> {
+  return exportConfigService.loadExportFormats();
 }
 
 /**
  * SheetsをPDFとしてもエクスポートするオプションを保存
  */
-export async function saveExportSheetAsPdf(enabled: boolean): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF, enabled ? 'true' : 'false');
+export function saveExportSheetAsPdf(enabled: boolean): Promise<void> {
+  return exportConfigService.saveExportSheetAsPdf(enabled);
 }
 
 /**
  * SheetsをPDFとしてもエクスポートするオプションを取得
  */
-export async function loadExportSheetAsPdf(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF);
-  return value === 'true';
+export function loadExportSheetAsPdf(): Promise<boolean> {
+  return exportConfigService.loadExportSheetAsPdf();
 }
 
 /**
  * 選択されたデータタグを保存
- * (HealthStoreでの永続化に使用、および設定画面等でのフォールバック用)
  */
-export async function saveSelectedDataTags(tags: string[]): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags));
+export function saveSelectedDataTags(tags: string[]): Promise<void> {
+  return exportConfigService.saveSelectedDataTags(tags);
 }
 
 /**
  * 選択されたデータタグを取得
- * 保存されていない場合はnullを返し、呼び出し元でデフォルト値を使用させる
  */
-export async function loadSelectedDataTags(): Promise<string[] | null> {
-  const json = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);
-  if (json) {
-    return JSON.parse(json) as string[];
-  }
-  return null;
+export function loadSelectedDataTags(): Promise<string[] | null> {
+  return exportConfigService.loadSelectedDataTags();
 }
 
 /**
  * 最後の同期時刻を削除（初期データ再取得のため）
  */
-export async function removeLastSyncTime(): Promise<void> {
-  await AsyncStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
+export function removeLastSyncTime(): Promise<void> {
+  return exportConfigService.removeLastSyncTime();
 }
+
+// DI注入用（SyncService等）にサービスインスタンスをエクスポート
+export { exportConfigService };

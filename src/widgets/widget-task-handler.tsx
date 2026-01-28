@@ -3,7 +3,7 @@ import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { loadLastSyncTime } from '../services/config/exportConfig';
 import { addDebugLog } from '../services/debugLogService';
-import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
+import { configureGoogleSignIn, isSignedIn, signIn } from '../services/infrastructure/googleAuth';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
 import { SyncWidgetSmall } from './SyncWidgetSmall';

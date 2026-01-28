@@ -16,7 +16,7 @@ import {
   isSignedIn,
   signIn,
   signOut
-} from '../services/googleAuth';
+} from '../services/infrastructure/googleAuth';
 
 interface AuthContextType {
   /** 認証済みかどうか */

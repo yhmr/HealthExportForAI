@@ -6,7 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
-import { configureGoogleSignIn, getOrRefreshAccessToken } from '../services/googleAuth';
+import {
+  configureGoogleSignIn,
+  getOrRefreshAccessToken
+} from '../services/infrastructure/googleAuth';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { getCurrentISOString } from '../utils/formatters';

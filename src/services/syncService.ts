@@ -1,7 +1,8 @@
 import { DataTagKey, HealthData } from '../types/health';
 import { filterHealthDataByTags } from '../utils/dataHelpers';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
-import { loadExportPeriodDays, loadLastSyncTime, saveLastSyncTime } from './config/exportConfig';
+import { ExportConfigService } from './config/ExportConfigService';
+import { exportConfigService } from './config/exportConfig';
 import { addDebugLog } from './debugLogService';
 import { addToExportQueue, processExportQueue, ProcessQueueResult } from './export/service';
 import {
@@ -27,10 +28,11 @@ export interface SyncResult {
 }
 
 /**
- * 同期サービス
- * フォアグラウンド(UI)とバックグラウンド(Task)で共通利用されるロジックを提供
+ * 同期サービスの実装クラス
  */
-export const SyncService = {
+export class SyncServiceImpl {
+  constructor(private configService: ExportConfigService) {}
+
   /**
    * Health Connectの状態確認と初期化
    */
@@ -51,7 +53,7 @@ export const SyncService = {
 
     const hasPermissions = await checkHealthPermissions();
     return { available: true, initialized: true, hasPermissions };
-  },
+  }
 
   /**
    * 同期実行（データ取得＋永続化）
@@ -68,7 +70,7 @@ export const SyncService = {
       await addDebugLog('[SyncService] Starting sync...', 'info');
 
       // 1. 取得期間の決定
-      const fetchTimeRange = await calculateFetchTimeRange(periodDays, forceFullSync);
+      const fetchTimeRange = await this.calculateFetchTimeRange(periodDays, forceFullSync);
       const { startTime, endTime } = fetchTimeRange;
 
       await addDebugLog(
@@ -90,7 +92,7 @@ export const SyncService = {
       if (hasData) {
         // 成功時のみ同期時刻を更新（永続化）
         const now = getCurrentISOString();
-        await saveLastSyncTime(now);
+        await this.configService.saveLastSyncTime(now);
         await addDebugLog(`[SyncService] Sync success. LastSyncTime updated: ${now}`, 'success');
 
         // エクスポートキューへの追加
@@ -130,7 +132,7 @@ export const SyncService = {
       await addDebugLog(`[SyncService] Sync failed: ${errorMessage}`, 'error');
       throw error;
     }
-  },
+  }
 
   /**
    * 同期とアップロードを一括実行 (Facade)
@@ -158,50 +160,56 @@ export const SyncService = {
       exportResult
     };
   }
-};
 
-/**
- * 取得期間の計算 (内部利用)
- */
-async function calculateFetchTimeRange(
-  periodDays?: number,
-  forceFullSync?: boolean
-): Promise<{ startTime: Date; endTime: Date }> {
-  const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
+  /**
+   * 取得期間の計算 (内部利用)
+   */
+  private async calculateFetchTimeRange(
+    periodDays?: number,
+    forceFullSync?: boolean
+  ): Promise<{ startTime: Date; endTime: Date }> {
+    const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
 
-  // 明示的に日数が指定された場合、または強制フル同期の場合
-  if (periodDays !== undefined || forceFullSync) {
-    const days = periodDays ?? (await loadExportPeriodDays());
-    const startTime = getDateDaysAgo(days);
-    return { startTime, endTime };
-  }
+    // 明示的に日数が指定された場合、または強制フル同期の場合
+    if (periodDays !== undefined || forceFullSync) {
+      const days = periodDays ?? (await this.configService.loadExportPeriodDays());
+      const startTime = getDateDaysAgo(days);
+      return { startTime, endTime };
+    }
 
-  // 差分更新判定
-  const lastSyncTimeStr = await loadLastSyncTime();
+    // 差分更新判定
+    const lastSyncTimeStr = await this.configService.loadLastSyncTime();
 
-  if (lastSyncTimeStr) {
-    // 前回同期がある場合はそこから
-    // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
-    // ここでは前回同期時刻をそのまま採用
-    const lastSyncDate = new Date(lastSyncTimeStr);
-    // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
-    // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
+    if (lastSyncTimeStr) {
+      // 前回同期がある場合はそこから
+      // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
+      // ここでは前回同期時刻をそのまま採用
+      const lastSyncDate = new Date(lastSyncTimeStr);
+      // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
+      // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
 
-    // 経過日数を計算
-    const daysSinceLastSync = Math.ceil(
-      (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+      // 経過日数を計算
+      const daysSinceLastSync = Math.ceil(
+        (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-    // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
-    // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
-    const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
-    const startTime = getDateDaysAgo(fetchDays);
+      // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
+      // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
+      const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
+      const startTime = getDateDaysAgo(fetchDays);
 
-    return { startTime, endTime };
-  } else {
-    // 初回同期（LastSyncTimeなし）
-    const days = await loadExportPeriodDays();
-    const startTime = getDateDaysAgo(days);
-    return { startTime, endTime };
+      return { startTime, endTime };
+    } else {
+      // 初回同期（LastSyncTimeなし）
+      const days = await this.configService.loadExportPeriodDays();
+      const startTime = getDateDaysAgo(days);
+      return { startTime, endTime };
+    }
   }
 }
+
+/**
+ * 同期サービスのシングルトンインスタンス
+ * フォアグラウンド(UI)とバックグラウンド(Task)で共通利用されるロジックを提供
+ */
+export const SyncService = new SyncServiceImpl(exportConfigService);

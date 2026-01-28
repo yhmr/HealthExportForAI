@@ -11,7 +11,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { getOrRefreshAccessToken } from '../services/googleAuth';
+import { getOrRefreshAccessToken } from '../services/infrastructure/googleAuth';
 import { createFolder, listFolders } from '../services/storage/googleDrive';
 import { ThemeColors } from '../theme/types';
 

@@ -1,4 +1,4 @@
-import { getOrRefreshAccessToken, isSignedIn } from '../googleAuth';
+import { getOrRefreshAccessToken, isSignedIn } from '../infrastructure/googleAuth';
 import {
   checkFolderExists,
   DEFAULT_FOLDER_NAME,

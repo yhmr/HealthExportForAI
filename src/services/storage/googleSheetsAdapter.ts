@@ -1,4 +1,4 @@
-import { getOrRefreshAccessToken } from '../googleAuth';
+import { getOrRefreshAccessToken } from '../infrastructure/googleAuth';
 import {
   createSpreadsheet,
   fetchPDF,
