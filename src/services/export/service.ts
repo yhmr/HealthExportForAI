@@ -10,8 +10,18 @@ import { loadDriveConfig } from '../config/driveConfig';
 import { loadExportFormats, loadExportSheetAsPdf } from '../config/exportConfig';
 import { addDebugLog } from '../debugLogService';
 import { getNetworkStatus } from '../networkService';
-import { createSpreadsheetAdapter, createStorageAdapter } from '../storage/adapterFactory';
-import type { SpreadsheetAdapter, StorageAdapter } from '../storage/interfaces';
+import {
+  createFileOperations,
+  createFolderOperations,
+  createInitializer,
+  createSpreadsheetAdapter
+} from '../storage/adapterFactory';
+import type {
+  FileOperations,
+  FolderOperations,
+  Initializable,
+  SpreadsheetAdapter
+} from '../storage/interfaces';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';
@@ -176,8 +186,12 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
   await addDebugLog(`[ExportService] Processing ${entry.id}...`, 'info');
 
   try {
-    const storageAdapter = createStorageAdapter();
+    // 必要な機能を個別に取得（ISP遵守）
+    const initializer = createInitializer();
+    const folderOps = createFolderOperations();
+    const fileOps = createFileOperations();
     const spreadsheetAdapter = createSpreadsheetAdapter();
+
     const config = entry.exportConfig ?? (await createDefaultExportConfig());
     const selectedTags = new Set(entry.selectedTags as DataTagKey[]);
     const dataToExport = filterHealthDataByTags(entry.healthData, selectedTags);
@@ -193,7 +207,9 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
     const result = await Promise.race([
       executeExportInternal(
         dataToExport,
-        storageAdapter,
+        initializer,
+        folderOps,
+        fileOps,
         spreadsheetAdapter,
         config,
         syncDateRangeSet
@@ -222,7 +238,9 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
 
 async function executeExportInternal(
   healthData: HealthData,
-  storageAdapter: StorageAdapter,
+  initializer: Initializable,
+  folderOps: FolderOperations,
+  fileOps: FileOperations,
   spreadsheetAdapter: SpreadsheetAdapter,
   config: ExportConfig,
   originalDates: Set<string>
@@ -231,7 +249,8 @@ async function executeExportInternal(
 
   try {
     const context = await prepareContext(
-      storageAdapter,
+      initializer,
+      folderOps,
       config.targetFolder?.id,
       config.targetFolder?.name
     );
@@ -263,7 +282,7 @@ async function executeExportInternal(
             const pdfResult = await exportSpreadsheetAsPDF(
               sheet.spreadsheetId,
               context.folderId,
-              storageAdapter,
+              fileOps,
               spreadsheetAdapter,
               sheet.year
             );
@@ -281,7 +300,7 @@ async function executeExportInternal(
     }
 
     if (config.formats.includes('csv')) {
-      const result = await exportToCSV(healthData, context.folderId, storageAdapter);
+      const result = await exportToCSV(healthData, context.folderId, fileOps);
       results.push({
         format: 'csv',
         success: result.success,
@@ -291,7 +310,7 @@ async function executeExportInternal(
     }
 
     if (config.formats.includes('json')) {
-      const result = await exportToJSON(healthData, context.folderId, storageAdapter);
+      const result = await exportToJSON(healthData, context.folderId, fileOps);
       results.push({
         format: 'json',
         success: result.success,
@@ -314,18 +333,19 @@ async function executeExportInternal(
 }
 
 async function prepareContext(
-  storageAdapter: StorageAdapter,
+  initializer: Initializable,
+  folderOps: FolderOperations,
   folderId?: string,
   folderName?: string
 ): Promise<ExportContext | null> {
-  const isInitialized = await storageAdapter.initialize();
+  const isInitialized = await initializer.initialize();
   if (!isInitialized) return null;
 
-  const targetFolderName = folderName || storageAdapter.defaultFolderName;
+  const targetFolderName = folderName || folderOps.defaultFolderName;
   let targetFolderId = folderId;
 
   if (!targetFolderId) {
-    const id = await storageAdapter.findOrCreateFolder(targetFolderName);
+    const id = await folderOps.findOrCreateFolder(targetFolderName);
     targetFolderId = id ?? undefined;
   }
 

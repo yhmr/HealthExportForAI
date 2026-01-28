@@ -8,9 +8,9 @@ import {
   updateFile,
   uploadFile
 } from './googleDrive';
-import type { FileInfo, StorageAdapter } from './interfaces';
+import type { FileInfo, FileOperations, FolderOperations, Initializable } from './interfaces';
 
-export class GoogleDriveAdapter implements StorageAdapter {
+export class GoogleDriveAdapter implements Initializable, FolderOperations, FileOperations {
   private accessToken: string | null = null;
   readonly defaultFolderName = DEFAULT_FOLDER_NAME;
 

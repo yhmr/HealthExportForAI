@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
 import { formatHealthDataToRows } from '../../../src/services/export/utils';
-import type { StorageAdapter } from '../../../src/services/storage/interfaces';
+import type { FileOperations } from '../../../src/services/storage/interfaces';
 
 // Mock dependencies
 vi.mock('../../../src/services/export/utils', () => ({
@@ -14,15 +14,11 @@ vi.mock('../../../src/services/debugLogService', () => ({
   addDebugLog: vi.fn()
 }));
 
-const mockStorageAdapter: StorageAdapter = {
-  initialize: vi.fn(),
-  findOrCreateFolder: vi.fn(),
-  checkFolderExists: vi.fn(),
+const mockFileOps: FileOperations = {
   findFile: vi.fn(),
   uploadFile: vi.fn(),
   updateFile: vi.fn(),
-  downloadFileContent: vi.fn(),
-  defaultFolderName: 'TestFolder'
+  downloadFileContent: vi.fn()
 };
 
 describe('CSV Escaping', () => {
@@ -40,14 +36,14 @@ describe('CSV Escaping', () => {
     });
 
     // Mock no existing file, triggering uploadFile
-    (mockStorageAdapter.findFile as any).mockResolvedValue(null);
-    (mockStorageAdapter.uploadFile as any).mockResolvedValue('new-id');
+    (mockFileOps.findFile as any).mockResolvedValue(null);
+    (mockFileOps.uploadFile as any).mockResolvedValue('new-id');
 
-    await exportToCSV({} as any, 'folder-id', mockStorageAdapter);
+    await exportToCSV({} as any, 'folder-id', mockFileOps);
 
     // Retrieve the generated CSV content
-    expect(mockStorageAdapter.uploadFile).toHaveBeenCalled();
-    const callArgs = (mockStorageAdapter.uploadFile as any).mock.calls[0];
+    expect(mockFileOps.uploadFile).toHaveBeenCalled();
+    const callArgs = (mockFileOps.uploadFile as any).mock.calls[0];
     const csvContent: string = callArgs[0];
 
     // Verify escaping

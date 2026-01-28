@@ -3,16 +3,23 @@ export interface FileInfo {
   name: string;
 }
 
-export interface StorageAdapter {
+export interface Initializable {
   /** 初期化または認証（必要な場合） */
   initialize(): Promise<boolean>;
+}
 
+export interface FolderOperations {
   /** フォルダを作成または既存のものを取得 */
   findOrCreateFolder(folderName: string): Promise<string | null>;
 
   /** フォルダが存在するか確認 */
   checkFolderExists(folderId: string): Promise<boolean>;
 
+  /** デフォルトの保存フォルダ名 */
+  readonly defaultFolderName: string;
+}
+
+export interface FileOperations {
   /** フォルダ内のファイルを検索 */
   findFile(fileName: string, mimeType: string, folderId?: string): Promise<FileInfo | null>;
 
@@ -32,9 +39,6 @@ export interface StorageAdapter {
     mimeType: string,
     isBase64?: boolean
   ): Promise<boolean>;
-
-  /** デフォルトの保存フォルダ名 */
-  readonly defaultFolderName: string;
 
   /** ファイルの内容をダウンロード */
   downloadFileContent(fileId: string): Promise<string | null>;

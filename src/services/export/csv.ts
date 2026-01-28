@@ -4,7 +4,7 @@
 
 import type { HealthData } from '../../types/health';
 import { addDebugLog } from '../debugLogService';
-import type { StorageAdapter } from '../storage/interfaces';
+import type { FileOperations } from '../storage/interfaces';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
 // エクスポート結果の型
@@ -72,7 +72,7 @@ function parseCSVRow(line: string): string[] {
 export async function exportToCSV(
   healthData: HealthData,
   folderId: string | undefined,
-  storageAdapter: StorageAdapter
+  fileOps: FileOperations
 ): Promise<ExportResult> {
   try {
     // データを行形式に変換
@@ -92,12 +92,12 @@ export async function exportToCSV(
       const fileName = getExportFileName(year, 'csv', true);
 
       // 既存ファイルを検索
-      const existingFile = await storageAdapter.findFile(fileName, 'text/csv', folderId);
+      const existingFile = await fileOps.findFile(fileName, 'text/csv', folderId);
       let existingRowMap = new Map<string, string[]>();
 
       if (existingFile) {
         // 既存ファイルの内容をダウンロード
-        const existingContent = await storageAdapter.downloadFileContent(existingFile.id);
+        const existingContent = await fileOps.downloadFileContent(existingFile.id);
         if (existingContent) {
           existingRowMap = parseCSV(existingContent);
         }
@@ -156,7 +156,7 @@ export async function exportToCSV(
 
       // アップロード or 更新
       if (existingFile) {
-        const success = await storageAdapter.updateFile(existingFile.id, csvContent, 'text/csv');
+        const success = await fileOps.updateFile(existingFile.id, csvContent, 'text/csv');
         if (success) {
           await addDebugLog(`[CSV Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
@@ -164,7 +164,7 @@ export async function exportToCSV(
           return { success: false, error: 'CSVファイルの更新に失敗しました' };
         }
       } else {
-        const fileId = await storageAdapter.uploadFile(csvContent, fileName, 'text/csv', folderId);
+        const fileId = await fileOps.uploadFile(csvContent, fileName, 'text/csv', folderId);
         if (fileId) {
           await addDebugLog(`[CSV Export] Created: ${fileName}`, 'success');
           lastFileId = fileId;

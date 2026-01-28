@@ -1,7 +1,7 @@
 // PDFエクスポート
 // Google SheetsをPDF形式でエクスポートしてDriveに保存
 
-import type { SpreadsheetAdapter, StorageAdapter } from '../storage/interfaces';
+import type { FileOperations, SpreadsheetAdapter } from '../storage/interfaces';
 import { getExportFileName } from './utils';
 
 /**
@@ -15,7 +15,7 @@ import { getExportFileName } from './utils';
 export async function exportSpreadsheetAsPDF(
   spreadsheetId: string,
   folderId: string | undefined,
-  storageAdapter: StorageAdapter,
+  fileOps: FileOperations,
   spreadsheetAdapter: SpreadsheetAdapter,
   year?: number
 ): Promise<{ success: boolean; fileId?: string; error?: string }> {
@@ -32,18 +32,13 @@ export async function exportSpreadsheetAsPDF(
     const pdfFileName = getExportFileName(targetYear, 'pdf', true);
 
     // 3. 既存のPDFファイルを検索
-    const existingFile = await storageAdapter.findFile(pdfFileName, 'application/pdf', folderId);
+    const existingFile = await fileOps.findFile(pdfFileName, 'application/pdf', folderId);
 
     // 4. アップロードまたは更新
     if (existingFile) {
       // 既存ファイルを更新（上書き）
       // isBase64: true を指定してBase64コンテンツの更新を行う
-      const success = await storageAdapter.updateFile(
-        existingFile.id,
-        pdfBase64,
-        'application/pdf',
-        true
-      );
+      const success = await fileOps.updateFile(existingFile.id, pdfBase64, 'application/pdf', true);
 
       if (success) {
         return { success: true, fileId: existingFile.id };
@@ -52,7 +47,7 @@ export async function exportSpreadsheetAsPDF(
       }
     } else {
       // 新規作成
-      const fileId = await storageAdapter.uploadFile(
+      const fileId = await fileOps.uploadFile(
         pdfBase64,
         pdfFileName,
         'application/pdf',
