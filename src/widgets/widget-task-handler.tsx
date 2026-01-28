@@ -1,22 +1,25 @@
 import React from 'react';
 import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
-import {
-  addToExportQueue,
-  BACKGROUND_EXECUTION_TIMEOUT_MS,
-  processExportQueue
-} from '../services/export/service';
+import { BACKGROUND_EXECUTION_TIMEOUT_MS, processExportQueue } from '../services/export/service';
 import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
-import { fetchAllHealthData } from '../services/healthConnect';
-import { generateDateRange, getDateDaysAgo, getEndOfToday } from '../utils/formatters';
+import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
 import { SyncWidgetSmall } from './SyncWidgetSmall';
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
-  console.log('[Widget] Handler called with action:', props.widgetAction, 'Widget:', props.widgetInfo?.widgetName);
+  console.log(
+    '[Widget] Handler called with action:',
+    props.widgetAction,
+    'Widget:',
+    props.widgetInfo?.widgetName
+  );
 
   // ウィジェット名に応じてレンダリングする関数
-  const renderCurrentWidget = (status: 'idle' | 'syncing' | 'success' | 'error', lastSyncTime?: string | null) => {
+  const renderCurrentWidget = (
+    status: 'idle' | 'syncing' | 'success' | 'error',
+    lastSyncTime?: string | null
+  ) => {
     const isSmall = props.widgetInfo?.widgetName === 'SyncWidgetSmall';
 
     if (isSmall) {
@@ -56,22 +59,22 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           return;
         }
 
-        // 4. データ取得 (本日分)
-        const endDate = getEndOfToday();
-        const startDate = getDateDaysAgo(0); // 今日のみ
-        console.log(
-          `[Widget] Fetching data for ${startDate.toISOString()} - ${endDate.toISOString()}`
-        );
+        // 4. データ取得 (本日分 = 0日前から)
+        console.log('[Widget] Fetching data for today...');
 
-        // Health Connectからデータ取得
-        // ※バックグラウンド権限がないと失敗する可能性があるが、アプリ側で許可済み前提
-        const healthData = await fetchAllHealthData(startDate, endDate);
-        const dateRange = generateDateRange(startDate, endDate);
+        // SyncServiceを使用
+        // 0を指定して「今日のみ」を取得
+        const syncResult = await SyncService.performSync(0);
 
-        // 5. キューに追加
-        const added = await addToExportQueue(healthData, dateRange);
-        if (!added) {
-          console.error('[Widget] Failed to add to queue');
+        if (!syncResult.success || !syncResult.isNewData) {
+          console.log('[Widget] No new data found or sync failed');
+          renderCurrentWidget('idle', new Date().toISOString());
+          return;
+        }
+
+        // SyncService内でキューに追加されているはずなのでチェック
+        if (!syncResult.queued) {
+          console.error('[Widget] Failed to queue data (in SyncService)');
           renderCurrentWidget('error', null);
           return;
         }

@@ -21,10 +21,16 @@ export async function loadIsSetupCompleted(): Promise<boolean> {
 
 /**
  * 最後の同期時刻を取得
- * (初期表示用。保存はHealthStoreで行うためsaveLastSyncTimeは削除)
  */
 export async function loadLastSyncTime(): Promise<string | null> {
   return AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME);
+}
+
+/**
+ * 最後の同期時刻を保存
+ */
+export async function saveLastSyncTime(time: string): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time);
 }
 
 /**
@@ -78,9 +84,16 @@ export async function loadExportSheetAsPdf(): Promise<boolean> {
 }
 
 /**
+ * 選択されたデータタグを保存
+ * (HealthStoreでの永続化に使用、および設定画面等でのフォールバック用)
+ */
+export async function saveSelectedDataTags(tags: string[]): Promise<void> {
+  await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags));
+}
+
+/**
  * 選択されたデータタグを取得
  * 保存されていない場合はnullを返し、呼び出し元でデフォルト値を使用させる
- * (保存はHealthStoreで行うためsaveSelectedDataTagsは削除)
  */
 export async function loadSelectedDataTags(): Promise<string[] | null> {
   const json = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);

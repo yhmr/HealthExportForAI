@@ -26,6 +26,14 @@ export async function loadBackgroundSyncConfig(): Promise<AutoSyncConfig> {
   return DEFAULT_AUTO_SYNC_CONFIG;
 }
 
+/**
+ * 最後のバックグラウンド同期時刻を取得
+ * (実質的には統合されたLastSyncTimeを返す)
+ */
+export async function loadLastBackgroundSync(): Promise<string | null> {
+  return AsyncStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME);
+}
+
 /** 利用可能な同期間隔一覧 */
 export const SYNC_INTERVALS: SyncInterval[] = [5, 60, 180, 360, 720, 1440, 2880, 4320];
 

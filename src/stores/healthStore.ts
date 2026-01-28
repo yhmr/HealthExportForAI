@@ -73,15 +73,6 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
 
   setLastSyncTime: (time) => {
     set({ lastSyncTime: time });
-    if (time) {
-      AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC_TIME, time).catch((e) =>
-        console.error('[HealthStore] Failed to save last sync time:', e)
-      );
-    } else {
-      AsyncStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME).catch((e) =>
-        console.error('[HealthStore] Failed to remove last sync time:', e)
-      );
-    }
   },
 
   setLoading: (isLoading) => set({ isLoading }),

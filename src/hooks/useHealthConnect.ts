@@ -1,21 +1,16 @@
 // Health Connect カスタムフック
 
 import { useCallback, useState } from 'react';
-import {
-  loadExportPeriodDays,
-  loadLastSyncTime,
-  loadSelectedDataTags
-} from '../services/config/exportConfig';
+import { loadLastSyncTime, loadSelectedDataTags } from '../services/config/exportConfig';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
-  fetchAllHealthData,
   initializeHealthConnect,
   requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
+import { SyncService } from '../services/syncService';
 import { DataTagKey, useHealthStore } from '../stores/healthStore';
-import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
 
 export function useHealthConnect() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -126,43 +121,18 @@ export function useHealthConnect() {
       setError(null);
 
       try {
-        // 差分更新のロジック:
-        // 1. 最終同期時刻 (lastSyncTime) がある場合は、そこから現在までを取得
-        // 2. ない場合は、期間設定 (periodDays) 分だけ過去から取得
+        const { selectedDataTags } = useHealthStore.getState();
+        const tags = Array.from(selectedDataTags || []);
 
-        // 引数で明示的に日数が指定された場合は、それを優先して初期取得（再構築）とみなすこともできるが、
-        // ここでは「引数periodDaysが未指定」かつ「lastSyncTimeあり」なら差分更新とする。
-        // UI側で「再構築」ボタンを作る場合は、明示的に期間を指定して呼ぶか、lastSyncTimeをクリアしてから呼ぶ形になる。
-        // ユーザーが「日数を変更」した直後などはどうする？ -> 今回の仕様ではメイン画面から期間選択が消えるので、
-        // periodDaysは「初期設定」または「設定画面での設定」になる。
+        // 第2引数は forceFullSync (false), 第3引数にタグを渡す
+        const result = await SyncService.performSync(periodDays, false, tags);
 
-        let startTime: Date;
-        const endTime = new Date(); // 現在時刻
-
-        // 元の実装の getEndOfToday は「今日の終わり」なので未来も含む可能性があるが、
-        // HealthConnectは未来のデータは基本ない。
-        // 差分更新の場合、前回同期時刻(lastSyncTime) ～ 現在(new Date()) とするのが自然。
-
-        if (!periodDays && lastSyncTime) {
-          console.log('[Sync] Performing differential sync from:', lastSyncTime);
-          startTime = new Date(lastSyncTime);
-        } else {
-          // 初期取得、または明示的な期間指定（再構築など）
-          const days = periodDays ?? (await loadExportPeriodDays());
-          console.log('[Sync] Performing full sync for days:', days);
-          startTime = getDateDaysAgo(days);
+        if (result.success) {
+          setAllData(result.data, result.dateRange);
+          setLastSyncTime(result.endTime);
+          return true;
         }
-
-        // 取得期間の全日付を生成
-        const dateRange = generateDateRange(startTime, endTime);
-
-        const data = await fetchAllHealthData(startTime, endTime);
-        setAllData(data, dateRange);
-
-        const syncTime = getCurrentISOString();
-        setLastSyncTime(syncTime);
-
-        return true;
+        return false;
       } catch (err) {
         setError(err instanceof Error ? err.message : '同期エラー');
         return false;
@@ -170,7 +140,7 @@ export function useHealthConnect() {
         setLoading(false);
       }
     },
-    [setAllData, setLastSyncTime, setLoading, setError, lastSyncTime]
+    [setAllData, setLastSyncTime, setLoading, setError]
   );
 
   const requestBackgroundPermissions = useCallback(async () => {
