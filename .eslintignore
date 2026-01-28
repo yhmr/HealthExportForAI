@@ -1,0 +1,5 @@
+pages/themes/PaperMod
+android/
+ios/
+.expo/
+node_modules/
