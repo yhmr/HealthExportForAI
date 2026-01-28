@@ -21,7 +21,25 @@ vi.mock('react-native-health-connect', () => ({
   initialize: vi.fn(),
   requestPermission: vi.fn(),
   readRecords: vi.fn(),
-  getGrantedPermissions: vi.fn()
+  getGrantedPermissions: vi.fn(),
+  getSdkStatus: vi.fn(),
+  aggregateGroupByDuration: vi.fn(),
+  SdkAvailabilityStatus: { SDK_AVAILABLE: 1, SDK_UNAVAILABLE: 2 },
+  ExerciseType: {}
+}));
+
+// Mock React Native Core
+vi.mock('react-native', () => ({
+  PermissionsAndroid: {
+    check: vi.fn(() => Promise.resolve(true)),
+    request: vi.fn(() => Promise.resolve('granted')),
+    RESULTS: { GRANTED: 'granted' }
+  },
+  Platform: {
+    OS: 'android',
+    Version: 34,
+    select: (objs: any) => objs.android
+  }
 }));
 
 // Mock Expo modules if necessary

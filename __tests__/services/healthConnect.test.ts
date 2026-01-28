@@ -4,31 +4,8 @@ import * as DebugLogService from '../../src/services/debugLogService';
 import { requestHealthPermissions } from '../../src/services/healthConnect';
 import { aggregateByLatestPerDay } from '../../src/utils/healthAggregation';
 
-// モック
-vi.mock('react-native-health-connect', () => ({
-  requestPermission: vi.fn(),
-  initialize: vi.fn(),
-  getSdkStatus: vi.fn(),
-  readRecords: vi.fn(),
-  aggregateGroupByDuration: vi.fn(),
-  SdkAvailabilityStatus: { SDK_AVAILABLE: 1, SDK_UNAVAILABLE: 2 },
-  ExerciseType: {}
-}));
-
 vi.mock('../../src/services/debugLogService', () => ({
   addDebugLog: vi.fn()
-}));
-
-vi.mock('react-native', () => ({
-  PermissionsAndroid: {
-    check: vi.fn(),
-    request: vi.fn(),
-    RESULTS: { GRANTED: 'granted' }
-  },
-  Platform: {
-    OS: 'android',
-    Version: 34
-  }
 }));
 
 describe('Health Connect Service', () => {

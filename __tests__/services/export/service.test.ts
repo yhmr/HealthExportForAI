@@ -49,10 +49,6 @@ vi.mock('../../../src/services/export/sheets', () => ({
   exportToSpreadsheet: vi.fn()
 }));
 
-vi.mock('../../../src/services/debugLogService', () => ({
-  addDebugLog: vi.fn()
-}));
-
 describe('ExportService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
