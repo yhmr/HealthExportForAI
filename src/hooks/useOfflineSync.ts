@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { addDebugLog } from '../services/debugLogService';
-import { addToQueue, getQueue } from '../services/export/queue-storage';
+import { queueManager } from '../services/export/QueueManager';
 import { processExportQueue } from '../services/export/service';
 import { getNetworkStatus, subscribeToNetworkChanges } from '../services/networkService';
 import { useOfflineStore } from '../stores/offlineStore';
@@ -29,7 +29,7 @@ export const useOfflineSync = () => {
    */
   const updatePendingCount = useCallback(async () => {
     try {
-      const queue = await getQueue();
+      const queue = await queueManager.getQueue();
       setPendingCount(queue.length);
       return queue.length;
     } catch {
@@ -95,7 +95,7 @@ export const useOfflineSync = () => {
 
       // オンライン復帰時に自動同期
       if (online) {
-        const queue = await getQueue();
+        const queue = await queueManager.getQueue();
         if (queue.length > 0) {
           processQueueNow();
         }
@@ -114,7 +114,7 @@ export const useOfflineSync = () => {
       selectedTags: Set<DataTagKey>,
       syncDateRange: Set<string> | null
     ): Promise<string | null> => {
-      const id = await addToQueue({
+      const id = await queueManager.addToQueue({
         healthData,
         selectedTags: Array.from(selectedTags),
         syncDateRange: syncDateRange ? Array.from(syncDateRange) : null
