@@ -79,7 +79,7 @@
               "minWidth": "130dp",
               "minHeight": "57dp",
               "description": "Sync health data to Google Drive (Wide)",
-              "previewImage": "./assets/widget-preview.png"
+              "previewImage": "./assets/widget-preview-wide.png"
             },
             {
               "name": "SyncWidgetSmall",
@@ -87,7 +87,7 @@
               "minWidth": "57dp",
               "minHeight": "57dp",
               "description": "Sync health data to Google Drive (Small)",
-              "previewImage": "./assets/widget-preview.png"
+              "previewImage": "./assets/widget-preview-small.png"
             }
           ]
         }
