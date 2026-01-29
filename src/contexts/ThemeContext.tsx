@@ -2,7 +2,6 @@
 // アプリ全体のテーマ（カラーモード）設定を管理
 // システム設定の検知とユーザー設定の永続化を行う
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,
   ReactNode,
@@ -13,6 +12,7 @@ import React, {
 } from 'react';
 import { useColorScheme } from 'react-native';
 import { STORAGE_KEYS } from '../config/storageKeys';
+import { keyValueStorage } from '../services/infrastructure/keyValueStorage';
 import { darkColors, lightColors } from '../theme/colors';
 import { ThemeColors, ThemeMode } from '../theme/types';
 
@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.APP_THEME);
+        const savedTheme = await keyValueStorage.getItem(STORAGE_KEYS.APP_THEME);
         if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
           setThemeModeState(savedTheme as ThemeMode);
         }
@@ -55,7 +55,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setThemeMode = useCallback(async (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.APP_THEME, mode);
+      await keyValueStorage.setItem(STORAGE_KEYS.APP_THEME, mode);
     } catch (error) {
       console.error('[ThemeContext] Failed to save theme:', error);
     }

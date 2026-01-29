@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../../config/storageKeys';
 import { OfflineQueueData, PendingExport } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
+import { keyValueStorage } from '../infrastructure/keyValueStorage';
 
 const STORAGE_KEY = STORAGE_KEYS.OFFLINE_EXPORT_QUEUE;
 export const MAX_RETRY_COUNT = 3;
@@ -94,7 +94,7 @@ export class QueueManager {
    * キューをクリア（デバッグ用）
    */
   async clearQueue(): Promise<void> {
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await keyValueStorage.removeItem(STORAGE_KEY);
     await addDebugLog('[QueueManager] Queue cleared', 'info');
   }
 
@@ -105,7 +105,7 @@ export class QueueManager {
    */
   private async loadQueueData(): Promise<OfflineQueueData> {
     try {
-      const json = await AsyncStorage.getItem(STORAGE_KEY);
+      const json = await keyValueStorage.getItem(STORAGE_KEY);
       if (!json) {
         return { pending: [], updatedAt: new Date().toISOString() };
       }
@@ -122,7 +122,7 @@ export class QueueManager {
   private async saveQueueData(data: OfflineQueueData): Promise<void> {
     try {
       data.updatedAt = new Date().toISOString();
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      await keyValueStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
       await addDebugLog(`[QueueManager] Save failed: ${error}`, 'error');
     }

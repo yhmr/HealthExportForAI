@@ -3,7 +3,6 @@
 // 実際のロジックは task.ts に委譲する
 
 import notifee, { AndroidImportance } from '@notifee/react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
@@ -11,6 +10,7 @@ import { Language, translations } from '../../i18n/translations';
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
 import { addDebugLog } from '../debugLogService';
+import { keyValueStorage } from '../infrastructure/keyValueStorage';
 import { executeSyncLogic } from './backgroundTask';
 
 /** バックグラウンド同期タスク名 */
@@ -25,7 +25,7 @@ addDebugLog('[Scheduler] Module loaded', 'info').catch(() => {});
  */
 async function getLanguage(): Promise<Language> {
   try {
-    const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
+    const savedLanguage = await keyValueStorage.getItem(LANGUAGE_KEY);
     return savedLanguage === 'ja' || savedLanguage === 'en' ? savedLanguage : 'ja';
   } catch {
     return 'ja';

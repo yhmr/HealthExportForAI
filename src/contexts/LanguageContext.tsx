@@ -1,7 +1,6 @@
 // 言語コンテキスト
 // アプリ全体の言語設定を管理
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import React, {
   createContext,
@@ -13,6 +12,7 @@ import React, {
 } from 'react';
 import { STORAGE_KEYS } from '../config/storageKeys';
 import { Language, translations } from '../i18n/translations';
+import { keyValueStorage } from '../services/infrastructure/keyValueStorage';
 
 type Translations = typeof translations.ja;
 
@@ -36,7 +36,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const savedLanguage = await AsyncStorage.getItem(STORAGE_KEYS.APP_LANGUAGE);
+        const savedLanguage = await keyValueStorage.getItem(STORAGE_KEYS.APP_LANGUAGE);
         if (savedLanguage === 'ja' || savedLanguage === 'en') {
           setLanguageState(savedLanguage);
         } else {
@@ -64,7 +64,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.APP_LANGUAGE, lang);
+      await keyValueStorage.setItem(STORAGE_KEYS.APP_LANGUAGE, lang);
     } catch (error) {
       console.error('[LanguageContext] Failed to save language:', error);
     }

@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { STORAGE_KEYS } from '../config/storageKeys';
+import { keyValueStorage } from '../services/infrastructure/keyValueStorage';
 import { ALL_DATA_TAGS, DataTagKey, HealthData } from '../types/health';
 
 // データタグのアイコン（ラベルはi18nのdataTypesを使用）
@@ -75,9 +75,9 @@ export const useHealthStore = create<HealthStore>((set) => ({
 
       // 永続化
       const tagsArray = Array.from(newSet);
-      AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tagsArray)).catch((e) =>
-        console.error('[HealthStore] Failed to save tags:', e)
-      );
+      keyValueStorage
+        .setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tagsArray))
+        .catch((e) => console.error('[HealthStore] Failed to save tags:', e));
 
       return { selectedDataTags: newSet };
     });
@@ -89,17 +89,17 @@ export const useHealthStore = create<HealthStore>((set) => ({
 
     // 永続化
     const tagsArray = Array.from(newSet);
-    AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tagsArray)).catch((e) =>
-      console.error('[HealthStore] Failed to save tags:', e)
-    );
+    keyValueStorage
+      .setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tagsArray))
+      .catch((e) => console.error('[HealthStore] Failed to save tags:', e));
   },
 
   setSelectedDataTags: (tags) => {
     set({ selectedDataTags: new Set(tags) });
     // 永続化
-    AsyncStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags)).catch((e) =>
-      console.error('[HealthStore] Failed to save tags:', e)
-    );
+    keyValueStorage
+      .setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, JSON.stringify(tags))
+      .catch((e) => console.error('[HealthStore] Failed to save tags:', e));
   },
 
   reset: () => {
@@ -114,7 +114,7 @@ export const useHealthStore = create<HealthStore>((set) => ({
     // リセット時は永続化データもクリアすべきだが、
     // ここではメモリ上の状態リセットのみとするか、設定も消すか。
     // 「アプリの状態リセット」なら設定も消すべき。
-    AsyncStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
-    AsyncStorage.removeItem(STORAGE_KEYS.SELECTED_DATA_TAGS); // タグ設定も初期化
+    keyValueStorage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
+    keyValueStorage.removeItem(STORAGE_KEYS.SELECTED_DATA_TAGS); // タグ設定も初期化
   }
 }));
