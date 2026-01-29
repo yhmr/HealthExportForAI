@@ -1,9 +1,7 @@
-// Google Sheetsエクスポート
-// ヘルスデータをGoogle Spreadsheetsにエクスポート
-
 import type { HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
+import type { SpreadsheetAdapter } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
-import type { SpreadsheetAdapter } from '../storage/interfaces';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
 /**
@@ -18,12 +16,9 @@ export async function exportToSpreadsheet(
   folderId: string | undefined,
   spreadsheetAdapter: SpreadsheetAdapter,
   originalDates: Set<string>
-): Promise<{
-  success: boolean;
-  exportedSheets: { year: number; spreadsheetId: string }[];
-  folderId?: string;
-  error?: string;
-}> {
+): Promise<
+  Result<{ exportedSheets: { year: number; spreadsheetId: string }[]; folderId?: string }, string>
+> {
   const exportedSheets: { year: number; spreadsheetId: string }[] = [];
   try {
     // 対象の年を取得（データの最新日付から）
@@ -36,7 +31,7 @@ export async function exportToSpreadsheet(
     ];
 
     if (allDates.length === 0) {
-      return { success: false, exportedSheets: [], error: 'エクスポートするデータがありません' };
+      return err('エクスポートするデータがありません');
     }
 
     // 年ごとにデータを分割
@@ -66,13 +61,15 @@ export async function exportToSpreadsheet(
     for (const [year, yearData] of dataByYear) {
       const fileName = getExportFileName(year);
       // ファイル名を渡す
-      let spreadsheetId = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
+      const findResult = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
+      let spreadsheetId = findResult.isOk() ? findResult.unwrap() : null;
       let existingHeaders: string[] = [];
       let existingRows: string[][] = [];
 
       if (spreadsheetId) {
-        const sheetData = await spreadsheetAdapter.getSheetData(spreadsheetId);
-        if (sheetData) {
+        const sheetDataResult = await spreadsheetAdapter.getSheetData(spreadsheetId);
+        if (sheetDataResult.isOk()) {
+          const sheetData = sheetDataResult.unwrap();
           existingHeaders = sheetData.headers;
           existingRows = sheetData.rows;
         }
@@ -91,20 +88,25 @@ export async function exportToSpreadsheet(
       // スプレッドシートが存在しない場合は新規作成
       if (!spreadsheetId) {
         // ファイル名を渡す
-        spreadsheetId = await spreadsheetAdapter.createSpreadsheet(fileName, newHeaders, folderId);
-        if (!spreadsheetId) {
-          return {
-            success: false,
-            exportedSheets: [],
-            error: `${year}年のスプレッドシート作成に失敗しました`
-          };
+        const createResult = await spreadsheetAdapter.createSpreadsheet(
+          fileName,
+          newHeaders,
+          folderId
+        );
+        if (createResult.isErr()) {
+          const errorMsg = createResult.unwrapErr().message;
+          return err(`${year}年のスプレッドシート作成に失敗しました: ${errorMsg}`);
         }
+        spreadsheetId = createResult.unwrap();
       } else {
         // ヘッダーが変更された場合は更新
         if (newHeaders.length > existingHeaders.length) {
           const updateResult = await spreadsheetAdapter.updateHeaders(spreadsheetId, newHeaders);
-          if (!updateResult) {
-            await addDebugLog('ヘッダー更新に失敗しました', 'error');
+          if (updateResult.isErr()) {
+            await addDebugLog(
+              `ヘッダー更新に失敗しました: ${updateResult.unwrapErr().message}`,
+              'error'
+            );
           }
         }
       }
@@ -148,23 +150,22 @@ export async function exportToSpreadsheet(
 
       // 全データを一括で書き込み
       if (allRows.length > 0) {
-        const success = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
-        if (!success) {
-          await addDebugLog('データ書き込みに失敗しました', 'error');
+        const updateRowsResult = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
+        if (updateRowsResult.isErr()) {
+          await addDebugLog(
+            `データ書き込みに失敗しました: ${updateRowsResult.unwrapErr().message}`,
+            'error'
+          );
         }
       }
 
       exportedSheets.push({ year, spreadsheetId });
     }
 
-    return { success: true, exportedSheets, folderId };
+    return ok({ exportedSheets, folderId });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : '不明なエラー';
     await addDebugLog(`スプレッドシートエクスポートエラー: ${errorMsg}`, 'error');
-    return {
-      success: false,
-      exportedSheets: [],
-      error: errorMsg
-    };
+    return err(errorMsg);
   }
 }

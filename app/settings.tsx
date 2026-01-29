@@ -17,7 +17,7 @@ import { DriveSection } from '../src/components/Settings/DriveSection';
 import { ExportSection } from '../src/components/Settings/ExportSection';
 
 // Services/Stores
-import { saveSelectedDataTags } from '../src/services/config/exportConfig';
+import { exportConfigService } from '../src/services/config/ExportConfigService';
 import { useHealthStore } from '../src/stores/healthStore';
 
 // Hooks
@@ -53,7 +53,10 @@ export default function SettingsScreen() {
 
   // selectedDataTagsが変更されたら保存
   useEffect(() => {
-    saveSelectedDataTags(Array.from(selectedDataTags));
+    const saveTags = async () => {
+      await exportConfigService.saveSelectedDataTags(Array.from(selectedDataTags));
+    };
+    saveTags();
   }, [selectedDataTags]);
 
   return (

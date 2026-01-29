@@ -10,13 +10,7 @@ import React, {
   type ReactNode
 } from 'react';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
-import {
-  configureGoogleSignIn,
-  getCurrentUser,
-  isSignedIn,
-  signIn,
-  signOut
-} from '../services/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 
 interface AuthContextType {
   /** 認証済みかどうか */
@@ -56,14 +50,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkAuthStatus = useCallback(async () => {
     try {
       // Google Sign-Inを設定
-      configureGoogleSignIn(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID);
 
       // 認証状態をチェック
-      const signedIn = await isSignedIn();
+      const signedIn = await googleAuthService.isSignedIn();
       setIsAuthenticated(signedIn);
 
       if (signedIn) {
-        const user = await getCurrentUser();
+        const user = await googleAuthService.getCurrentUser();
         setCurrentUser(user);
       } else {
         setCurrentUser(null);
@@ -84,15 +78,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthError(null);
 
     try {
-      configureGoogleSignIn(WEB_CLIENT_ID);
-      const result = await signIn();
+      googleAuthService.configure(WEB_CLIENT_ID);
+      const result = await googleAuthService.signIn();
 
-      if (result.success && result.user) {
+      if (result.isOk()) {
+        const user = result.unwrap();
         setIsAuthenticated(true);
-        setCurrentUser(result.user);
+        setCurrentUser(user);
         return true;
       } else {
-        setAuthError(result.error || 'サインインに失敗しました');
+        const error = result.unwrapErr();
+        setAuthError(error.message);
         return false;
       }
     } catch (error) {
@@ -107,7 +103,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const handleSignOut = useCallback(async () => {
     try {
-      await signOut();
+      const result = await googleAuthService.signOut();
+      if (result.isErr()) {
+        console.error('[AuthContext] signOut warning:', result.unwrapErr().toString());
+        // 失敗してもクライアント側はサインアウト扱いにする
+      }
       setIsAuthenticated(false);
       setCurrentUser(null);
     } catch (error) {

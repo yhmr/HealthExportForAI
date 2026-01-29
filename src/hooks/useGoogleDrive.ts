@@ -3,10 +3,10 @@
 import { useCallback, useState } from 'react';
 import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
-import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
+import { driveConfigService } from '../services/config/DriveConfigService';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
-import { configureGoogleSignIn, getOrRefreshAccessToken } from '../services/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { getCurrentISOString } from '../utils/formatters';
@@ -27,10 +27,10 @@ export function useGoogleDrive() {
    */
   const loadConfig = useCallback(async () => {
     try {
-      const config = await loadDriveConfig();
+      const config = await driveConfigService.loadDriveConfig();
       setDriveConfigState(config);
       // Google Sign-Inを設定（埋め込みIDを使用）
-      configureGoogleSignIn(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID);
       return config;
     } finally {
       setIsConfigLoaded(true);
@@ -41,7 +41,7 @@ export function useGoogleDrive() {
    * Drive設定を保存
    */
   const saveConfig = useCallback(async (config: DriveConfig) => {
-    await saveDriveConfig(config);
+    await driveConfigService.saveDriveConfig(config);
     setDriveConfigState(config);
   }, []);
 
@@ -127,22 +127,33 @@ export function useGoogleDrive() {
           return driveConfig.folderName;
         }
 
-        const token = await getOrRefreshAccessToken();
-        if (!token) return DEFAULT_FOLDER_NAME;
-
-        const folder = await getFolder(folderId, token);
-        if (folder) {
-          const newConfig = { folderId, folderName: folder.name };
-          await saveDriveConfig(newConfig);
-          setDriveConfigState(newConfig);
-          return folder.name;
-        } else {
-          // 見つからない場合は設定をクリア
-          const emptyConfig = { folderId: '', folderName: '' };
-          await saveDriveConfig(emptyConfig);
-          setDriveConfigState(emptyConfig);
+        const tokenResult = await googleAuthService.getOrRefreshAccessToken();
+        if (tokenResult.isErr()) {
+          console.error('[useGoogleDrive] Failed to get token:', tokenResult.unwrapErr());
           return DEFAULT_FOLDER_NAME;
         }
+
+        const token = tokenResult.unwrap();
+        if (!token) return DEFAULT_FOLDER_NAME;
+
+        const folderResult = await getFolder(folderId, token);
+        if (folderResult.isOk()) {
+          const folder = folderResult.unwrap();
+          if (folder) {
+            const newConfig = { folderId, folderName: folder.name };
+            await driveConfigService.saveDriveConfig(newConfig);
+            setDriveConfigState(newConfig);
+            return folder.name;
+          }
+        } else {
+          console.error('[useGoogleDrive] getFolder error:', folderResult.unwrapErr());
+        }
+
+        // 見つからない場合やエラーの場合は設定をクリア
+        const emptyConfig = { folderId: '', folderName: '' };
+        await driveConfigService.saveDriveConfig(emptyConfig);
+        setDriveConfigState(emptyConfig);
+        return DEFAULT_FOLDER_NAME;
       } catch (error) {
         console.error('[useGoogleDrive] resolveFolder error:', error);
         return DEFAULT_FOLDER_NAME;

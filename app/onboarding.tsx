@@ -19,13 +19,7 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
-import {
-  saveExportFormats,
-  saveExportPeriodDays,
-  saveExportSheetAsPdf,
-  saveIsSetupCompleted,
-  saveSelectedDataTags
-} from '../src/services/config/exportConfig';
+import { exportConfigService } from '../src/services/config/ExportConfigService';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
 import { useHealthStore } from '../src/stores/healthStore';
 import { ALL_DATA_TAGS, DataTagKey } from '../src/types/health';
@@ -118,19 +112,19 @@ export default function OnboardingScreen() {
   const handleNext = async () => {
     if (currentStep === STEPS.SETUP) {
       // 設定保存
-      await saveExportPeriodDays(initialDays);
-      await saveSelectedDataTags(Array.from(selectedTags));
+      await exportConfigService.saveExportPeriodDays(initialDays);
+      await exportConfigService.saveSelectedDataTags(Array.from(selectedTags));
     }
 
     if (currentStep === STEPS.FORMAT) {
-      await saveExportFormats(exportFormats);
-      await saveExportSheetAsPdf(exportSheetAsPdf);
+      await exportConfigService.saveExportFormats(exportFormats);
+      await exportConfigService.saveExportSheetAsPdf(exportSheetAsPdf);
     }
 
     if (currentStep < STEPS.COMPLETED) {
       setCurrentStep((prev) => (prev + 1) as Step);
     } else {
-      await saveIsSetupCompleted(true);
+      await exportConfigService.saveIsSetupCompleted(true);
       router.replace('/');
     }
   };

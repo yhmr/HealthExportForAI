@@ -5,23 +5,23 @@ import type { ExportFormat } from '../../config/driveConfig';
 import { useOfflineStore } from '../../stores/offlineStore';
 import type { ExportConfig, PendingExport } from '../../types/exportTypes';
 import type { DataTagKey, HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
+import type {
+  FileOperations,
+  FolderOperations,
+  Initializable,
+  SpreadsheetAdapter
+} from '../../types/storage';
 import { filterHealthDataByTags } from '../../utils/dataHelpers';
-import { loadDriveConfig } from '../config/driveConfig';
-import { loadExportFormats, loadExportSheetAsPdf } from '../config/exportConfig';
+import { driveConfigService } from '../config/DriveConfigService';
+import { exportConfigService } from '../config/ExportConfigService';
 import { addDebugLog } from '../debugLogService';
 import { getNetworkStatus } from '../networkService';
-import { createSpreadsheetAdapter, createStorageAdapter } from '../storage/adapterFactory';
-import type { SpreadsheetAdapter, StorageAdapter } from '../storage/interfaces';
+import { adapterFactory } from '../storage/adapterFactory';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';
-import {
-  addToQueue,
-  getQueue,
-  hasExceededMaxRetries,
-  incrementRetry,
-  removeFromQueue
-} from './queue-storage';
+import { queueManager } from './QueueManager';
 import { exportToSpreadsheet } from './sheets';
 
 // ===== 型定義 =====
@@ -63,9 +63,9 @@ export const BACKGROUND_EXECUTION_TIMEOUT_MS = 25000;
  * デフォルトのエクスポート設定を生成
  */
 export async function createDefaultExportConfig(): Promise<ExportConfig> {
-  const formats = await loadExportFormats();
-  const exportAsPdf = await loadExportSheetAsPdf();
-  const driveConfig = await loadDriveConfig();
+  const formats = await exportConfigService.loadExportFormats();
+  const exportAsPdf = await exportConfigService.loadExportSheetAsPdf();
+  const driveConfig = await driveConfigService.loadDriveConfig();
 
   return {
     formats,
@@ -75,39 +75,6 @@ export async function createDefaultExportConfig(): Promise<ExportConfig> {
       name: driveConfig?.folderName
     }
   };
-}
-
-/**
- * エクスポートリクエストをキューに追加
- */
-export async function addToExportQueue(
-  healthData: HealthData,
-  dateRange: Set<string>,
-  config?: ExportConfig
-): Promise<boolean> {
-  const exportConfig = config ?? (await createDefaultExportConfig());
-  const tags = Object.keys(healthData) as string[];
-
-  await addDebugLog('[ExportService] Adding request to queue', 'info');
-
-  try {
-    const id = await addToQueue({
-      healthData,
-      selectedTags: tags,
-      syncDateRange: Array.from(dateRange),
-      exportConfig
-    });
-
-    if (id) {
-      const count = (await getQueue()).length;
-      useOfflineStore.getState().setPendingCount(count);
-      return true;
-    }
-    return false;
-  } catch (error) {
-    await addDebugLog(`[ExportService] Queue add failed: ${error}`, 'error');
-    return false;
-  }
 }
 
 /**
@@ -123,7 +90,6 @@ export async function processExportQueue(
     skippedCount: 0,
     errors: []
   };
-
   await addDebugLog(`[ExportService] Starting queue processing (timeout: ${timeoutMs}ms)`, 'info');
 
   const networkStatus = await getNetworkStatus();
@@ -132,25 +98,28 @@ export async function processExportQueue(
     return result;
   }
 
-  const queue = await getQueue();
+  const queue = await queueManager.getQueue();
   await addDebugLog(`[ExportService] Queue size: ${queue.length}`, 'info');
 
   for (const entry of queue) {
-    if (hasExceededMaxRetries(entry)) {
+    if (queueManager.hasExceededMaxRetries(entry)) {
       await addDebugLog(`[ExportService] Skipping ${entry.id} (max retries)`, 'info');
       result.skippedCount++;
-      await removeFromQueue(entry.id);
+      await queueManager.removeFromQueue(entry.id);
       result.errors.push(`Entry ${entry.id}: Max retries`);
       continue;
     }
 
-    const success = await processSingleEntry(entry, timeoutMs);
+    const res = await processSingleEntry(entry, timeoutMs);
 
-    if (success) {
+    if (res.isOk()) {
       result.successCount++;
-      await removeFromQueue(entry.id);
+      await queueManager.removeFromQueue(entry.id);
     } else {
       result.failCount++;
+      const errorMsg = res.unwrapErr();
+      result.errors.push(errorMsg);
+
       const currentStatus = await getNetworkStatus();
       if (currentStatus !== 'online') {
         await addDebugLog('[ExportService] Network went offline, stopping', 'info');
@@ -159,7 +128,7 @@ export async function processExportQueue(
     }
   }
 
-  const remainingQueue = await getQueue();
+  const remainingQueue = await queueManager.getQueue();
   useOfflineStore.getState().setPendingCount(remainingQueue.length);
 
   await addDebugLog(
@@ -172,12 +141,19 @@ export async function processExportQueue(
 
 // ===== 内部処理 =====
 
-async function processSingleEntry(entry: PendingExport, timeoutMs: number): Promise<boolean> {
+async function processSingleEntry(
+  entry: PendingExport,
+  timeoutMs: number
+): Promise<Result<void, string>> {
   await addDebugLog(`[ExportService] Processing ${entry.id}...`, 'info');
 
   try {
-    const storageAdapter = createStorageAdapter();
-    const spreadsheetAdapter = createSpreadsheetAdapter();
+    // 必要な機能を個別に取得
+    const initializer = adapterFactory.createInitializer();
+    const folderOps = adapterFactory.createFolderOperations();
+    const fileOps = adapterFactory.createFileOperations();
+    const spreadsheetAdapter = adapterFactory.createSpreadsheetAdapter();
+
     const config = entry.exportConfig ?? (await createDefaultExportConfig());
     const selectedTags = new Set(entry.selectedTags as DataTagKey[]);
     const dataToExport = filterHealthDataByTags(entry.healthData, selectedTags);
@@ -193,56 +169,67 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
     const result = await Promise.race([
       executeExportInternal(
         dataToExport,
-        storageAdapter,
+        initializer,
+        folderOps,
+        fileOps,
         spreadsheetAdapter,
         config,
         syncDateRangeSet
       ),
-      new Promise<ExportResults>((_, reject) =>
+      new Promise<Result<ExportResults, string>>((_, reject) =>
         setTimeout(() => reject(new Error(`Timeout (${timeoutMs}ms)`)), timeoutMs)
       )
     ]);
 
-    if (result.success) {
-      await addDebugLog(`[ExportService] Entry ${entry.id} success`, 'success');
-      return true;
+    if (result.isOk()) {
+      const exportResults = result.unwrap();
+      // 個別のエクスポート結果に少なくとも一つ成功が含まれているか、または成功フラグが立っているかを確認
+      if (exportResults.success) {
+        await addDebugLog(`[ExportService] Entry ${entry.id} success`, 'success');
+        return ok<void, string>(undefined);
+      } else {
+        const errorMsg = exportResults.error || 'Export failed partially or completely';
+        await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
+        await queueManager.incrementRetry(entry.id, errorMsg);
+        return err(errorMsg);
+      }
     } else {
-      const errorMsg = result.error || 'Unknown error';
+      const errorMsg = result.unwrapErr();
       await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
-      await incrementRetry(entry.id, errorMsg);
-      return false;
+      await queueManager.incrementRetry(entry.id, errorMsg);
+      return err(errorMsg);
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     await addDebugLog(`[ExportService] Entry ${entry.id} error: ${errorMsg}`, 'error');
-    await incrementRetry(entry.id, errorMsg);
-    return false;
+    await queueManager.incrementRetry(entry.id, errorMsg);
+    return err(errorMsg);
   }
 }
 
 async function executeExportInternal(
   healthData: HealthData,
-  storageAdapter: StorageAdapter,
+  initializer: Initializable,
+  folderOps: FolderOperations,
+  fileOps: FileOperations,
   spreadsheetAdapter: SpreadsheetAdapter,
   config: ExportConfig,
   originalDates: Set<string>
-): Promise<ExportResults> {
+): Promise<Result<ExportResults, string>> {
   const results: FormatResult[] = [];
 
   try {
-    const context = await prepareContext(
-      storageAdapter,
+    const contextResult = await prepareContext(
+      initializer,
+      folderOps,
       config.targetFolder?.id,
       config.targetFolder?.name
     );
 
-    if (!context) {
-      return {
-        success: false,
-        results: [],
-        error: 'No access context (SignIn required)'
-      };
+    if (contextResult.isErr()) {
+      return err(contextResult.unwrapErr());
     }
+    const context = contextResult.unwrap();
 
     if (config.formats.includes('googleSheets')) {
       const result = await exportToSpreadsheet(
@@ -252,82 +239,111 @@ async function executeExportInternal(
         originalDates
       );
 
-      if (result.success) {
-        result.exportedSheets.forEach((sheet) => {
+      if (result.isOk()) {
+        const value = result.unwrap();
+        value.exportedSheets.forEach((sheet) => {
           results.push({ format: 'googleSheets', success: true, fileId: sheet.spreadsheetId });
         });
-        if (result.folderId) context.folderId = result.folderId;
+        if (value.folderId) context.folderId = value.folderId;
 
-        if (config.exportAsPdf && result.exportedSheets.length > 0) {
-          for (const sheet of result.exportedSheets) {
+        if (config.exportAsPdf && value.exportedSheets.length > 0) {
+          for (const sheet of value.exportedSheets) {
             const pdfResult = await exportSpreadsheetAsPDF(
               sheet.spreadsheetId,
               context.folderId,
-              storageAdapter,
+              fileOps,
               spreadsheetAdapter,
               sheet.year
             );
-            results.push({
-              format: 'pdf',
-              success: pdfResult.success,
-              error: pdfResult.error,
-              fileId: pdfResult.fileId
-            });
+            if (pdfResult.isOk()) {
+              results.push({
+                format: 'pdf',
+                success: true,
+                fileId: pdfResult.unwrap()
+              });
+            } else {
+              results.push({
+                format: 'pdf',
+                success: false,
+                error: pdfResult.unwrapErr()
+              });
+            }
           }
         }
       } else {
-        results.push({ format: 'googleSheets', success: false, error: result.error });
+        results.push({ format: 'googleSheets', success: false, error: result.unwrapErr() });
       }
     }
 
     if (config.formats.includes('csv')) {
-      const result = await exportToCSV(healthData, context.folderId, storageAdapter);
-      results.push({
-        format: 'csv',
-        success: result.success,
-        error: result.error,
-        fileId: result.fileId
-      });
+      const result = await exportToCSV(healthData, context.folderId, fileOps);
+      if (result.isOk()) {
+        results.push({
+          format: 'csv',
+          success: true,
+          fileId: result.unwrap()
+        });
+      } else {
+        results.push({
+          format: 'csv',
+          success: false,
+          error: result.unwrapErr()
+        });
+      }
     }
 
     if (config.formats.includes('json')) {
-      const result = await exportToJSON(healthData, context.folderId, storageAdapter);
-      results.push({
-        format: 'json',
-        success: result.success,
-        error: result.error,
-        fileId: result.fileId
-      });
+      const result = await exportToJSON(healthData, context.folderId, fileOps);
+      if (result.isOk()) {
+        results.push({
+          format: 'json',
+          success: true,
+          fileId: result.unwrap()
+        });
+      } else {
+        results.push({
+          format: 'json',
+          success: false,
+          error: result.unwrapErr()
+        });
+      }
     }
 
     const successCount = results.filter((r) => r.success).length;
     const hasSuccess = successCount > 0;
 
-    return {
+    return ok({
       success: hasSuccess,
       results,
       folderId: context.folderId
-    };
+    });
   } catch (error) {
-    throw error;
+    return err(error instanceof Error ? error.message : 'Unknown error during export');
   }
 }
 
 async function prepareContext(
-  storageAdapter: StorageAdapter,
+  initializer: Initializable,
+  folderOps: FolderOperations,
   folderId?: string,
   folderName?: string
-): Promise<ExportContext | null> {
-  const isInitialized = await storageAdapter.initialize();
-  if (!isInitialized) return null;
+): Promise<Result<ExportContext, string>> {
+  const isInitialized = await initializer.initialize();
+  if (!isInitialized) return err('No access context (SignIn required)');
 
-  const targetFolderName = folderName || storageAdapter.defaultFolderName;
+  const targetFolderName = folderName || folderOps.defaultFolderName;
   let targetFolderId = folderId;
 
   if (!targetFolderId) {
-    const id = await storageAdapter.findOrCreateFolder(targetFolderName);
-    targetFolderId = id ?? undefined;
+    const result = await folderOps.findOrCreateFolder(targetFolderName);
+    if (result.isOk()) {
+      targetFolderId = result.unwrap();
+    } else {
+      const errorMsg = result.unwrapErr().message;
+      await addDebugLog(`[ExportService] Failed to find/create folder: ${errorMsg}`, 'error');
+      return err(errorMsg);
+    }
   }
 
-  return { folderId: targetFolderId, folderName: targetFolderName };
+  return ok({ folderId: targetFolderId, folderName: targetFolderName });
 }

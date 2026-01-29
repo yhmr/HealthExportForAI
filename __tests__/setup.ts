@@ -51,3 +51,30 @@ vi.mock('expo-file-system', () => ({
   getInfoAsync: vi.fn(),
   makeDirectoryAsync: vi.fn()
 }));
+
+// Mock Google Signin
+vi.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: vi.fn(),
+    hasPlayServices: vi.fn().mockResolvedValue(true),
+    signIn: vi.fn().mockResolvedValue({
+      user: {
+        id: 'test-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        photo: null,
+        familyName: 'User',
+        givenName: 'Test'
+      },
+      idToken: 'test-id-token'
+    }),
+    signOut: vi.fn().mockResolvedValue(null),
+    isSignedIn: vi.fn().mockResolvedValue(true),
+    getTokens: vi.fn().mockResolvedValue({ accessToken: 'test-access-token' })
+  },
+  statusCodes: {
+    SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    PLAY_SERVICES_NOT_AVAILABLE: 'PLAY_SERVICES_NOT_AVAILABLE'
+  }
+}));

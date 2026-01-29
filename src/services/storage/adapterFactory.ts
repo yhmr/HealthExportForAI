@@ -1,67 +1,59 @@
 // アダプターファクトリ
 // テスト容易性とDIのためにアダプター生成を一元管理
 
-import { GoogleDriveAdapter } from './googleDriveAdapter';
-import { GoogleSheetsAdapter } from './googleSheetsAdapter';
-import type { SpreadsheetAdapter, StorageAdapter } from './interfaces';
+import { googleAuthService } from '../../services/infrastructure/GoogleAuthService';
+import { IAuthService } from '../../types/auth';
+import {
+  FileOperations,
+  FolderOperations,
+  Initializable,
+  SpreadsheetAdapter
+} from '../../types/storage';
+import { GoogleDriveAdapter } from './GoogleDriveAdapter';
+import { GoogleSheetsAdapter } from './GoogleSheetsAdapter';
 
 /**
  * アダプターファクトリのインターフェース
  */
 export interface AdapterFactory {
-  createStorageAdapter(): StorageAdapter;
+  // 目的別のメソッド
+  createInitializer(): Initializable;
+  createFolderOperations(): FolderOperations;
+  createFileOperations(): FileOperations;
+
   createSpreadsheetAdapter(): SpreadsheetAdapter;
+
+  // 以前のメソッド（非推奨または一括取得用）
+  createStorageAdapter(): Initializable & FolderOperations & FileOperations;
 }
 
 /**
  * デフォルトのアダプターファクトリ実装
  * GoogleDrive/GoogleSheetsアダプターを生成
  */
-class DefaultAdapterFactory implements AdapterFactory {
-  createStorageAdapter(): StorageAdapter {
-    return new GoogleDriveAdapter();
+export class DefaultAdapterFactory implements AdapterFactory {
+  constructor(private authService: IAuthService) {}
+
+  createInitializer(): Initializable {
+    return new GoogleDriveAdapter(this.authService);
+  }
+
+  createFolderOperations(): FolderOperations {
+    return new GoogleDriveAdapter(this.authService);
+  }
+
+  createFileOperations(): FileOperations {
+    return new GoogleDriveAdapter(this.authService);
+  }
+
+  createStorageAdapter(): Initializable & FolderOperations & FileOperations {
+    return new GoogleDriveAdapter(this.authService);
   }
 
   createSpreadsheetAdapter(): SpreadsheetAdapter {
-    return new GoogleSheetsAdapter();
+    return new GoogleSheetsAdapter(this.authService);
   }
 }
 
-// シングルトンインスタンス
-let currentFactory: AdapterFactory = new DefaultAdapterFactory();
-
-/**
- * 現在のアダプターファクトリを取得
- */
-export function getAdapterFactory(): AdapterFactory {
-  return currentFactory;
-}
-
-/**
- * アダプターファクトリを設定（テスト用）
- * @param factory カスタムファクトリ
- */
-export function setAdapterFactory(factory: AdapterFactory): void {
-  currentFactory = factory;
-}
-
-/**
- * デフォルトファクトリにリセット（テスト用）
- */
-export function resetAdapterFactory(): void {
-  currentFactory = new DefaultAdapterFactory();
-}
-
-/**
- * ストレージアダプターを作成（ショートカット）
- */
-export function createStorageAdapter(): StorageAdapter {
-  return currentFactory.createStorageAdapter();
-}
-
-/**
- * スプレッドシートアダプターを作成（ショートカット）
- */
-export function createSpreadsheetAdapter(): SpreadsheetAdapter {
-  return currentFactory.createSpreadsheetAdapter();
-}
+// シングルトンインスタンス（デフォルトでgoogleAuthServiceを使用）
+export const adapterFactory: AdapterFactory = new DefaultAdapterFactory(googleAuthService);

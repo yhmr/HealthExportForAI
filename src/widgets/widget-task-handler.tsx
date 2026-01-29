@@ -1,9 +1,9 @@
 import React from 'react';
 import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
-import { loadLastSyncTime } from '../services/config/exportConfig';
+import { exportConfigService } from '../services/config/ExportConfigService';
 import { addDebugLog } from '../services/debugLogService';
-import { configureGoogleSignIn, isSignedIn, signIn } from '../services/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
 import { SyncWidgetSmall } from './SyncWidgetSmall';
@@ -32,13 +32,13 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         renderCurrentWidget('syncing', now);
 
         // 2. Google認証設定 (必須)
-        configureGoogleSignIn(WEB_CLIENT_ID);
+        googleAuthService.configure(WEB_CLIENT_ID);
 
         // 3. 認証状態チェック
-        let authenticated = await isSignedIn();
+        let authenticated = await googleAuthService.isSignedIn();
         if (!authenticated) {
-          const result = await signIn(); // Headlessでのsilent sign-inを期待
-          authenticated = result.success;
+          const result = await googleAuthService.signIn(); // Headlessでのsilent sign-inを期待
+          authenticated = result.isOk();
         }
 
         if (!authenticated) {
@@ -47,23 +47,28 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           // 数秒後にアイドルに戻す
           await new Promise((resolve) => setTimeout(resolve, 3000));
 
-          const lastTime = await loadLastSyncTime();
+          const lastTime = await exportConfigService.loadLastSyncTime();
           renderCurrentWidget('idle', lastTime);
           return;
         }
 
         // 4. データ取得 & エクスポート (一括実行)
         // 前回同期からの差分を取得
-        const { syncResult } = await SyncService.executeFullSync();
+        const fullSyncResult = await SyncService.executeFullSync();
+
+        if (!fullSyncResult.isOk()) {
+          throw new Error(fullSyncResult.unwrapErr().message);
+        }
+        const { syncResult } = fullSyncResult.unwrap();
 
         if (!syncResult.success || !syncResult.isNewData) {
-          const lastTime = await loadLastSyncTime();
+          const lastTime = await exportConfigService.loadLastSyncTime();
           renderCurrentWidget('idle', lastTime);
           return;
         }
 
         // 常に保存されている最終同期時刻を表示してアイドルに戻る
-        const lastTime = await loadLastSyncTime();
+        const lastTime = await exportConfigService.loadLastSyncTime();
         renderCurrentWidget('idle', lastTime);
       } catch (error) {
         await addDebugLog(`[Widget] Sync error: ${error}`, 'error');
@@ -71,7 +76,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
         // エラー後も保存されている時刻を表示
-        const lastTime = await loadLastSyncTime();
+        const lastTime = await exportConfigService.loadLastSyncTime();
         renderCurrentWidget('idle', lastTime);
       }
       break;
@@ -81,7 +86,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'WIDGET_RESIZED':
       {
         // 初期表示
-        const lastTime = await loadLastSyncTime();
+        const lastTime = await exportConfigService.loadLastSyncTime();
         renderCurrentWidget('idle', lastTime);
       }
       break;

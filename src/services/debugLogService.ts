@@ -1,5 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../config/storageKeys';
+import { keyValueStorage } from './infrastructure/keyValueStorage';
+
+import { AppError } from '../types/errors';
 
 /** デバッグログの型 */
 export interface DebugLogEntry {
@@ -13,7 +15,7 @@ export interface DebugLogEntry {
  */
 export async function loadDebugLogs(): Promise<DebugLogEntry[]> {
   try {
-    const json = await AsyncStorage.getItem(STORAGE_KEYS.DEBUG_LOG);
+    const json = await keyValueStorage.getItem(STORAGE_KEYS.DEBUG_LOG);
     return json ? JSON.parse(json) : [];
   } catch {
     return [];
@@ -47,7 +49,7 @@ export async function addDebugLog(
       type
     };
     const updatedLogs = [newLog, ...currentLogs].slice(0, 50);
-    await AsyncStorage.setItem(STORAGE_KEYS.DEBUG_LOG, JSON.stringify(updatedLogs));
+    await keyValueStorage.setItem(STORAGE_KEYS.DEBUG_LOG, JSON.stringify(updatedLogs));
   } catch (error) {
     console.error('Failed to save debug log:', error);
   }
@@ -57,5 +59,20 @@ export async function addDebugLog(
  * デバッグログをクリア
  */
 export async function clearDebugLogs(): Promise<void> {
-  await AsyncStorage.removeItem(STORAGE_KEYS.DEBUG_LOG);
+  await keyValueStorage.removeItem(STORAGE_KEYS.DEBUG_LOG);
+}
+
+/**
+ * エラーをログに記録するヘルパー
+ */
+export async function logError(error: unknown): Promise<void> {
+  let message: string;
+  if (error instanceof AppError) {
+    message = error.toString();
+  } else if (error instanceof Error) {
+    message = error.message;
+  } else {
+    message = String(error);
+  }
+  await addDebugLog(message, 'error');
 }

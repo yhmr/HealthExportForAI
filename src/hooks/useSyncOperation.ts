@@ -30,11 +30,16 @@ export function useSyncOperation(): UseSyncOperationResult {
         const tags = Array.from(selectedDataTags || []);
 
         // SyncServiceに集約されたメソッドを呼び出す
-        const { syncResult, exportResult } = await SyncService.executeFullSync(
+        const fullSyncResult = await SyncService.executeFullSync(
           periodDays,
           false, // forceFullSync
           tags
         );
+
+        if (!fullSyncResult.isOk()) {
+          throw new Error(fullSyncResult.unwrapErr().message);
+        }
+        const { syncResult, exportResult } = fullSyncResult.unwrap();
 
         // 成功時のState更新（Storeへのデータ反映）
         if (syncResult.success) {

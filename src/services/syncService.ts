@@ -1,15 +1,18 @@
-import { DataTagKey, HealthData } from '../types/health';
-import { filterHealthDataByTags } from '../utils/dataHelpers';
+import { AppError } from '../types/errors';
+import { HealthData } from '../types/health';
+import { err, ok, Result } from '../types/result';
 import { generateDateRange, getCurrentISOString, getDateDaysAgo } from '../utils/formatters';
-import { loadExportPeriodDays, loadLastSyncTime, saveLastSyncTime } from './config/exportConfig';
+import { ExportConfigService, exportConfigService } from './config/ExportConfigService';
 import { addDebugLog } from './debugLogService';
-import { addToExportQueue, processExportQueue, ProcessQueueResult } from './export/service';
+import { queueManager, QueueManager } from './export/QueueManager';
 import {
-  checkHealthConnectAvailability,
-  checkHealthPermissions,
-  fetchAllHealthData,
-  initializeHealthConnect
-} from './healthConnect';
+  createDefaultExportConfig,
+  processExportQueue,
+  ProcessQueueResult
+} from './export/service';
+import { AccessChecker } from './health/AccessChecker';
+import { Fetcher } from './health/Fetcher';
+import { Filter } from './health/Filter';
 
 /** 最小取得日数 */
 const MIN_FETCH_DAYS = 7;
@@ -22,36 +25,78 @@ export interface SyncResult {
   dateRange: Set<string>;
   startTime: string;
   endTime: string;
-  isNewData: boolean; // 前回同期よりもデータが新しいか（簡易判定）
-  queued: boolean; // エクスポートキューに追加されたか
+  isNewData: boolean;
+  queued: boolean;
 }
 
 /**
- * 同期サービス
- * フォアグラウンド(UI)とバックグラウンド(Task)で共通利用されるロジックを提供
+ * 同期サービスの実装クラス
+ * 機能ごとのサービスクラスを統括するオーケストレーター
  */
-export const SyncService = {
+export class SyncServiceImpl {
+  constructor(
+    private accessChecker: AccessChecker,
+    private fetcher: Fetcher,
+    private filter: Filter,
+    private queueManager: QueueManager,
+    private configService: ExportConfigService
+  ) {}
+
   /**
    * Health Connectの状態確認と初期化
    */
-  async initialize(): Promise<{
-    available: boolean;
-    initialized: boolean;
-    hasPermissions: boolean;
-  }> {
-    const availability = await checkHealthConnectAvailability();
+  async initialize(): Promise<
+    Result<
+      {
+        available: boolean;
+        initialized: boolean;
+        hasPermissions: boolean;
+      },
+      AppError
+    >
+  > {
+    const availabilityResult = await this.accessChecker.checkAvailability();
+    if (!availabilityResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Availability check failed: ${availabilityResult.unwrapErr()}`,
+        'error'
+      );
+
+      return err(availabilityResult.unwrapErr());
+    }
+    const availability = availabilityResult.unwrap();
+
     if (!availability.available) {
-      return { available: false, initialized: false, hasPermissions: false };
+      return ok({ available: false, initialized: false, hasPermissions: false });
     }
 
-    const initialized = await initializeHealthConnect();
+    const initResult = await this.accessChecker.initialize();
+    if (!initResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Initialization check failed: ${initResult.unwrapErr()}`,
+        'error'
+      );
+      // 初期化チェックが失敗した場合のエラー処理
+      return err(initResult.unwrapErr());
+    }
+    const initialized = initResult.unwrap();
+
     if (!initialized) {
-      return { available: true, initialized: false, hasPermissions: false };
+      return ok({ available: true, initialized: false, hasPermissions: false });
     }
 
-    const hasPermissions = await checkHealthPermissions();
-    return { available: true, initialized: true, hasPermissions };
-  },
+    const permResult = await this.accessChecker.hasPermissions();
+    if (!permResult.isOk()) {
+      await addDebugLog(
+        `[SyncService] Permission check failed: ${permResult.unwrapErr()}`,
+        'error'
+      );
+      return err(permResult.unwrapErr());
+    }
+    const hasPermissions = permResult.unwrap();
+
+    return ok({ available: true, initialized: true, hasPermissions });
+  }
 
   /**
    * 同期実行（データ取得＋永続化）
@@ -63,12 +108,12 @@ export const SyncService = {
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<SyncResult> {
+  ): Promise<Result<SyncResult, AppError>> {
     try {
       await addDebugLog('[SyncService] Starting sync...', 'info');
 
       // 1. 取得期間の決定
-      const fetchTimeRange = await calculateFetchTimeRange(periodDays, forceFullSync);
+      const fetchTimeRange = await this.calculateFetchTimeRange(periodDays, forceFullSync);
       const { startTime, endTime } = fetchTimeRange;
 
       await addDebugLog(
@@ -76,37 +121,34 @@ export const SyncService = {
         'info'
       );
 
-      // 2. データの取得
-      const healthData = await fetchAllHealthData(startTime, endTime);
+      // 2. データの取得 (Fetcher利用)
+      const healthData = await this.fetcher.fetchAllData(startTime, endTime);
 
-      // データが存在するか確認
       const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
-
-      // 取得期間の全日付セット生成
       const dateRange = generateDateRange(startTime, endTime);
-
       let queued = false;
 
       if (hasData) {
-        // 成功時のみ同期時刻を更新（永続化）
         const now = getCurrentISOString();
-        await saveLastSyncTime(now);
+        await this.configService.saveLastSyncTime(now);
         await addDebugLog(`[SyncService] Sync success. LastSyncTime updated: ${now}`, 'success');
 
-        // エクスポートキューへの追加
-        // バックグラウンド/Widget/UI統一で、SyncServiceが責務を持つ
-
-        // タグフィルタリング (selectedTagsが指定されている場合)
         let dataToQueue = healthData;
-        // Note: filterHealthDataByTagsを使わずに手動でフィルタリング（循環参照回避のため）
-
         if (selectedTags && selectedTags.length > 0) {
-          // Utilを使ってフィルタリング
-          const tagSet = new Set<DataTagKey>(selectedTags as DataTagKey[]);
-          dataToQueue = filterHealthDataByTags(healthData, tagSet);
+          dataToQueue = this.filter.filterByTags(healthData, selectedTags);
         }
 
-        queued = await addToExportQueue(dataToQueue, dateRange);
+        const exportConfig = await createDefaultExportConfig();
+        const tags = Object.keys(dataToQueue) as string[];
+
+        const queueId = await this.queueManager.addToQueue({
+          healthData: dataToQueue,
+          selectedTags: tags,
+          syncDateRange: Array.from(dateRange),
+          exportConfig
+        });
+
+        queued = !!queueId;
         if (queued) {
           await addDebugLog('[SyncService] Data automatically added to export queue', 'info');
         } else {
@@ -116,7 +158,7 @@ export const SyncService = {
         await addDebugLog('[SyncService] No data found in range', 'info');
       }
 
-      return {
+      return ok({
         success: true,
         data: healthData,
         dateRange,
@@ -124,13 +166,14 @@ export const SyncService = {
         endTime: endTime.toISOString(),
         isNewData: hasData,
         queued
-      };
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       await addDebugLog(`[SyncService] Sync failed: ${errorMessage}`, 'error');
-      throw error;
+      // AppErrorとして返す
+      return err(new AppError(`Sync failed: ${errorMessage}`, 'SYNC_FAILED', error));
     }
-  },
+  }
 
   /**
    * 同期とアップロードを一括実行 (Facade)
@@ -141,67 +184,85 @@ export const SyncService = {
     periodDays?: number,
     forceFullSync: boolean = false,
     selectedTags?: string[]
-  ): Promise<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }> {
+  ): Promise<
+    Result<{ syncResult: SyncResult; exportResult?: ProcessQueueResult | null }, AppError>
+  > {
     // 1. データ取得 & キューイング
-    const syncResult = await this.fetchAndQueueNewData(periodDays, forceFullSync, selectedTags);
+    const syncResultOrErr = await this.fetchAndQueueNewData(
+      periodDays,
+      forceFullSync,
+      selectedTags
+    );
+
+    if (!syncResultOrErr.isOk()) {
+      return err(syncResultOrErr.unwrapErr());
+    }
+    const syncResult = syncResultOrErr.unwrap();
 
     let exportResult = null;
 
     // 2. 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
     if (syncResult.success) {
+      // 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
       // オフライン判定等は processExportQueue 側で行われるため、ここでは単に呼び出す
       exportResult = await processExportQueue();
     }
 
-    return {
+    return ok({
       syncResult,
       exportResult
-    };
-  }
-};
-
-/**
- * 取得期間の計算 (内部利用)
- */
-async function calculateFetchTimeRange(
-  periodDays?: number,
-  forceFullSync?: boolean
-): Promise<{ startTime: Date; endTime: Date }> {
-  const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
-
-  // 明示的に日数が指定された場合、または強制フル同期の場合
-  if (periodDays !== undefined || forceFullSync) {
-    const days = periodDays ?? (await loadExportPeriodDays());
-    const startTime = getDateDaysAgo(days);
-    return { startTime, endTime };
+    });
   }
 
-  // 差分更新判定
-  const lastSyncTimeStr = await loadLastSyncTime();
+  /**
+   * 取得期間の計算 (内部利用)
+   */
+  private async calculateFetchTimeRange(
+    periodDays?: number,
+    forceFullSync?: boolean
+  ): Promise<{ startTime: Date; endTime: Date }> {
+    const endTime = new Date(); // 現在時刻 (getEndOfToday() だと未来が含まれる可能性があるため、現在時刻までとするのが安全)
 
-  if (lastSyncTimeStr) {
-    // 前回同期がある場合はそこから
-    // ただし、安全のため少しだけ重複を持たせる（例: 数分前とか、あるいは前回同期時刻そのまま）
-    // ここでは前回同期時刻をそのまま採用
-    const lastSyncDate = new Date(lastSyncTimeStr);
-    // あまりに古い場合は最大期間で制限するロジックを入れても良いが、
-    // HealthConnectは制限があるので、ここでは自動計算ロジック（backgroundTaskにあったもの）を統合
+    // 明示的に日数が指定された場合、または強制フル同期の場合
+    if (periodDays !== undefined || forceFullSync) {
+      const days = periodDays ?? (await this.configService.loadExportPeriodDays());
+      const startTime = getDateDaysAgo(days);
+      return { startTime, endTime };
+    }
 
-    // 経過日数を計算
-    const daysSinceLastSync = Math.ceil(
-      (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    // 差分更新判定
+    const lastSyncTimeStr = await this.configService.loadLastSyncTime();
 
-    // 最小7日、最大30日の範囲で調整（バックグラウンドロジックを踏襲）
-    // ※フォアグラウンドでも「久しぶりに開いたとき」はこれでカバーできる
-    const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
-    const startTime = getDateDaysAgo(fetchDays);
+    if (lastSyncTimeStr) {
+      // 前回同期がある場合はそこから
+      const lastSyncDate = new Date(lastSyncTimeStr);
 
-    return { startTime, endTime };
-  } else {
-    // 初回同期（LastSyncTimeなし）
-    const days = await loadExportPeriodDays();
-    const startTime = getDateDaysAgo(days);
-    return { startTime, endTime };
+      // 経過日数を計算
+      const daysSinceLastSync = Math.ceil(
+        (Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // 最小7日、最大30日の範囲で調整
+      const fetchDays = Math.min(Math.max(daysSinceLastSync, MIN_FETCH_DAYS), MAX_FETCH_DAYS);
+      const startTime = getDateDaysAgo(fetchDays);
+
+      return { startTime, endTime };
+    } else {
+      // 初回同期（LastSyncTimeなし）
+      const days = await this.configService.loadExportPeriodDays();
+      const startTime = getDateDaysAgo(days);
+      return { startTime, endTime };
+    }
   }
 }
+
+/**
+ * 同期サービスのシングルトンインスタンス
+ */
+export const SyncService = new SyncServiceImpl(
+  new AccessChecker(),
+  new Fetcher(),
+  new Filter(),
+  queueManager,
+  exportConfigService
+);

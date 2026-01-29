@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
-import type { StorageAdapter } from '../../../src/services/storage/interfaces';
+import { err, ok } from '../../../src/types/result';
+import { FileOperations } from '../../../src/types/storage';
 
 // Mock debugLogService to prevent AsyncStorage usage
 vi.mock('../../../src/services/debugLogService', () => ({
@@ -8,23 +9,35 @@ vi.mock('../../../src/services/debugLogService', () => ({
 }));
 
 // Mock StorageAdapter
-const mockStorageAdapter = {
+const mockFileOps = {
   findFile: vi.fn(),
   uploadFile: vi.fn(),
   updateFile: vi.fn(),
   downloadFileContent: vi.fn()
-} as unknown as StorageAdapter;
+} as unknown as FileOperations;
 
 // Mock Health Data
 const mockHealthData = {
   steps: [{ date: '2025-01-01', count: 5000 }],
-  weight: [],
-  bodyFat: [],
-  totalCaloriesBurned: [],
-  basalMetabolicRate: [],
-  sleep: [],
-  nutrition: [],
-  exercise: []
+  weight: [{ date: '2025-01-01', value: 70, unit: 'kg' as const, time: '2025-01-01T08:00:00Z' }],
+  bodyFat: [{ date: '2025-01-01', percentage: 20, time: '2025-01-01T08:00:00Z' }],
+  totalCaloriesBurned: [{ date: '2025-01-01', value: 2000, unit: 'kcal' as const }],
+  basalMetabolicRate: [
+    { date: '2025-01-01', value: 1500, unit: 'kcal/day' as const, time: '2025-01-01T08:00:00Z' }
+  ],
+  sleep: [{ date: '2025-01-01', durationMinutes: 480, deepSleepPercentage: 20 }],
+  nutrition: [
+    {
+      date: '2025-01-01',
+      calories: 2000,
+      protein: 100,
+      totalFat: 50,
+      totalCarbohydrate: 250,
+      dietaryFiber: 30,
+      saturatedFat: 10
+    }
+  ],
+  exercise: [{ date: '2025-01-01', type: 'Running', durationMinutes: 30 }]
 };
 
 // Reset mocks before each test
@@ -35,15 +48,15 @@ beforeEach(() => {
 describe('JSON Export Service', () => {
   it('should create a new JSON file if it does not exist', async () => {
     // Setup: File does not exist, upload succeeds
-    (mockStorageAdapter.findFile as any).mockResolvedValue(null);
-    (mockStorageAdapter.uploadFile as any).mockResolvedValue('new-file-id');
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(ok('new-file-id'));
 
-    const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('new-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('new-file-id');
 
-    expect(mockStorageAdapter.uploadFile).toHaveBeenCalledWith(
+    expect(mockFileOps.uploadFile).toHaveBeenCalledWith(
       expect.any(String),
       'Health_Data_2025.json',
       'application/json',
@@ -51,7 +64,7 @@ describe('JSON Export Service', () => {
     );
 
     // Verify JSON content
-    const uploadCall = (mockStorageAdapter.uploadFile as any).mock.calls[0];
+    const uploadCall = (mockFileOps.uploadFile as any).mock.calls[0];
     const jsonContent = JSON.parse(uploadCall[0]);
 
     expect(jsonContent.year).toBe(2025);
@@ -62,7 +75,7 @@ describe('JSON Export Service', () => {
 
   it('should update and merge with existing JSON file', async () => {
     // Setup: File exists with previous data
-    (mockStorageAdapter.findFile as any).mockResolvedValue({ id: 'existing-file-id' });
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
 
     const existingData = {
       year: 2025,
@@ -71,22 +84,22 @@ describe('JSON Export Service', () => {
         { date: '2024-12-31', steps: 2000 }
       ]
     };
-    (mockStorageAdapter.downloadFileContent as any).mockResolvedValue(JSON.stringify(existingData));
-    (mockStorageAdapter.updateFile as any).mockResolvedValue(true);
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(ok(JSON.stringify(existingData)));
+    (mockFileOps.updateFile as any).mockResolvedValue(ok(true));
 
-    const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('existing-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('existing-file-id');
 
-    expect(mockStorageAdapter.updateFile).toHaveBeenCalledWith(
+    expect(mockFileOps.updateFile).toHaveBeenCalledWith(
       'existing-file-id',
       expect.any(String),
       'application/json'
     );
 
     // Verify merged content
-    const updateCall = (mockStorageAdapter.updateFile as any).mock.calls[0];
+    const updateCall = (mockFileOps.updateFile as any).mock.calls[0];
     const jsonContent = JSON.parse(updateCall[1]);
 
     expect(jsonContent.year).toBe(2025);
@@ -104,16 +117,48 @@ describe('JSON Export Service', () => {
   });
 
   it('should handle invalid existing JSON gracefuly', async () => {
-    (mockStorageAdapter.findFile as any).mockResolvedValue({ id: 'existing-file-id' });
-    (mockStorageAdapter.downloadFileContent as any).mockResolvedValue('invalid-json'); // Corrupt file
-    (mockStorageAdapter.updateFile as any).mockResolvedValue(true);
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(ok('invalid-json')); // Corrupt file
+    (mockFileOps.updateFile as any).mockResolvedValue(ok(true));
 
-    const result = await exportToJSON(mockHealthData, 'folder-123', mockStorageAdapter);
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
+    expect(result.isOk()).toBe(true);
     // It should start fresh if parsing fails
-    const updateCall = (mockStorageAdapter.updateFile as any).mock.calls[0];
+    const updateCall = (mockFileOps.updateFile as any).mock.calls[0];
     const jsonContent = JSON.parse(updateCall[1]);
     expect(jsonContent.records).toHaveLength(1); // Only new data
+  });
+
+  it('should return failure if update file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(
+      ok(JSON.stringify({ year: 2025, records: [] }))
+    );
+    (mockFileOps.updateFile as any).mockResolvedValue(err(new Error('Update failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('Update failed');
+  });
+
+  it('should return failure if upload file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(err(new Error('Upload failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('Upload failed');
+  });
+
+  it('should return failure on unexpected exception', async () => {
+    (mockFileOps.findFile as any).mockRejectedValue(new Error('Unexpected error'));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toBe('Unexpected error');
   });
 });

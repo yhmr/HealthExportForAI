@@ -11,7 +11,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { getOrRefreshAccessToken } from '../services/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { createFolder, listFolders } from '../services/storage/googleDrive';
 import { ThemeColors } from '../theme/types';
 
@@ -56,10 +56,19 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   const loadFolders = async (parentId: string) => {
     setIsLoading(true);
     try {
-      const token = await getOrRefreshAccessToken();
-      if (token) {
-        const list = await listFolders(token, parentId);
-        setFolders(list);
+      const tokenResult = await googleAuthService.getOrRefreshAccessToken();
+      if (tokenResult.isOk()) {
+        const token = tokenResult.unwrap();
+        const result = await listFolders(token, parentId);
+        if (result.isOk()) {
+          setFolders(result.unwrap());
+        } else {
+          console.error('Failed to list folders:', result.unwrapErr());
+          Alert.alert('エラー', 'フォルダ一覧の取得に失敗しました');
+        }
+      } else {
+        console.error('Failed to get access token:', tokenResult.unwrapErr());
+        Alert.alert('エラー', '認証トークンの取得に失敗しました');
       }
     } catch (error) {
       console.error('Failed to load folders:', error);
@@ -88,10 +97,11 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
 
     setIsLoading(true);
     try {
-      const token = await getOrRefreshAccessToken();
-      if (token) {
-        const newId = await createFolder(newFolderName, token, currentFolder.id);
-        if (newId) {
+      const tokenResult = await googleAuthService.getOrRefreshAccessToken();
+      if (tokenResult.isOk()) {
+        const token = tokenResult.unwrap();
+        const result = await createFolder(newFolderName, token, currentFolder.id);
+        if (result.isOk()) {
           setNewFolderName('');
           setIsCreatingFolder(false);
           loadFolders(currentFolder.id);
@@ -99,6 +109,9 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
         } else {
           Alert.alert('エラー', 'フォルダの作成に失敗しました');
         }
+      } else {
+        console.error('Failed to get access token:', tokenResult.unwrapErr());
+        Alert.alert('エラー', '認証トークンの取得に失敗しました');
       }
     } catch (error) {
       console.error('Failed to create folder:', error);
