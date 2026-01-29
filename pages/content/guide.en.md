@@ -7,68 +7,80 @@ layout: 'page'
 
 # User Guide
 
-This guide explains how to export your Google Health Connect data using **Health Export For AI**.
+This guide explains how to easily export your Google Health Connect data using **Health Export For AI**.
 
 ## 1. Initial Setup
 
 ### Install Health Connect
 
-This app uses Health Connect.
-On Android 14 and later, it is pre-installed. For older versions, please install it from the Play Store.
+This app uses the Health Connect app.  
+On Android 14 and later, it is pre-installed. For earlier versions, please install it from the Play Store.
 
 ### Grant Permissions
 
-When you first launch the app, you will be asked to grant access to Health Connect and Google Drive (Sign-in). Please allow both.
+1. When you first launch the app, you will be asked to grant access to Health Connect and Google Drive (Sign-in). Please "Allow" both.
 
 <div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
-<img src="/HealthExportForAI/img/init-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/init-02.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/init-03.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/init-04.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/init-05.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-02.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-03.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
 </div>
 
 - **Google Sign-In:** Required to upload exported files to Google Drive.
 - **Health Connect Permissions:** Required to read data such as steps, weight, sleep, etc.
 
-## 2. Sync Data (Manual)
+2. Next, complete the initial setup. First, specify the historical range of data to retrieve from Health Connect. Once the retrieval is complete, specify "the types of data to export".
 
-1.  Select the date range for the data you want to export.
-2.  Tap "Fetch Data" to retrieve data from Health Connect for the specified days.
+<div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
+<img src="/HealthExportForAI/img/onboard-04.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-05.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-06.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+</div>
+
+3. Continue by specifying the file format for export and the destination folder on Google Drive.
+
+<div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
+<img src="/HealthExportForAI/img/onboard-07.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+<img src="/HealthExportForAI/img/onboard-08.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+</div>
+
+4. You're all set! Now, whenever you want to sync your data, just press the button in the app or tap the widget, and your Google Drive data will be updated!
+
+<div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
+<img src="/HealthExportForAI/img/onboard-09.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
+</div>
+
+## 2. Syncing Data
+
+By tapping "Sync Now", you can retrieve the latest data from Health Connect and save it to Google Drive.  
+(After the first sync, only the difference since the last sync will be added.)
 
 <div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
 <img src="/HealthExportForAI/img/home-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/home-02.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/home-03.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
-<img src="/HealthExportForAI/img/home-04.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
 </div>
 
-3.  Tap "Export" to upload the data to your configured Google Drive.
-4.  Once synchronized, a folder named `HealthExport` (or your custom folder) will be created in your Google Drive root directory containing the saved data.
+## 3. Syncing with Widgets
 
-## 3. Sync with Widget
-
-Add the widget to your home screen for one-tap synchronization.
+By adding a widget to your home screen, you can perform synchronization with a single tap.
 
 <div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
 <img src="/HealthExportForAI/img/widget-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
 <img src="/HealthExportForAI/img/widget-02.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
 </div>
 
-1.  Long-press on the Android home screen and select "Widgets".
-2.  Find **Health Export For AI** and place the widget.
-3.  Tap the widget to start the background sync process.
+1. Long-press on the Android home screen and select "Widgets".
+2. Find **Health Export For AI** and place the widget anywhere on your home screen.
 
-## 4. Export Settings
+(You can also place the widget via the menu shown by long-pressing the app icon.)
 
-You can change the export format from the settings screen (gear icon).
+3. Tapping the widget will start the synchronization process in the background.
+
+## 4. Changing Settings
+
+You can change various settings, such as the export format, from the settings screen (gear icon).
 
 <img src="/HealthExportForAI/img/setting-01.png" width="200" />
 
-- **Google Sheets:** Save as spreadsheets (Ideal for AI analysis)
-- **PDF:** Save as PDF file
-- **JSON / CSV:** Save as raw data
-
 ---
 
-If you have any questions, please contact us via [GitHub Issue](https://github.com/yhmr/HealthExportForAI/issues).
+If you have any questions, please post them to [GitHub Issue](https://github.com/yhmr/HealthExportForAI/issues).
