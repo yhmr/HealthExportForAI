@@ -15,8 +15,6 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "pages:dev": "hugo server -s pages -D",
-    "build:android:all": "node scripts/build-android.js all",
-    "build:android:release": "node scripts/build-android.js release",
     "build:android:debug": "node scripts/build-android.js debug"
   },
   "dependencies": {

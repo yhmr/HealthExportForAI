@@ -4,8 +4,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 // モード取得
-const mode = process.argv[2] || 'all';
-console.log(`🔧 Build mode: ${mode}`);
+const mode = process.argv[2] || 'debug';
+console.log(`🔧 Build mode: ${mode} (Debug Only)`);
 
 // 環境変数読み込み関数
 function loadEnv(filePath) {
@@ -82,20 +82,9 @@ function runCommand(command, args, cwd = process.cwd()) {
     const isWindows = process.platform === 'win32';
     const gradlew = isWindows ? 'gradlew.bat' : './gradlew';
 
-    let tasks = [];
-    if (mode === 'all') {
-      tasks = ['clean', 'bundleRelease', 'assembleRelease'];
-    } else if (mode === 'release') {
-      tasks = ['clean', 'bundleRelease'];
-    } else if (mode === 'debug') {
-      tasks = ['clean', 'assembleDebug'];
-    } else {
-      throw new Error(
-        `❌ Unknown mode: ${mode}. Usage: node scripts/build-android.js [all|release|debug]`
-      );
-    }
+    const tasks = ['clean', 'assembleDebug', 'assembleRelease'];
 
-    console.log('🚀 Starting build...');
+    console.log('🚀 Starting Debug build...');
     // Androidディレクトリが存在することを確認 (Prebuildで生成されるはずだが念のため)
     if (!fs.existsSync(androidDir)) {
       throw new Error(`Android directory not found at ${androidDir}`);
@@ -103,22 +92,10 @@ function runCommand(command, args, cwd = process.cwd()) {
 
     await runCommand(gradlew, tasks, androidDir);
 
-    console.log('✅ Build complete!');
-    if (mode === 'all' || mode === 'release') {
-      console.log(
-        `AAB: ${path.join('android', 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab')}`
-      );
-    }
-    if (mode === 'all') {
-      console.log(
-        `APK: ${path.join('android', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk')}`
-      );
-    }
-    if (mode === 'debug') {
-      console.log(
-        `APK: ${path.join('android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')}`
-      );
-    }
+    console.log('✅ Debug Build complete!');
+    console.log(
+      `APK: ${path.join('android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')}`
+    );
   } catch (error) {
     console.error('Build failed:', error.message);
     process.exit(1);
