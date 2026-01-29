@@ -14,7 +14,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "prepare": "husky",
-    "pages:dev": "hugo server -s pages -D"
+    "pages:dev": "hugo server -s pages -D",
+    "build:android:debug": "node scripts/build-android.js debug"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",

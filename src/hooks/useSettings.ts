@@ -58,10 +58,7 @@ export function useSettings() {
         const config = await loadConfig();
         const formats = await exportConfigService.loadExportFormats();
         const pdfOption = await exportConfigService.loadExportSheetAsPdf();
-        const days = await (() =>
-          import('../services/config/ExportConfigService').then((m) =>
-            m.exportConfigService.loadExportPeriodDays()
-          ))();
+        const days = await exportConfigService.loadExportPeriodDays();
         const syncConfig = await backgroundSyncConfigService.loadBackgroundSyncConfig();
         const lastSync = await backgroundSyncConfigService.loadLastBackgroundSync();
         const logs = await loadDebugLogs();

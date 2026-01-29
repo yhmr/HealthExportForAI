@@ -98,7 +98,32 @@ npm run lint
 npm run format
 ```
 
-## Project Structure
+## Android Build
+
+You can build Release (AAB) and Debug (APK) versions using the scripts added to `package.json`.
+
+### Prerequisites
+
+- Ensure `EXPO_PUBLIC_WEB_CLIENT_ID`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` are set in your `.env` file.
+
+### Build Commands
+
+```bash
+# Automated Build (Recommended)
+# Installs dependencies -> prebuild -> loads env -> generates AAB & APK
+npm run build:android:all
+
+# Generate Release AAB only
+npm run build:android:release
+
+# Generate Debug APK only
+npm run build:android:debug
+```
+
+### Output Locations
+
+- **Release AAB (for Google Play)**: `android/app/build/outputs/bundle/release/app-release.aab`
+- **Debug/Test APK**: `android/app/build/outputs/apk/release/app-release.apk` (or `debug/app-debug.apk`)
 
 ```
 ├── app/                    # Expo Router pages

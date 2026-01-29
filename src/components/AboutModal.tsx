@@ -18,6 +18,8 @@ import { ThemeColors } from '../theme/types';
 
 const REPO_URL = 'https://github.com/yhmr/HealthExportForAI';
 const AUTHOR_URL = 'https://yhmr.github.io/';
+const APP_URL = 'https://yhmr.github.io/HealthExportForAI/';
+const PRIVACY_URL = 'https://yhmr.github.io/HealthExportForAI/privacy/';
 
 interface AboutModalProps {
   visible: boolean;
@@ -91,6 +93,23 @@ export function AboutModal({
                 <Text style={styles.label}>Author</Text>
                 <Text style={styles.value}>{pkg.author}</Text>
               </View>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity onPress={() => Linking.openURL(APP_URL)} style={styles.actionRow}>
+                <Text style={styles.actionLabel}>Application Site</Text>
+                <Text style={styles.actionIcon}>→</Text>
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL(PRIVACY_URL)}
+                style={styles.actionRow}
+              >
+                <Text style={styles.actionLabel}>Privacy Policy</Text>
+                <Text style={styles.actionIcon}>→</Text>
+              </TouchableOpacity>
 
               <View style={styles.divider} />
 
