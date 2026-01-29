@@ -52,6 +52,5 @@ pages/.hugo_build.lock
 
 # Scripts
 copy_apk.sh
-releaseBuild.sh
 
 coverage/

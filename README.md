@@ -98,7 +98,32 @@ npm run lint
 npm run format
 ```
 
-## プロジェクト構成
+## Android ビルド
+
+`package.json` に追加されたスクリプトを使用して、リリース用 (AAB) およびテスト用 (APK) のビルドが可能です。
+
+### 必須要件
+
+- `.env` ファイルに `EXPO_PUBLIC_WEB_CLIENT_ID` や `SENTRY_AUTH_TOKEN`、`SENTRY_ORG`、`SENTRY_PROJECT` が設定されていること。
+
+### ビルドコマンド
+
+```bash
+# 全自動ビルド (推奨)
+# 依存関係インストール -> prebuild -> 環境変数読込 -> AAB & APK 生成
+npm run build:android:all
+
+# リリース用 AAB のみ生成
+npm run build:android:release
+
+# デバッグ用 APK のみ生成
+npm run build:android:debug
+```
+
+### 生成物の場所
+
+- **Google Play用 AAB**: `android/app/build/outputs/bundle/release/app-release.aab`
+- **テスト配布用 APK**: `android/app/build/outputs/apk/release/app-release.apk` (または `debug/app-debug.apk`)
 
 ```
 ├── app/                    # Expo Router ページ
