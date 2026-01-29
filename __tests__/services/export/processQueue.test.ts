@@ -1,17 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadDriveConfig } from '../../../src/services/config/driveConfig';
-import { loadExportFormats, loadExportSheetAsPdf } from '../../../src/services/config/exportConfig';
+import { exportConfigService } from '../../../src/services/config/ExportConfigService';
 import { queueManager } from '../../../src/services/export/QueueManager';
 import { processExportQueue } from '../../../src/services/export/service';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
-import {
-  createFileOperations,
-  createFolderOperations,
-  createInitializer,
-  createSpreadsheetAdapter,
-  createStorageAdapter
-} from '../../../src/services/storage/adapterFactory';
+import { adapterFactory } from '../../../src/services/storage/adapterFactory';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
 import { ok } from '../../../src/types/result';
 
@@ -31,16 +25,19 @@ vi.mock('../../../src/services/export/QueueManager', () => ({
   }
 }));
 vi.mock('../../../src/services/storage/adapterFactory', () => ({
-  createStorageAdapter: vi.fn(),
-  createSpreadsheetAdapter: vi.fn(),
-  createInitializer: vi.fn(),
-  createFolderOperations: vi.fn(),
-  createFileOperations: vi.fn()
+  adapterFactory: {
+    createStorageAdapter: vi.fn(),
+    createSpreadsheetAdapter: vi.fn(),
+    createInitializer: vi.fn(),
+    createFolderOperations: vi.fn(),
+    createFileOperations: vi.fn()
+  }
 }));
-vi.mock('../../../src/services/config/exportConfig', () => ({
-  loadExportFormats: vi.fn(),
-  loadExportSheetAsPdf: vi.fn(),
-  createDefaultExportConfig: vi.fn()
+vi.mock('../../../src/services/config/ExportConfigService', () => ({
+  exportConfigService: {
+    loadExportFormats: vi.fn(),
+    loadExportSheetAsPdf: vi.fn()
+  }
 }));
 vi.mock('../../../src/services/config/driveConfig', () => ({
   loadDriveConfig: vi.fn()
@@ -67,38 +64,38 @@ describe('ExportService - processExportQueue', () => {
     vi.mocked(queueManager.hasExceededMaxRetries).mockReturnValue(false);
 
     // Config系モック
-    vi.mocked(loadExportFormats).mockResolvedValue(['googleSheets']);
-    vi.mocked(loadExportSheetAsPdf).mockResolvedValue(false);
+    vi.mocked(exportConfigService.loadExportFormats).mockResolvedValue(['googleSheets']);
+    vi.mocked(exportConfigService.loadExportSheetAsPdf).mockResolvedValue(false);
     vi.mocked(loadDriveConfig).mockResolvedValue({
       folderId: 'folder-id',
       folderName: 'folder-name'
     });
 
     // アダプタのモック
-    vi.mocked(createStorageAdapter).mockReturnValue({
+    vi.mocked(adapterFactory.createStorageAdapter).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(ok(true)),
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       defaultFolderName: 'ConnectHealth'
     } as any);
 
-    vi.mocked(createInitializer).mockReturnValue({
+    vi.mocked(adapterFactory.createInitializer).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(ok(true))
     });
 
-    vi.mocked(createFolderOperations).mockReturnValue({
+    vi.mocked(adapterFactory.createFolderOperations).mockReturnValue({
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
       defaultFolderName: 'ConnectHealth'
     });
 
-    vi.mocked(createFileOperations).mockReturnValue({
+    vi.mocked(adapterFactory.createFileOperations).mockReturnValue({
       findFile: vi.fn(),
       uploadFile: vi.fn(),
       updateFile: vi.fn(),
       downloadFileContent: vi.fn()
     });
 
-    vi.mocked(createSpreadsheetAdapter).mockReturnValue({} as any);
+    vi.mocked(adapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
 
     // エクスポート処理の成功モック
     vi.mocked(exportToSpreadsheet).mockResolvedValue({

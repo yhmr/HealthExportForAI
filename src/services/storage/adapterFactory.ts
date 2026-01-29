@@ -1,7 +1,7 @@
 // アダプターファクトリ
 // テスト容易性とDIのためにアダプター生成を一元管理
 
-import { googleAuthService } from '../../services/infrastructure/googleAuth';
+import { googleAuthService } from '../../services/infrastructure/GoogleAuthService';
 import { IAuthService } from '../../types/auth';
 import {
   FileOperations,
@@ -56,61 +56,4 @@ export class DefaultAdapterFactory implements AdapterFactory {
 }
 
 // シングルトンインスタンス（デフォルトでgoogleAuthServiceを使用）
-let currentFactory: AdapterFactory = new DefaultAdapterFactory(googleAuthService);
-
-/**
- * 現在のアダプターファクトリを取得
- */
-export function getAdapterFactory(): AdapterFactory {
-  return currentFactory;
-}
-
-/**
- * アダプターファクトリを設定（テスト用）
- * @param factory カスタムファクトリ
- */
-export function setAdapterFactory(factory: AdapterFactory): void {
-  currentFactory = factory;
-}
-
-/**
- * デフォルトファクトリにリセット（テスト用）
- */
-export function resetAdapterFactory(): void {
-  currentFactory = new DefaultAdapterFactory(googleAuthService);
-}
-
-/**
- * 初期化用アダプターを作成
- */
-export function createInitializer(): Initializable {
-  return currentFactory.createInitializer();
-}
-
-/**
- * フォルダ操作用アダプターを作成
- */
-export function createFolderOperations(): FolderOperations {
-  return currentFactory.createFolderOperations();
-}
-
-/**
- * ファイル操作用アダプターを作成
- */
-export function createFileOperations(): FileOperations {
-  return currentFactory.createFileOperations();
-}
-
-/**
- * ストレージアダプターを作成（一括機能）
- */
-export function createStorageAdapter(): Initializable & FolderOperations & FileOperations {
-  return currentFactory.createStorageAdapter();
-}
-
-/**
- * スプレッドシートアダプターを作成（ショートカット）
- */
-export function createSpreadsheetAdapter(): SpreadsheetAdapter {
-  return currentFactory.createSpreadsheetAdapter();
-}
+export const adapterFactory: AdapterFactory = new DefaultAdapterFactory(googleAuthService);

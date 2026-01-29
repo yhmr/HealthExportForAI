@@ -2,8 +2,8 @@
 // ヘルスデータをGoogle Spreadsheetsにエクスポート
 
 import type { HealthData } from '../../types/health';
+import type { SpreadsheetAdapter } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
-import type { SpreadsheetAdapter } from '../storage/interfaces';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
 /**

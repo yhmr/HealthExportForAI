@@ -1,7 +1,7 @@
 // PDFエクスポート
 // Google SheetsをPDF形式でエクスポートしてDriveに保存
 
-import type { FileOperations, SpreadsheetAdapter } from '../storage/interfaces';
+import type { FileOperations, SpreadsheetAdapter } from '../../types/storage';
 import { getExportFileName } from './utils';
 
 /**

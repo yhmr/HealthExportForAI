@@ -9,15 +9,9 @@ vi.mock('../../src/services/health/AccessChecker');
 vi.mock('../../src/services/health/Fetcher');
 vi.mock('../../src/services/health/Filter');
 vi.mock('../../src/services/export/QueueManager');
-vi.mock('../../src/services/config/exportConfig', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/services/config/exportConfig')>();
-  return {
-    ...actual,
-    createDefaultExportConfig: vi.fn().mockResolvedValue({})
-  };
-});
 vi.mock('../../src/services/export/service', () => ({
-  processExportQueue: vi.fn()
+  processExportQueue: vi.fn(),
+  createDefaultExportConfig: vi.fn().mockResolvedValue({})
 }));
 vi.mock('../../src/services/debugLogService', () => ({
   addDebugLog: vi.fn()

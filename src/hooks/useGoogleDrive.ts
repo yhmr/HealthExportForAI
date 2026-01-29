@@ -6,10 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
-import {
-  configureGoogleSignIn,
-  getOrRefreshAccessToken
-} from '../services/infrastructure/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { getNetworkStatus } from '../services/networkService';
 import { DEFAULT_FOLDER_NAME, getFolder } from '../services/storage/googleDrive';
 import { getCurrentISOString } from '../utils/formatters';
@@ -33,7 +30,7 @@ export function useGoogleDrive() {
       const config = await loadDriveConfig();
       setDriveConfigState(config);
       // Google Sign-Inを設定（埋め込みIDを使用）
-      configureGoogleSignIn(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID);
       return config;
     } finally {
       setIsConfigLoaded(true);
@@ -130,7 +127,7 @@ export function useGoogleDrive() {
           return driveConfig.folderName;
         }
 
-        const tokenResult = await getOrRefreshAccessToken();
+        const tokenResult = await googleAuthService.getOrRefreshAccessToken();
         if (tokenResult.isErr()) {
           console.error('[useGoogleDrive] Failed to get token:', tokenResult.unwrapErr());
           return DEFAULT_FOLDER_NAME;

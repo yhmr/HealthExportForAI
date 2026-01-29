@@ -1,7 +1,7 @@
 // Health Connect カスタムフック
 
 import { useCallback, useState } from 'react';
-import { loadLastSyncTime, loadSelectedDataTags } from '../services/config/exportConfig';
+import { exportConfigService } from '../services/config/ExportConfigService';
 import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
@@ -73,14 +73,14 @@ export function useHealthConnect() {
         setHasPermissions(hasPerms);
 
         // 保存されたデータタグ設定を読み込む
-        const savedTags = await loadSelectedDataTags();
+        const savedTags = await exportConfigService.loadSelectedDataTags();
         if (savedTags) {
           // 保存された設定があれば反映
           setSelectedDataTags(savedTags as DataTagKey[]);
         }
 
         // 保存された最終同期時刻を読み込む
-        const savedTime = await loadLastSyncTime();
+        const savedTime = await exportConfigService.loadLastSyncTime();
         if (savedTime) {
           setLastSyncTime(savedTime);
         }

@@ -15,8 +15,8 @@ import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { useSyncOperation } from '../src/hooks/useSyncOperation';
-import { loadBackgroundSyncConfig } from '../src/services/config/backgroundSyncConfig';
-import { loadIsSetupCompleted } from '../src/services/config/exportConfig';
+import { backgroundSyncConfigService } from '../src/services/config/BackgroundSyncConfigService';
+import { exportConfigService } from '../src/services/config/ExportConfigService';
 import { checkHealthPermissions } from '../src/services/healthConnect';
 import { ThemeColors } from '../src/theme/types';
 
@@ -57,7 +57,7 @@ export default function HomeScreen() {
         const [initResult, configResult, setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
           loadConfig(),
-          loadIsSetupCompleted()
+          exportConfigService.loadIsSetupCompleted()
         ]);
 
         if (!isMounted) return;
@@ -71,8 +71,8 @@ export default function HomeScreen() {
         }
 
         // UI設定の読み込み
-        const bgConfig = await loadBackgroundSyncConfig();
-        setAutoSyncEnabled(bgConfig.enabled);
+        const config = await backgroundSyncConfigService.loadBackgroundSyncConfig();
+        setAutoSyncEnabled(config.enabled);
 
         // オンボーディング判定
         const needsOnboarding =

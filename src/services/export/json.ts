@@ -3,8 +3,8 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
+import type { FileOperations } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
-import type { FileOperations } from '../storage/interfaces';
 import type { ExportResult } from './csv';
 import { getExportFileName } from './utils';
 

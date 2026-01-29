@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { SYNC_INTERVALS, getSyncIntervalLabel } from '../../services/config/backgroundSyncConfig';
+import {
+  SYNC_INTERVALS,
+  getSyncIntervalLabel
+} from '../../services/config/BackgroundSyncConfigService';
 import { ThemeColors } from '../../theme/types';
 import { AutoSyncConfig, SyncInterval } from '../../types/exportTypes';
 import { SettingsItem } from './SettingsItem';

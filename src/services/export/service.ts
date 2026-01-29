@@ -5,23 +5,18 @@ import type { ExportFormat } from '../../config/driveConfig';
 import { useOfflineStore } from '../../stores/offlineStore';
 import type { ExportConfig, PendingExport } from '../../types/exportTypes';
 import type { DataTagKey, HealthData } from '../../types/health';
-import { filterHealthDataByTags } from '../../utils/dataHelpers';
-import { loadDriveConfig } from '../config/driveConfig';
-import { loadExportFormats, loadExportSheetAsPdf } from '../config/exportConfig';
-import { addDebugLog } from '../debugLogService';
-import { getNetworkStatus } from '../networkService';
-import {
-  createFileOperations,
-  createFolderOperations,
-  createInitializer,
-  createSpreadsheetAdapter
-} from '../storage/adapterFactory';
 import type {
   FileOperations,
   FolderOperations,
   Initializable,
   SpreadsheetAdapter
-} from '../storage/interfaces';
+} from '../../types/storage';
+import { filterHealthDataByTags } from '../../utils/dataHelpers';
+import { loadDriveConfig } from '../config/driveConfig';
+import { exportConfigService } from '../config/ExportConfigService';
+import { addDebugLog } from '../debugLogService';
+import { getNetworkStatus } from '../networkService';
+import { adapterFactory } from '../storage/adapterFactory';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';
@@ -67,8 +62,8 @@ export const BACKGROUND_EXECUTION_TIMEOUT_MS = 25000;
  * デフォルトのエクスポート設定を生成
  */
 export async function createDefaultExportConfig(): Promise<ExportConfig> {
-  const formats = await loadExportFormats();
-  const exportAsPdf = await loadExportSheetAsPdf();
+  const formats = await exportConfigService.loadExportFormats();
+  const exportAsPdf = await exportConfigService.loadExportSheetAsPdf();
   const driveConfig = await loadDriveConfig();
 
   return {
@@ -148,10 +143,10 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
 
   try {
     // 必要な機能を個別に取得（ISP遵守）
-    const initializer = createInitializer();
-    const folderOps = createFolderOperations();
-    const fileOps = createFileOperations();
-    const spreadsheetAdapter = createSpreadsheetAdapter();
+    const initializer = adapterFactory.createInitializer();
+    const folderOps = adapterFactory.createFolderOperations();
+    const fileOps = adapterFactory.createFileOperations();
+    const spreadsheetAdapter = adapterFactory.createSpreadsheetAdapter();
 
     const config = entry.exportConfig ?? (await createDefaultExportConfig());
     const selectedTags = new Set(entry.selectedTags as DataTagKey[]);

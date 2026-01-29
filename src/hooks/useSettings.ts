@@ -5,17 +5,8 @@ import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
 import { syncBackgroundTask } from '../services/background/scheduler';
-import {
-  loadBackgroundSyncConfig,
-  loadLastBackgroundSync,
-  saveBackgroundSyncConfig
-} from '../services/config/backgroundSyncConfig';
-import {
-  loadExportFormats,
-  loadExportSheetAsPdf,
-  saveExportFormats,
-  saveExportSheetAsPdf
-} from '../services/config/exportConfig';
+import { backgroundSyncConfigService } from '../services/config/BackgroundSyncConfigService';
+import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
 import { requestBackgroundHealthPermission } from '../services/healthConnect';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
@@ -65,12 +56,14 @@ export function useSettings() {
       try {
         setIsLoading(true);
         const config = await loadConfig();
-        const formats = await loadExportFormats();
-        const pdfOption = await loadExportSheetAsPdf();
+        const formats = await exportConfigService.loadExportFormats();
+        const pdfOption = await exportConfigService.loadExportSheetAsPdf();
         const days = await (() =>
-          import('../services/config/exportConfig').then((m) => m.loadExportPeriodDays()))();
-        const syncConfig = await loadBackgroundSyncConfig();
-        const lastSync = await loadLastBackgroundSync();
+          import('../services/config/ExportConfigService').then((m) =>
+            m.exportConfigService.loadExportPeriodDays()
+          ))();
+        const syncConfig = await backgroundSyncConfigService.loadBackgroundSyncConfig();
+        const lastSync = await backgroundSyncConfigService.loadLastBackgroundSync();
         const logs = await loadDebugLogs();
 
         if (!mounted) return;
@@ -120,14 +113,14 @@ export function useSettings() {
       ? exportFormats.filter((f) => f !== format)
       : [...exportFormats, format];
     setExportFormats(newFormats);
-    await saveExportFormats(newFormats);
+    await exportConfigService.saveExportFormats(newFormats);
   };
 
   // アクション: PDFオプション変更
   const togglePdfOption = async () => {
     const newValue = !exportSheetAsPdf;
     setExportSheetAsPdf(newValue);
-    await saveExportSheetAsPdf(newValue);
+    await exportConfigService.saveExportSheetAsPdf(newValue);
   };
 
   // アクション: 自動同期トグル
@@ -158,7 +151,7 @@ export function useSettings() {
 
     const newConfig = { ...autoSyncConfig, enabled };
     setAutoSyncConfigState(newConfig);
-    await saveBackgroundSyncConfig(newConfig);
+    await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
     await syncBackgroundTask(newConfig);
     await refreshLogs();
   };
@@ -167,7 +160,7 @@ export function useSettings() {
   const changeSyncInterval = async (interval: SyncInterval) => {
     const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
     setAutoSyncConfigState(newConfig);
-    await saveBackgroundSyncConfig(newConfig);
+    await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
     await syncBackgroundTask(newConfig);
     await refreshLogs();
   };
@@ -176,7 +169,7 @@ export function useSettings() {
   const toggleWifiOnly = async (wifiOnly: boolean) => {
     const newConfig = { ...autoSyncConfig, wifiOnly };
     setAutoSyncConfigState(newConfig);
-    await saveBackgroundSyncConfig(newConfig);
+    await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
   };
 
   // アクション: ログクリア

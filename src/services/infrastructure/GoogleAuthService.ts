@@ -134,3 +134,6 @@ export class GoogleAuthService implements IAuthService {
     return result;
   }
 }
+
+// シングルトンインスタンスの作成
+export const googleAuthService = new GoogleAuthService();

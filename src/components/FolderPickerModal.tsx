@@ -11,7 +11,7 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { getOrRefreshAccessToken } from '../services/infrastructure/googleAuth';
+import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { createFolder, listFolders } from '../services/storage/googleDrive';
 import { ThemeColors } from '../theme/types';
 
@@ -56,7 +56,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   const loadFolders = async (parentId: string) => {
     setIsLoading(true);
     try {
-      const tokenResult = await getOrRefreshAccessToken();
+      const tokenResult = await googleAuthService.getOrRefreshAccessToken();
       if (tokenResult.isOk()) {
         const token = tokenResult.unwrap();
         const result = await listFolders(token, parentId);
@@ -97,7 +97,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
 
     setIsLoading(true);
     try {
-      const tokenResult = await getOrRefreshAccessToken();
+      const tokenResult = await googleAuthService.getOrRefreshAccessToken();
       if (tokenResult.isOk()) {
         const token = tokenResult.unwrap();
         const result = await createFolder(newFolderName, token, currentFolder.id);

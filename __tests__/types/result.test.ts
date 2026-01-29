@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { err, ok } from '../../src/types/result';
 
 describe('Result Type Tests', () => {
@@ -68,7 +69,7 @@ describe('Result Type Tests', () => {
       const mapped = result.map((v) => v * 2);
       expect(mapped.isErr()).toBe(true);
       mapped.match({
-        ok: () => fail('Should be Err'),
+        ok: () => expect.fail('Should be Err'),
         err: (e) => expect(e).toBe('error')
       });
     });
@@ -77,7 +78,7 @@ describe('Result Type Tests', () => {
       const result = err<number, string>('error');
       const mapped = result.mapErr((e) => 'Fatal: ' + e);
       mapped.match({
-        ok: () => fail('Should be Err'),
+        ok: () => expect.fail('Should be Err'),
         err: (e) => expect(e).toBe('Fatal: error')
       });
     });

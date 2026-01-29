@@ -2,6 +2,9 @@ import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
 import { STORAGE_KEYS } from '../../config/storageKeys';
 import { IKeyValueStorage } from '../../types/storage';
 
+// シングルトンインスタンスの作成
+import { keyValueStorage } from '../infrastructure/keyValueStorage';
+
 /**
  * エクスポート設定サービス
  */
@@ -120,3 +123,4 @@ export class ExportConfigService {
     await this.storage.removeItem(STORAGE_KEYS.LAST_SYNC_TIME);
   }
 }
+export const exportConfigService = new ExportConfigService(keyValueStorage);

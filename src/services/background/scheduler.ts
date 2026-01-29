@@ -8,7 +8,7 @@ import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
 import { Language, translations } from '../../i18n/translations';
 import { AutoSyncConfig } from '../../types/exportTypes';
-import { loadBackgroundSyncConfig } from '../config/backgroundSyncConfig';
+import { backgroundSyncConfigService } from '../config/BackgroundSyncConfigService';
 import { addDebugLog } from '../debugLogService';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 import { executeSyncLogic } from './backgroundTask';
@@ -82,7 +82,7 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
   const BACKGROUND_TIMEOUT_MS = 60000;
 
   try {
-    const config = await loadBackgroundSyncConfig();
+    const config = await backgroundSyncConfigService.loadBackgroundSyncConfig();
 
     // タイムアウト付きで実行
     const result = await Promise.race([
