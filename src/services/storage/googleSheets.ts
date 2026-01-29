@@ -13,9 +13,6 @@ const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 /**
  * 名前でスプレッドシートを検索
  */
-/**
- * 名前でスプレッドシートを検索
- */
 export async function findSpreadsheet(
   fileName: string,
   accessToken: string,
@@ -61,9 +58,6 @@ export async function findSpreadsheet(
   }
 }
 
-/**
- * 新しいスプレッドシートを作成
- */
 /**
  * 新しいスプレッドシートを作成
  */
@@ -150,9 +144,6 @@ export async function createSpreadsheet(
 /**
  * スプレッドシートの既存データを取得
  */
-/**
- * スプレッドシートの既存データを取得
- */
 export async function getSheetData(
   spreadsheetId: string,
   accessToken: string
@@ -197,9 +188,6 @@ export async function getSheetData(
   }
 }
 
-/**
- * ヘッダー行を更新（エクササイズの動的カラム追加時）
- */
 /**
  * ヘッダー行を更新（エクササイズの動的カラム追加時）
  */
@@ -248,9 +236,6 @@ export async function updateHeaders(
   }
 }
 
-/**
- * 行データを更新または追加
- */
 /**
  * 行データを更新または追加
  */
@@ -309,11 +294,6 @@ export async function updateRows(
  * @param spreadsheetId スプレッドシートID
  * @param accessToken アクセストークン
  */
-/**
- * スプレッドシートをPDFとして取得（Base64形式）
- * @param spreadsheetId スプレッドシートID
- * @param accessToken アクセストークン
- */
 export async function fetchPDF(
   spreadsheetId: string,
   accessToken: string
@@ -363,9 +343,6 @@ function columnToLetter(column: number): string {
   return letter;
 }
 
-/**
- * ファイルを指定フォルダに移動 (内部利用のみ)
- */
 /**
  * ファイルを指定フォルダに移動 (内部利用のみ)
  */

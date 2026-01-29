@@ -61,7 +61,7 @@ export class SyncServiceImpl {
         `[SyncService] Availability check failed: ${availabilityResult.unwrapErr()}`,
         'error'
       );
-      // Return specific error
+
       return err(availabilityResult.unwrapErr());
     }
     const availability = availabilityResult.unwrap();
@@ -76,11 +76,7 @@ export class SyncServiceImpl {
         `[SyncService] Initialization check failed: ${initResult.unwrapErr()}`,
         'error'
       );
-      // If init fails, maybe we still return Ok but with initialized=false?
-      // But AccessChecker returns error only if exception.
-      // The original code treated false as just "not initialized".
-      // HealthConnect.initialize throws if failed.
-      // So err is appropriate.
+      // 初期化チェックが失敗した場合のエラー処理
       return err(initResult.unwrapErr());
     }
     const initialized = initResult.unwrap();
@@ -126,18 +122,13 @@ export class SyncServiceImpl {
       );
 
       // 2. データの取得 (Fetcher利用)
-      // fetcher.fetchAllData currently throws or returns empty.
-      // If we refactor fetcher to Result, we can use it here.
-      // But currently it returns HealthData.
       const healthData = await this.fetcher.fetchAllData(startTime, endTime);
 
-      // ... (logic) ...
       const hasData = Object.values(healthData).some((arr) => Array.isArray(arr) && arr.length > 0);
       const dateRange = generateDateRange(startTime, endTime);
       let queued = false;
 
       if (hasData) {
-        // ...
         const now = getCurrentISOString();
         await this.configService.saveLastSyncTime(now);
         await addDebugLog(`[SyncService] Sync success. LastSyncTime updated: ${now}`, 'success');
@@ -168,7 +159,7 @@ export class SyncServiceImpl {
       }
 
       return ok({
-        success: true, // We can keep success:true for backward compat inside SyncResult if needed, or remove it.
+        success: true,
         data: healthData,
         dateRange,
         startTime: startTime.toISOString(),
@@ -179,7 +170,7 @@ export class SyncServiceImpl {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       await addDebugLog(`[SyncService] Sync failed: ${errorMessage}`, 'error');
-      // Return AppError. Convert unknown error.
+      // AppErrorとして返す
       return err(new AppError(`Sync failed: ${errorMessage}`, 'SYNC_FAILED', error));
     }
   }
@@ -212,7 +203,7 @@ export class SyncServiceImpl {
 
     // 2. 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
     if (syncResult.success) {
-      // success is always true if Ok, but keeping property check logic
+      // 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
       // オフライン判定等は processExportQueue 側で行われるため、ここでは単に呼び出す
       exportResult = await processExportQueue();
     }

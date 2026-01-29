@@ -18,9 +18,6 @@ export const DEFAULT_FOLDER_NAME = 'Health Export For AI Data';
 /**
  * フォルダを作成
  */
-/**
- * フォルダを作成
- */
 export async function createFolder(
   folderName: string,
   accessToken: string,
@@ -73,9 +70,6 @@ export async function createFolder(
 /**
  * フォルダ一覧を取得
  */
-/**
- * フォルダ一覧を取得
- */
 export async function listFolders(
   accessToken: string,
   parentId: string = 'root'
@@ -118,9 +112,6 @@ export async function listFolders(
 /**
  * フォルダ情報を取得
  */
-/**
- * フォルダ情報を取得
- */
 export async function getFolder(
   folderId: string,
   accessToken: string
@@ -156,9 +147,6 @@ export async function getFolder(
   }
 }
 
-/**
- * 指定したIDのフォルダが存在するか確認
- */
 /**
  * 指定したIDのフォルダが存在するか確認
  */
@@ -201,9 +189,6 @@ export async function checkFolderExists(
   }
 }
 
-/**
- * 指定した名前のフォルダを検索または作成
- */
 /**
  * 指定した名前のフォルダを検索または作成
  */
@@ -341,9 +326,6 @@ export async function uploadFile(
 /**
  * ファイルを検索（名前とMIMEタイプで検索）
  */
-/**
- * ファイルを検索（名前とMIMEタイプで検索）
- */
 export async function findFile(
   fileName: string,
   mimeType: string,
@@ -394,9 +376,6 @@ export async function findFile(
 /**
  * ファイル内容をダウンロード（テキストファイル用）
  */
-/**
- * ファイル内容をダウンロード（テキストファイル用）
- */
 export async function downloadFileContent(
   fileId: string,
   accessToken: string
@@ -432,9 +411,6 @@ export async function downloadFileContent(
   }
 }
 
-/**
- * 既存ファイルを上書きアップロード
- */
 /**
  * 既存ファイルを上書きアップロード
  */

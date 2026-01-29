@@ -142,7 +142,7 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
   await addDebugLog(`[ExportService] Processing ${entry.id}...`, 'info');
 
   try {
-    // 必要な機能を個別に取得（ISP遵守）
+    // 必要な機能を個別に取得
     const initializer = adapterFactory.createInitializer();
     const folderOps = adapterFactory.createFolderOperations();
     const fileOps = adapterFactory.createFileOperations();
