@@ -1,6 +1,4 @@
-// PDFエクスポート
-// Google SheetsをPDF形式でエクスポートしてDriveに保存
-
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import type { FileOperations, SpreadsheetAdapter } from '../../types/storage';
 import { getExportFileName } from './utils';
 
@@ -18,16 +16,13 @@ export async function exportSpreadsheetAsPDF(
   fileOps: FileOperations,
   spreadsheetAdapter: SpreadsheetAdapter,
   year?: number
-): Promise<{ success: boolean; fileId?: string; error?: string }> {
+): Promise<Result<string | undefined, string>> {
   try {
     // 1. PDFをBase64形式で取得
     const pdfResult = await spreadsheetAdapter.fetchPDF(spreadsheetId);
 
     if (pdfResult.isErr()) {
-      return {
-        success: false,
-        error: `PDFデータの取得に失敗しました: ${pdfResult.unwrapErr().message}`
-      };
+      return err(`PDFデータの取得に失敗しました: ${pdfResult.unwrapErr().message}`);
     }
     const pdfBase64 = pdfResult.unwrap();
 
@@ -51,12 +46,9 @@ export async function exportSpreadsheetAsPDF(
       );
 
       if (updateResult.isOk()) {
-        return { success: true, fileId: existingFile.id };
+        return ok(existingFile.id);
       } else {
-        return {
-          success: false,
-          error: `PDF更新に失敗しました: ${updateResult.unwrapErr().message}`
-        };
+        return err(`PDF更新に失敗しました: ${updateResult.unwrapErr().message}`);
       }
     } else {
       // 新規作成
@@ -69,19 +61,13 @@ export async function exportSpreadsheetAsPDF(
       );
 
       if (uploadResult.isOk()) {
-        return { success: true, fileId: uploadResult.unwrap() };
+        return ok(uploadResult.unwrap());
       } else {
-        return {
-          success: false,
-          error: `PDF作成に失敗しました: ${uploadResult.unwrapErr().message}`
-        };
+        return err(`PDF作成に失敗しました: ${uploadResult.unwrapErr().message}`);
       }
     }
   } catch (error) {
     console.error('PDF Export Error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'PDFエクスポートエラー'
-    };
+    return err(error instanceof Error ? error.message : 'PDFエクスポートエラー');
   }
 }

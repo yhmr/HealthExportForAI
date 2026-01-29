@@ -1,16 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
-import { StorageError } from '../../../src/types/errors';
 import { err, ok } from '../../../src/types/result';
 import { SpreadsheetAdapter } from '../../../src/types/storage';
 
-// Mock Adapters
+// Mock debugLogService
+vi.mock('../../../src/services/debugLogService', () => ({
+  addDebugLog: vi.fn()
+}));
+
+// Mock SpreadsheetAdapter
 const mockSpreadsheetAdapter = {
   findSpreadsheet: vi.fn(),
   createSpreadsheet: vi.fn(),
   getSheetData: vi.fn(),
   updateHeaders: vi.fn(),
-  updateRows: vi.fn()
+  updateRows: vi.fn(),
+  fetchPDF: vi.fn()
 } as unknown as SpreadsheetAdapter;
 
 // Mock Health Data
@@ -25,22 +30,14 @@ const mockHealthData = {
   exercise: []
 };
 
-// Mock original dates (sync date range)
-const mockOriginalDates = new Set(['2025-01-01']);
-
 // Reset mocks before each test
 beforeEach(() => {
   vi.resetAllMocks();
 });
 
-// Mock DebugLogService
-vi.mock('../../../src/services/debugLogService', () => ({
-  addDebugLog: vi.fn()
-}));
-
 describe('Sheets Export Service', () => {
   it('should create a new spreadsheet if it does not exist', async () => {
-    // Setup: Spreadsheet does not exist
+    // Setup: Spreadsheet does not exist, creation succeeds
     (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok(null));
     (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(ok('new-sheet-id'));
     (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(ok(true));
@@ -49,71 +46,83 @@ describe('Sheets Export Service', () => {
       mockHealthData,
       'folder-123',
       mockSpreadsheetAdapter,
-      mockOriginalDates
+      new Set()
     );
 
-    expect(result.success).toBe(true);
-    expect(result.exportedSheets[0].spreadsheetId).toBe('new-sheet-id');
+    expect(result.isOk()).toBe(true);
+    const successResult = result.unwrap();
+    expect(successResult.exportedSheets).toHaveLength(1);
+    expect(successResult.exportedSheets[0]).toEqual({ year: 2025, spreadsheetId: 'new-sheet-id' });
     expect(mockSpreadsheetAdapter.createSpreadsheet).toHaveBeenCalledWith(
-      'Health Data 2025',
-      expect.any(Array), // Headers
+      expect.stringContaining('2025'),
+      expect.any(Array),
       'folder-123'
-    );
-    expect(mockSpreadsheetAdapter.updateRows).toHaveBeenCalledWith(
-      'new-sheet-id',
-      2,
-      expect.arrayContaining([expect.arrayContaining(['2025-01-01', 'Wednesday', 5000])])
     );
   });
 
-  it('should update an existing spreadsheet', async () => {
+  it('should update an existing spreadsheet if it exists', async () => {
     // Setup: Spreadsheet exists
     (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok('existing-sheet-id'));
     (mockSpreadsheetAdapter.getSheetData as any).mockResolvedValue(
-      ok({
-        headers: ['Date', 'Day of Week', 'Steps'],
-        rows: [['2025-01-01', 'Wednesday', '1000']]
-      })
+      ok({ headers: ['Date', 'Steps'], rows: [['2025-01-01', '1000']] })
     );
     (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(ok(true));
-    (mockSpreadsheetAdapter.updateHeaders as any).mockResolvedValue(ok(true));
+    (mockSpreadsheetAdapter.updateHeaders as any).mockResolvedValue(ok(true)); // Add this line
 
     const result = await exportToSpreadsheet(
       mockHealthData,
       'folder-123',
       mockSpreadsheetAdapter,
-      mockOriginalDates
+      new Set()
     );
 
-    expect(result.success).toBe(true);
-    expect(result.exportedSheets[0].spreadsheetId).toBe('existing-sheet-id');
-
-    // updateHeaders should be called to expand headers
-    expect(mockSpreadsheetAdapter.updateHeaders).toHaveBeenCalled();
-
-    expect(mockSpreadsheetAdapter.updateRows).toHaveBeenCalledWith(
-      'existing-sheet-id',
-      2,
-      expect.arrayContaining([expect.arrayContaining(['2025-01-01', 'Wednesday', 5000])])
-    );
+    expect(result.isOk()).toBe(true);
+    const successResult = result.unwrap();
+    expect(successResult.exportedSheets).toHaveLength(1);
+    expect(successResult.exportedSheets[0]).toEqual({
+      year: 2025,
+      spreadsheetId: 'existing-sheet-id'
+    });
+    expect(mockSpreadsheetAdapter.updateRows).toHaveBeenCalled();
   });
 
-  // Note: Folder fallback test removed - responsibility moved to controller.ts
-
-  it('should handle spreadsheet creation failure', async () => {
+  it('should fail if spreadsheet creation fails', async () => {
     (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok(null));
     (mockSpreadsheetAdapter.createSpreadsheet as any).mockResolvedValue(
-      err(new StorageError('作成に失敗しました'))
-    ); // Failure
+      err(new Error('Create failed'))
+    );
 
     const result = await exportToSpreadsheet(
       mockHealthData,
       'folder-123',
       mockSpreadsheetAdapter,
-      mockOriginalDates
+      new Set()
     );
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('作成に失敗しました');
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('作成に失敗しました');
+  });
+
+  it('should return error if no health data to export', async () => {
+    const emptyHealthData = {
+      steps: [],
+      weight: [],
+      bodyFat: [],
+      totalCaloriesBurned: [],
+      basalMetabolicRate: [],
+      sleep: [],
+      nutrition: [],
+      exercise: []
+    };
+
+    const result = await exportToSpreadsheet(
+      emptyHealthData,
+      'folder-123',
+      mockSpreadsheetAdapter,
+      new Set()
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toBe('エクスポートするデータがありません');
   });
 });

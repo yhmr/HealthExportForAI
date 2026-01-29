@@ -5,6 +5,7 @@ import type { ExportFormat } from '../../config/driveConfig';
 import { useOfflineStore } from '../../stores/offlineStore';
 import type { ExportConfig, PendingExport } from '../../types/exportTypes';
 import type { DataTagKey, HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import type {
   FileOperations,
   FolderOperations,
@@ -111,14 +112,14 @@ export async function processExportQueue(
 
     const res = await processSingleEntry(entry, timeoutMs);
 
-    if (res.success) {
+    if (res.isOk()) {
       result.successCount++;
       await queueManager.removeFromQueue(entry.id);
     } else {
       result.failCount++;
-      if (res.error) {
-        result.errors.push(res.error);
-      }
+      const errorMsg = res.unwrapErr();
+      result.errors.push(errorMsg);
+
       const currentStatus = await getNetworkStatus();
       if (currentStatus !== 'online') {
         await addDebugLog('[ExportService] Network went offline, stopping', 'info');
@@ -143,7 +144,7 @@ export async function processExportQueue(
 async function processSingleEntry(
   entry: PendingExport,
   timeoutMs: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<Result<void, string>> {
   await addDebugLog(`[ExportService] Processing ${entry.id}...`, 'info');
 
   try {
@@ -175,25 +176,34 @@ async function processSingleEntry(
         config,
         syncDateRangeSet
       ),
-      new Promise<ExportResults>((_, reject) =>
+      new Promise<Result<ExportResults, string>>((_, reject) =>
         setTimeout(() => reject(new Error(`Timeout (${timeoutMs}ms)`)), timeoutMs)
       )
     ]);
 
-    if (result.success) {
-      await addDebugLog(`[ExportService] Entry ${entry.id} success`, 'success');
-      return { success: true };
+    if (result.isOk()) {
+      const exportResults = result.unwrap();
+      // 個別のエクスポート結果に少なくとも一つ成功が含まれているか、または成功フラグが立っているかを確認
+      if (exportResults.success) {
+        await addDebugLog(`[ExportService] Entry ${entry.id} success`, 'success');
+        return ok<void, string>(undefined);
+      } else {
+        const errorMsg = exportResults.error || 'Export failed partially or completely';
+        await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
+        await queueManager.incrementRetry(entry.id, errorMsg);
+        return err(errorMsg);
+      }
     } else {
-      const errorMsg = result.error || 'Unknown error';
+      const errorMsg = result.unwrapErr();
       await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
       await queueManager.incrementRetry(entry.id, errorMsg);
-      return { success: false, error: errorMsg };
+      return err(errorMsg);
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     await addDebugLog(`[ExportService] Entry ${entry.id} error: ${errorMsg}`, 'error');
     await queueManager.incrementRetry(entry.id, errorMsg);
-    return { success: false, error: errorMsg };
+    return err(errorMsg);
   }
 }
 
@@ -205,24 +215,21 @@ async function executeExportInternal(
   spreadsheetAdapter: SpreadsheetAdapter,
   config: ExportConfig,
   originalDates: Set<string>
-): Promise<ExportResults> {
+): Promise<Result<ExportResults, string>> {
   const results: FormatResult[] = [];
 
   try {
-    const context = await prepareContext(
+    const contextResult = await prepareContext(
       initializer,
       folderOps,
       config.targetFolder?.id,
       config.targetFolder?.name
     );
 
-    if (!context) {
-      return {
-        success: false,
-        results: [],
-        error: 'No access context (SignIn required)'
-      };
+    if (contextResult.isErr()) {
+      return err(contextResult.unwrapErr());
     }
+    const context = contextResult.unwrap();
 
     if (config.formats.includes('googleSheets')) {
       const result = await exportToSpreadsheet(
@@ -232,14 +239,15 @@ async function executeExportInternal(
         originalDates
       );
 
-      if (result.success) {
-        result.exportedSheets.forEach((sheet) => {
+      if (result.isOk()) {
+        const value = result.unwrap();
+        value.exportedSheets.forEach((sheet) => {
           results.push({ format: 'googleSheets', success: true, fileId: sheet.spreadsheetId });
         });
-        if (result.folderId) context.folderId = result.folderId;
+        if (value.folderId) context.folderId = value.folderId;
 
-        if (config.exportAsPdf && result.exportedSheets.length > 0) {
-          for (const sheet of result.exportedSheets) {
+        if (config.exportAsPdf && value.exportedSheets.length > 0) {
+          for (const sheet of value.exportedSheets) {
             const pdfResult = await exportSpreadsheetAsPDF(
               sheet.spreadsheetId,
               context.folderId,
@@ -247,49 +255,70 @@ async function executeExportInternal(
               spreadsheetAdapter,
               sheet.year
             );
-            results.push({
-              format: 'pdf',
-              success: pdfResult.success,
-              error: pdfResult.error,
-              fileId: pdfResult.fileId
-            });
+            if (pdfResult.isOk()) {
+              results.push({
+                format: 'pdf',
+                success: true,
+                fileId: pdfResult.unwrap()
+              });
+            } else {
+              results.push({
+                format: 'pdf',
+                success: false,
+                error: pdfResult.unwrapErr()
+              });
+            }
           }
         }
       } else {
-        results.push({ format: 'googleSheets', success: false, error: result.error });
+        results.push({ format: 'googleSheets', success: false, error: result.unwrapErr() });
       }
     }
 
     if (config.formats.includes('csv')) {
       const result = await exportToCSV(healthData, context.folderId, fileOps);
-      results.push({
-        format: 'csv',
-        success: result.success,
-        error: result.error,
-        fileId: result.fileId
-      });
+      if (result.isOk()) {
+        results.push({
+          format: 'csv',
+          success: true,
+          fileId: result.unwrap()
+        });
+      } else {
+        results.push({
+          format: 'csv',
+          success: false,
+          error: result.unwrapErr()
+        });
+      }
     }
 
     if (config.formats.includes('json')) {
       const result = await exportToJSON(healthData, context.folderId, fileOps);
-      results.push({
-        format: 'json',
-        success: result.success,
-        error: result.error,
-        fileId: result.fileId
-      });
+      if (result.isOk()) {
+        results.push({
+          format: 'json',
+          success: true,
+          fileId: result.unwrap()
+        });
+      } else {
+        results.push({
+          format: 'json',
+          success: false,
+          error: result.unwrapErr()
+        });
+      }
     }
 
     const successCount = results.filter((r) => r.success).length;
     const hasSuccess = successCount > 0;
 
-    return {
+    return ok({
       success: hasSuccess,
       results,
       folderId: context.folderId
-    };
+    });
   } catch (error) {
-    throw error;
+    return err(error instanceof Error ? error.message : 'Unknown error during export');
   }
 }
 
@@ -298,9 +327,9 @@ async function prepareContext(
   folderOps: FolderOperations,
   folderId?: string,
   folderName?: string
-): Promise<ExportContext | null> {
+): Promise<Result<ExportContext, string>> {
   const isInitialized = await initializer.initialize();
-  if (!isInitialized) return null;
+  if (!isInitialized) return err('No access context (SignIn required)');
 
   const targetFolderName = folderName || folderOps.defaultFolderName;
   let targetFolderId = folderId;
@@ -310,14 +339,11 @@ async function prepareContext(
     if (result.isOk()) {
       targetFolderId = result.unwrap();
     } else {
-      await addDebugLog(
-        `[ExportService] Failed to find/create folder: ${result.unwrapErr().message}`,
-        'error'
-      );
-      // フォルダ作成失敗時はnullを返す（コンテキスト作成失敗）
-      return null;
+      const errorMsg = result.unwrapErr().message;
+      await addDebugLog(`[ExportService] Failed to find/create folder: ${errorMsg}`, 'error');
+      return err(errorMsg);
     }
   }
 
-  return { folderId: targetFolderId, folderName: targetFolderName };
+  return ok({ folderId: targetFolderId, folderName: targetFolderName });
 }

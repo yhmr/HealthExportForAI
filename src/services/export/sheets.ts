@@ -1,7 +1,5 @@
-// Google Sheetsエクスポート
-// ヘルスデータをGoogle Spreadsheetsにエクスポート
-
 import type { HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import type { SpreadsheetAdapter } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
 import { formatHealthDataToRows, getExportFileName } from './utils';
@@ -18,12 +16,9 @@ export async function exportToSpreadsheet(
   folderId: string | undefined,
   spreadsheetAdapter: SpreadsheetAdapter,
   originalDates: Set<string>
-): Promise<{
-  success: boolean;
-  exportedSheets: { year: number; spreadsheetId: string }[];
-  folderId?: string;
-  error?: string;
-}> {
+): Promise<
+  Result<{ exportedSheets: { year: number; spreadsheetId: string }[]; folderId?: string }, string>
+> {
   const exportedSheets: { year: number; spreadsheetId: string }[] = [];
   try {
     // 対象の年を取得（データの最新日付から）
@@ -36,7 +31,7 @@ export async function exportToSpreadsheet(
     ];
 
     if (allDates.length === 0) {
-      return { success: false, exportedSheets: [], error: 'エクスポートするデータがありません' };
+      return err('エクスポートするデータがありません');
     }
 
     // 年ごとにデータを分割
@@ -99,12 +94,8 @@ export async function exportToSpreadsheet(
           folderId
         );
         if (createResult.isErr()) {
-          const err = createResult.unwrapErr();
-          return {
-            success: false,
-            exportedSheets: [],
-            error: `${year}年のスプレッドシート作成に失敗しました: ${err.message}`
-          };
+          const errorMsg = createResult.unwrapErr().message;
+          return err(`${year}年のスプレッドシート作成に失敗しました: ${errorMsg}`);
         }
         spreadsheetId = createResult.unwrap();
       } else {
@@ -171,14 +162,10 @@ export async function exportToSpreadsheet(
       exportedSheets.push({ year, spreadsheetId });
     }
 
-    return { success: true, exportedSheets, folderId };
+    return ok({ exportedSheets, folderId });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : '不明なエラー';
     await addDebugLog(`スプレッドシートエクスポートエラー: ${errorMsg}`, 'error');
-    return {
-      success: false,
-      exportedSheets: [],
-      error: errorMsg
-    };
+    return err(errorMsg);
   }
 }

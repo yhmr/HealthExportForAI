@@ -3,9 +3,9 @@
 // 年間データを蓄積（既存ファイルがあればマージ）
 
 import type { HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import type { FileOperations } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
-import type { ExportResult } from './csv';
 import { getExportFileName } from './utils';
 
 // 日付ごとのデータ構造
@@ -118,7 +118,7 @@ export async function exportToJSON(
   healthData: HealthData,
   folderId: string | undefined,
   fileOps: FileOperations
-): Promise<ExportResult> {
+): Promise<Result<string | undefined, string>> {
   try {
     // データを日付ごとのレコードに変換
     const newRecordsMap = healthDataToDailyRecords(healthData);
@@ -205,10 +205,7 @@ export async function exportToJSON(
           await addDebugLog(`[JSON Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
-          return {
-            success: false,
-            error: `JSONファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`
-          };
+          return err(`JSONファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`);
         }
       } else {
         const uploadResult = await fileOps.uploadFile(
@@ -221,20 +218,16 @@ export async function exportToJSON(
           await addDebugLog(`[JSON Export] Created: ${fileName}`, 'success');
           lastFileId = uploadResult.unwrap();
         } else {
-          return {
-            success: false,
-            error: `JSONファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
-          };
+          return err(
+            `JSONファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
+          );
         }
       }
     }
 
-    return { success: true, fileId: lastFileId };
+    return ok(lastFileId);
   } catch (error) {
     await addDebugLog(`[JSON Export] Error: ${error}`, 'error');
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'JSONエクスポートに失敗しました'
-    };
+    return err(error instanceof Error ? error.message : 'JSONエクスポートに失敗しました');
   }
 }

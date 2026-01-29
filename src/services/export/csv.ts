@@ -1,18 +1,8 @@
-// CSVエクスポート
-// ヘルスデータをCSV形式でGoogle Driveにアップロード
-// 年間データを蓄積（既存ファイルがあればマージ）
-
 import type { HealthData } from '../../types/health';
+import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import type { FileOperations } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
 import { formatHealthDataToRows, getExportFileName } from './utils';
-
-// エクスポート結果の型
-export interface ExportResult {
-  success: boolean;
-  fileId?: string;
-  error?: string;
-}
 
 /**
  * CSVデータをパースして日付→行データのマップに変換
@@ -73,7 +63,7 @@ export async function exportToCSV(
   healthData: HealthData,
   folderId: string | undefined,
   fileOps: FileOperations
-): Promise<ExportResult> {
+): Promise<Result<string | undefined, string>> {
   try {
     // データを行形式に変換
     const { headers, rows: newRowsMap } = formatHealthDataToRows(healthData, []);
@@ -108,7 +98,6 @@ export async function exportToCSV(
       }
 
       // 新規データをマージ（日付で上書き）
-      // ... (no changes needed for logic here, just context) ...
       // 新しいデータの日付範囲を取得
       const newDates = [...newRowsMap.keys()]
         .filter((date) => new Date(date).getFullYear() === year)
@@ -165,10 +154,7 @@ export async function exportToCSV(
           await addDebugLog(`[CSV Export] Updated: ${fileName}`, 'success');
           lastFileId = existingFile.id;
         } else {
-          return {
-            success: false,
-            error: `CSVファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`
-          };
+          return err(`CSVファイルの更新に失敗しました: ${updateResult.unwrapErr().message}`);
         }
       } else {
         const uploadResult = await fileOps.uploadFile(csvContent, fileName, 'text/csv', folderId);
@@ -176,20 +162,16 @@ export async function exportToCSV(
           await addDebugLog(`[CSV Export] Created: ${fileName}`, 'success');
           lastFileId = uploadResult.unwrap();
         } else {
-          return {
-            success: false,
-            error: `CSVファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
-          };
+          return err(
+            `CSVファイルのアップロードに失敗しました: ${uploadResult.unwrapErr().message}`
+          );
         }
       }
     }
 
-    return { success: true, fileId: lastFileId };
+    return ok(lastFileId);
   } catch (error) {
     await addDebugLog(`[CSV Export] Error: ${error}`, 'error');
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'CSVエクスポートに失敗しました'
-    };
+    return err(error instanceof Error ? error.message : 'CSVエクスポートに失敗しました');
   }
 }

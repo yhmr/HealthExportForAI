@@ -9,7 +9,7 @@ import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
 import { adapterFactory } from '../../../src/services/storage/adapterFactory';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
-import { ok } from '../../../src/types/result';
+import { err, ok } from '../../../src/types/result';
 
 // Mocks
 vi.mock('../../../src/services/networkService', () => ({
@@ -83,13 +83,13 @@ describe('ExportService - processExportQueue', () => {
 
     // アダプタのモック
     vi.mocked(adapterFactory.createStorageAdapter).mockReturnValue({
-      initialize: vi.fn().mockResolvedValue(ok(true)),
+      initialize: vi.fn().mockResolvedValue(true), // Initializable so boolean or Promise<boolean>
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       defaultFolderName: 'ConnectHealth'
     } as any);
 
     vi.mocked(adapterFactory.createInitializer).mockReturnValue({
-      initialize: vi.fn().mockResolvedValue(ok(true))
+      initialize: vi.fn().mockResolvedValue(true)
     });
 
     vi.mocked(adapterFactory.createFolderOperations).mockReturnValue({
@@ -107,11 +107,15 @@ describe('ExportService - processExportQueue', () => {
 
     vi.mocked(adapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
 
-    // エクスポート処理の成功モック
-    vi.mocked(exportToSpreadsheet).mockResolvedValue({
-      success: true,
-      exportedSheets: [{ spreadsheetId: 'sheet-id', year: 2023 }]
-    });
+    // エクスポート処理の成功モック (Result型を返す)
+    vi.mocked(exportToSpreadsheet).mockResolvedValue(
+      ok({
+        exportedSheets: [{ spreadsheetId: 'sheet-id', year: 2023 }],
+        folderId: 'folder-id'
+      })
+    );
+    vi.mocked(exportToCSV).mockResolvedValue(ok('csv-id'));
+    vi.mocked(exportToJSON).mockResolvedValue(ok('json-id'));
   });
 
   it('should skip processing if offline', async () => {
@@ -183,11 +187,7 @@ describe('ExportService - processExportQueue', () => {
     vi.mocked(queueManager.getQueue)
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue(['entry-3'] as any); // Still in queue
-    vi.mocked(exportToSpreadsheet).mockResolvedValue({
-      success: false,
-      error: 'API Error',
-      exportedSheets: []
-    });
+    vi.mocked(exportToSpreadsheet).mockResolvedValue(err('API Error'));
 
     // Act
     const result = await processExportQueue();
@@ -207,7 +207,7 @@ describe('ExportService - processExportQueue', () => {
     vi.mocked(queueManager.getQueue).mockResolvedValueOnce(entries as any);
 
     // e1 fails -> check network -> offline -> break
-    vi.mocked(exportToSpreadsheet).mockResolvedValue({ success: false, exportedSheets: [] });
+    vi.mocked(exportToSpreadsheet).mockResolvedValue(err('Some failure'));
 
     // First check (start): online
     // Second check (after failure): offline
@@ -239,9 +239,9 @@ describe('ExportService - processExportQueue', () => {
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue([]);
 
-    // Mocks for CSV/JSON
-    vi.mocked(exportToCSV).mockResolvedValue({ success: true, fileId: 'csv-id' });
-    vi.mocked(exportToJSON).mockResolvedValue({ success: true, fileId: 'json-id' });
+    // Mocks for CSV/JSON (already set in beforeEach but explicit here for clarity)
+    vi.mocked(exportToCSV).mockResolvedValue(ok('csv-id'));
+    vi.mocked(exportToJSON).mockResolvedValue(ok('json-id'));
 
     // Act
     const result = await processExportQueue();
@@ -291,21 +291,16 @@ describe('ExportService - processExportQueue', () => {
       .mockResolvedValueOnce([mockEntry] as any)
       .mockResolvedValue([]);
 
-    // Mock folder check failure
-    const mockFolderOps = adapterFactory.createFolderOperations();
-    vi.mocked(mockFolderOps.findOrCreateFolder).mockResolvedValue(ok('')); // Empty -> Fail logic? No, check prepareContext logic.
-    // Actually prepareContext checks `result.isOk()` then `result.unwrap()`.
-    // If we want it to fail, findOrCreateFolder should return Err OR we simulate initialize returning false.
-
+    // Mock initialize failure
     const mockInitializer = adapterFactory.createInitializer();
-    vi.mocked(mockInitializer.initialize).mockResolvedValue(Promise.resolve(false));
+    vi.mocked(mockInitializer.initialize).mockResolvedValue(false);
 
     // Act
     const result = await processExportQueue();
 
     // Assert
     expect(result.failCount).toBe(1);
-    expect(result.errors[0]).toContain('No access context'); // Or similar check
+    expect(result.errors[0]).toContain('No access context');
   });
 
   it('should handle unexpected exception during processing', async () => {

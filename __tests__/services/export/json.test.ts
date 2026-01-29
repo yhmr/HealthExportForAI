@@ -53,8 +53,8 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('new-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('new-file-id');
 
     expect(mockFileOps.uploadFile).toHaveBeenCalledWith(
       expect.any(String),
@@ -89,8 +89,8 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('existing-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('existing-file-id');
 
     expect(mockFileOps.updateFile).toHaveBeenCalledWith(
       'existing-file-id',
@@ -123,7 +123,7 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
+    expect(result.isOk()).toBe(true);
     // It should start fresh if parsing fails
     const updateCall = (mockFileOps.updateFile as any).mock.calls[0];
     const jsonContent = JSON.parse(updateCall[1]);
@@ -139,8 +139,8 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Update failed');
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('Update failed');
   });
 
   it('should return failure if upload file fails', async () => {
@@ -149,8 +149,8 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Upload failed');
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('Upload failed');
   });
 
   it('should return failure on unexpected exception', async () => {
@@ -158,7 +158,7 @@ describe('JSON Export Service', () => {
 
     const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Unexpected error');
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toBe('Unexpected error');
   });
 });

@@ -42,8 +42,8 @@ describe('CSV Export Service', () => {
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('new-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('new-file-id');
     expect(mockFileOps.uploadFile).toHaveBeenCalledWith(
       expect.stringContaining('2025-01-01,Wednesday,5000'), // Check content partially
       'Health_Data_2025.csv',
@@ -62,8 +62,8 @@ describe('CSV Export Service', () => {
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(true);
-    expect(result.fileId).toBe('existing-file-id');
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe('existing-file-id');
 
     // Check if updateFile was called with merged content
     expect(mockFileOps.updateFile).toHaveBeenCalledWith(
@@ -81,7 +81,7 @@ describe('CSV Export Service', () => {
 
     const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('アップロードに失敗');
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('アップロードに失敗');
   });
 });
