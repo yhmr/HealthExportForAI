@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadDriveConfig } from '../../../src/services/config/driveConfig';
+import { driveConfigService } from '../../../src/services/config/DriveConfigService';
 import { exportConfigService } from '../../../src/services/config/ExportConfigService';
 import { queueManager } from '../../../src/services/export/QueueManager';
 import { processExportQueue } from '../../../src/services/export/service';
@@ -39,8 +39,10 @@ vi.mock('../../../src/services/config/ExportConfigService', () => ({
     loadExportSheetAsPdf: vi.fn()
   }
 }));
-vi.mock('../../../src/services/config/driveConfig', () => ({
-  loadDriveConfig: vi.fn()
+vi.mock('../../../src/services/config/DriveConfigService', () => ({
+  driveConfigService: {
+    loadDriveConfig: vi.fn()
+  }
 }));
 vi.mock('../../../src/services/export/sheets', () => ({
   exportToSpreadsheet: vi.fn()
@@ -66,7 +68,7 @@ describe('ExportService - processExportQueue', () => {
     // Config系モック
     vi.mocked(exportConfigService.loadExportFormats).mockResolvedValue(['googleSheets']);
     vi.mocked(exportConfigService.loadExportSheetAsPdf).mockResolvedValue(false);
-    vi.mocked(loadDriveConfig).mockResolvedValue({
+    vi.mocked(driveConfigService.loadDriveConfig).mockResolvedValue({
       folderId: 'folder-id',
       folderName: 'folder-name'
     });

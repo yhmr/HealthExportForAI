@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_DRIVE_CONFIG } from '../../../src/config/driveConfig';
 import { STORAGE_KEYS } from '../../../src/config/storageKeys';
-import { driveConfigService } from '../../../src/services/config/driveConfig';
+import { driveConfigService } from '../../../src/services/config/DriveConfigService';
 import { MockKeyValueStorage } from '../../mocks/MockKeyValueStorage';
 
 describe('DriveConfigService', () => {

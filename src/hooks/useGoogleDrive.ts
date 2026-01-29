@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
-import { loadDriveConfig, saveDriveConfig } from '../services/config/driveConfig';
+import { driveConfigService } from '../services/config/DriveConfigService';
 import { addDebugLog } from '../services/debugLogService';
 import { processExportQueue } from '../services/export/service';
 import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
@@ -27,7 +27,7 @@ export function useGoogleDrive() {
    */
   const loadConfig = useCallback(async () => {
     try {
-      const config = await loadDriveConfig();
+      const config = await driveConfigService.loadDriveConfig();
       setDriveConfigState(config);
       // Google Sign-Inを設定（埋め込みIDを使用）
       googleAuthService.configure(WEB_CLIENT_ID);
@@ -41,7 +41,7 @@ export function useGoogleDrive() {
    * Drive設定を保存
    */
   const saveConfig = useCallback(async (config: DriveConfig) => {
-    await saveDriveConfig(config);
+    await driveConfigService.saveDriveConfig(config);
     setDriveConfigState(config);
   }, []);
 
@@ -141,7 +141,7 @@ export function useGoogleDrive() {
           const folder = folderResult.unwrap();
           if (folder) {
             const newConfig = { folderId, folderName: folder.name };
-            await saveDriveConfig(newConfig);
+            await driveConfigService.saveDriveConfig(newConfig);
             setDriveConfigState(newConfig);
             return folder.name;
           }
@@ -151,7 +151,7 @@ export function useGoogleDrive() {
 
         // 見つからない場合やエラーの場合は設定をクリア
         const emptyConfig = { folderId: '', folderName: '' };
-        await saveDriveConfig(emptyConfig);
+        await driveConfigService.saveDriveConfig(emptyConfig);
         setDriveConfigState(emptyConfig);
         return DEFAULT_FOLDER_NAME;
       } catch (error) {

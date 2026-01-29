@@ -2,6 +2,9 @@ import { DEFAULT_DRIVE_CONFIG, DriveConfig } from '../../config/driveConfig';
 import { STORAGE_KEYS } from '../../config/storageKeys';
 import { IKeyValueStorage } from '../../types/storage';
 
+// シングルトンインスタンスの作成
+import { keyValueStorage } from '../infrastructure/keyValueStorage';
+
 /**
  * Drive設定サービス
  */
@@ -34,3 +37,4 @@ export class DriveConfigService {
     return DEFAULT_DRIVE_CONFIG;
   }
 }
+export const driveConfigService = new DriveConfigService(keyValueStorage);

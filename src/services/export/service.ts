@@ -12,7 +12,7 @@ import type {
   SpreadsheetAdapter
 } from '../../types/storage';
 import { filterHealthDataByTags } from '../../utils/dataHelpers';
-import { loadDriveConfig } from '../config/driveConfig';
+import { driveConfigService } from '../config/DriveConfigService';
 import { exportConfigService } from '../config/ExportConfigService';
 import { addDebugLog } from '../debugLogService';
 import { getNetworkStatus } from '../networkService';
@@ -64,7 +64,7 @@ export const BACKGROUND_EXECUTION_TIMEOUT_MS = 25000;
 export async function createDefaultExportConfig(): Promise<ExportConfig> {
   const formats = await exportConfigService.loadExportFormats();
   const exportAsPdf = await exportConfigService.loadExportSheetAsPdf();
-  const driveConfig = await loadDriveConfig();
+  const driveConfig = await driveConfigService.loadDriveConfig();
 
   return {
     formats,
