@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { AppError, AuthError, NetworkError, StorageError } from '../../src/types/errors';
+import {
+  AppError,
+  AuthError,
+  HealthConnectError,
+  NetworkError,
+  StorageError,
+  UnknownError,
+  ValidationError
+} from '../../src/types/errors';
 
 describe('Error Types', () => {
   describe('AppError', () => {
@@ -43,6 +51,27 @@ describe('Error Types', () => {
       const error = new AuthError('Auth failed');
       expect(error).toBeInstanceOf(AuthError);
       expect(error.code).toBe('AUTH_ERROR');
+    });
+
+    it('ValidationError', () => {
+      const error = new ValidationError('Validation failed');
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.code).toBe('VALIDATION_ERROR');
+      expect(error.name).toBe('ValidationError');
+    });
+
+    it('HealthConnectError', () => {
+      const error = new HealthConnectError('HC failed');
+      expect(error).toBeInstanceOf(HealthConnectError);
+      expect(error.code).toBe('HEALTH_CONNECT_ERROR');
+      expect(error.name).toBe('HealthConnectError');
+    });
+
+    it('UnknownError', () => {
+      const error = new UnknownError('Unknown');
+      expect(error).toBeInstanceOf(UnknownError);
+      expect(error.code).toBe('UNKNOWN_ERROR');
+      expect(error.name).toBe('UnknownError');
     });
   });
 });

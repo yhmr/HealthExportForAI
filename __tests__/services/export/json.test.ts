@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
-import { ok } from '../../../src/types/result';
+import { err, ok } from '../../../src/types/result';
 import { FileOperations } from '../../../src/types/storage';
 
 // Mock debugLogService to prevent AsyncStorage usage
@@ -19,13 +19,25 @@ const mockFileOps = {
 // Mock Health Data
 const mockHealthData = {
   steps: [{ date: '2025-01-01', count: 5000 }],
-  weight: [],
-  bodyFat: [],
-  totalCaloriesBurned: [],
-  basalMetabolicRate: [],
-  sleep: [],
-  nutrition: [],
-  exercise: []
+  weight: [{ date: '2025-01-01', value: 70, unit: 'kg' as const, time: '2025-01-01T08:00:00Z' }],
+  bodyFat: [{ date: '2025-01-01', percentage: 20, time: '2025-01-01T08:00:00Z' }],
+  totalCaloriesBurned: [{ date: '2025-01-01', value: 2000, unit: 'kcal' as const }],
+  basalMetabolicRate: [
+    { date: '2025-01-01', value: 1500, unit: 'kcal/day' as const, time: '2025-01-01T08:00:00Z' }
+  ],
+  sleep: [{ date: '2025-01-01', durationMinutes: 480, deepSleepPercentage: 20 }],
+  nutrition: [
+    {
+      date: '2025-01-01',
+      calories: 2000,
+      protein: 100,
+      totalFat: 50,
+      totalCarbohydrate: 250,
+      dietaryFiber: 30,
+      saturatedFat: 10
+    }
+  ],
+  exercise: [{ date: '2025-01-01', type: 'Running', durationMinutes: 30 }]
 };
 
 // Reset mocks before each test
@@ -116,5 +128,37 @@ describe('JSON Export Service', () => {
     const updateCall = (mockFileOps.updateFile as any).mock.calls[0];
     const jsonContent = JSON.parse(updateCall[1]);
     expect(jsonContent.records).toHaveLength(1); // Only new data
+  });
+
+  it('should return failure if update file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(ok({ id: 'existing-file-id' }));
+    (mockFileOps.downloadFileContent as any).mockResolvedValue(
+      ok(JSON.stringify({ year: 2025, records: [] }))
+    );
+    (mockFileOps.updateFile as any).mockResolvedValue(err(new Error('Update failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Update failed');
+  });
+
+  it('should return failure if upload file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(ok(null));
+    (mockFileOps.uploadFile as any).mockResolvedValue(err(new Error('Upload failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Upload failed');
+  });
+
+  it('should return failure on unexpected exception', async () => {
+    (mockFileOps.findFile as any).mockRejectedValue(new Error('Unexpected error'));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Unexpected error');
   });
 });

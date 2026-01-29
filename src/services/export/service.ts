@@ -89,7 +89,6 @@ export async function processExportQueue(
     skippedCount: 0,
     errors: []
   };
-
   await addDebugLog(`[ExportService] Starting queue processing (timeout: ${timeoutMs}ms)`, 'info');
 
   const networkStatus = await getNetworkStatus();
@@ -110,13 +109,16 @@ export async function processExportQueue(
       continue;
     }
 
-    const success = await processSingleEntry(entry, timeoutMs);
+    const res = await processSingleEntry(entry, timeoutMs);
 
-    if (success) {
+    if (res.success) {
       result.successCount++;
       await queueManager.removeFromQueue(entry.id);
     } else {
       result.failCount++;
+      if (res.error) {
+        result.errors.push(res.error);
+      }
       const currentStatus = await getNetworkStatus();
       if (currentStatus !== 'online') {
         await addDebugLog('[ExportService] Network went offline, stopping', 'info');
@@ -138,7 +140,10 @@ export async function processExportQueue(
 
 // ===== 内部処理 =====
 
-async function processSingleEntry(entry: PendingExport, timeoutMs: number): Promise<boolean> {
+async function processSingleEntry(
+  entry: PendingExport,
+  timeoutMs: number
+): Promise<{ success: boolean; error?: string }> {
   await addDebugLog(`[ExportService] Processing ${entry.id}...`, 'info');
 
   try {
@@ -177,18 +182,18 @@ async function processSingleEntry(entry: PendingExport, timeoutMs: number): Prom
 
     if (result.success) {
       await addDebugLog(`[ExportService] Entry ${entry.id} success`, 'success');
-      return true;
+      return { success: true };
     } else {
       const errorMsg = result.error || 'Unknown error';
       await addDebugLog(`[ExportService] Entry ${entry.id} failed: ${errorMsg}`, 'error');
       await queueManager.incrementRetry(entry.id, errorMsg);
-      return false;
+      return { success: false, error: errorMsg };
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     await addDebugLog(`[ExportService] Entry ${entry.id} error: ${errorMsg}`, 'error');
     await queueManager.incrementRetry(entry.id, errorMsg);
-    return false;
+    return { success: false, error: errorMsg };
   }
 }
 

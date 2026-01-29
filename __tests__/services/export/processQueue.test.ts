@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { driveConfigService } from '../../../src/services/config/DriveConfigService';
 import { exportConfigService } from '../../../src/services/config/ExportConfigService';
 import { queueManager } from '../../../src/services/export/QueueManager';
+import { exportToCSV } from '../../../src/services/export/csv';
+import { exportToJSON } from '../../../src/services/export/json';
 import { processExportQueue } from '../../../src/services/export/service';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
@@ -53,6 +55,12 @@ vi.mock('../../../src/services/debugLogService', () => ({
 vi.mock('../../../src/services/storage/googleDrive', () => ({
   getFolder: vi.fn(),
   DEFAULT_FOLDER_NAME: 'ConnectHealth'
+}));
+vi.mock('../../../src/services/export/csv', () => ({
+  exportToCSV: vi.fn()
+}));
+vi.mock('../../../src/services/export/json', () => ({
+  exportToJSON: vi.fn()
 }));
 
 describe('ExportService - processExportQueue', () => {
@@ -213,5 +221,111 @@ describe('ExportService - processExportQueue', () => {
     expect(result.successCount).toBe(0);
     // e2 should not be processed
     expect(exportToSpreadsheet).toHaveBeenCalledTimes(1);
+  });
+
+  it('should export to multiple formats (CSV, JSON, Sheets)', async () => {
+    // Arrange
+    const mockEntry = {
+      id: 'entry-multi',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      retryCount: 0,
+      exportConfig: {
+        formats: ['googleSheets', 'csv', 'json'],
+        targetFolder: { id: 'f1' }
+      }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([]);
+
+    // Mocks for CSV/JSON
+    vi.mocked(exportToCSV).mockResolvedValue({ success: true, fileId: 'csv-id' });
+    vi.mocked(exportToJSON).mockResolvedValue({ success: true, fileId: 'json-id' });
+
+    // Act
+    const result = await processExportQueue();
+
+    // Assert
+    expect(result.successCount).toBe(1);
+    expect(exportToSpreadsheet).toHaveBeenCalled();
+    expect(exportToCSV).toHaveBeenCalled();
+    expect(exportToJSON).toHaveBeenCalled();
+  });
+
+  it('should utilize syncDateRange if provided', async () => {
+    // Arrange
+    const mockEntry = {
+      id: 'entry-dates',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      syncDateRange: ['2023-01-01', '2023-01-02'],
+      retryCount: 0,
+      exportConfig: { formats: ['googleSheets'] }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([]);
+
+    // Act
+    await processExportQueue();
+
+    // Assert
+    expect(exportToSpreadsheet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      // 4th arg is originalDates Set
+      expect.any(Set)
+    );
+    const callArgs = vi.mocked(exportToSpreadsheet).mock.calls[0];
+    const passedSet = callArgs[3] as Set<string>;
+    expect(passedSet.has('2023-01-01')).toBe(true);
+    expect(passedSet.has('2023-01-02')).toBe(true);
+  });
+
+  it('should handle context preparation failure', async () => {
+    // Arrange
+    const mockEntry = { id: 'entry-fail-ctx', exportConfig: { formats: ['googleSheets'] } };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([]);
+
+    // Mock folder check failure
+    const mockFolderOps = adapterFactory.createFolderOperations();
+    vi.mocked(mockFolderOps.findOrCreateFolder).mockResolvedValue(ok('')); // Empty -> Fail logic? No, check prepareContext logic.
+    // Actually prepareContext checks `result.isOk()` then `result.unwrap()`.
+    // If we want it to fail, findOrCreateFolder should return Err OR we simulate initialize returning false.
+
+    const mockInitializer = adapterFactory.createInitializer();
+    vi.mocked(mockInitializer.initialize).mockResolvedValue(Promise.resolve(false));
+
+    // Act
+    const result = await processExportQueue();
+
+    // Assert
+    expect(result.failCount).toBe(1);
+    expect(result.errors[0]).toContain('No access context'); // Or similar check
+  });
+
+  it('should handle unexpected exception during processing', async () => {
+    // Arrange
+    const mockEntry = { id: 'entry-except', exportConfig: { formats: ['googleSheets'] } };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([]);
+
+    vi.mocked(exportToSpreadsheet).mockRejectedValue(new Error('Unexpected Crash'));
+
+    // Act
+    const result = await processExportQueue();
+
+    // Assert
+    expect(result.failCount).toBe(1);
+    // Should increment retry
+    expect(queueManager.incrementRetry).toHaveBeenCalledWith(
+      'entry-except',
+      expect.stringContaining('Unexpected Crash')
+    );
   });
 });

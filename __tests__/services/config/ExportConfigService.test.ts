@@ -48,4 +48,50 @@ describe('ExportConfigService', () => {
     expect(completed).toBe(false);
     expect(await mockStorage.getItem(STORAGE_KEYS.IS_SETUP_COMPLETED)).toBe('false');
   });
+
+  it('最終同期日時を保存・取得・削除できる', async () => {
+    const time = '2023-01-01T12:00:00Z';
+
+    // Save
+    await exportConfigService.saveLastSyncTime(time);
+    expect(await exportConfigService.loadLastSyncTime()).toBe(time);
+    expect(await mockStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME)).toBe(time);
+
+    // Remove
+    await exportConfigService.removeLastSyncTime();
+    expect(await exportConfigService.loadLastSyncTime()).toBeNull();
+    expect(await mockStorage.getItem(STORAGE_KEYS.LAST_SYNC_TIME)).toBeNull();
+  });
+
+  it('エクスポート期間（日数）を保存・取得できる', async () => {
+    // Default
+    expect(await exportConfigService.loadExportPeriodDays()).toBe(7);
+
+    // Save & Load
+    await exportConfigService.saveExportPeriodDays(30);
+    expect(await exportConfigService.loadExportPeriodDays()).toBe(30);
+    expect(await mockStorage.getItem(STORAGE_KEYS.EXPORT_PERIOD_DAYS)).toBe('30');
+  });
+
+  it('SpreadsheetのPDF出力オプションを保存・取得できる', async () => {
+    // Save
+    await exportConfigService.saveExportSheetAsPdf(true);
+    expect(await exportConfigService.loadExportSheetAsPdf()).toBe(true);
+    expect(await mockStorage.getItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF)).toBe('true');
+
+    await exportConfigService.saveExportSheetAsPdf(false);
+    expect(await exportConfigService.loadExportSheetAsPdf()).toBe(false);
+    expect(await mockStorage.getItem(STORAGE_KEYS.EXPORT_SHEET_AS_PDF)).toBe('false');
+  });
+
+  it('選択されたデータタグを保存・取得できる', async () => {
+    // Default (null)
+    expect(await exportConfigService.loadSelectedDataTags()).toBeNull();
+
+    // Save & Load
+    const tags = ['steps', 'weight'];
+    await exportConfigService.saveSelectedDataTags(tags);
+    expect(await exportConfigService.loadSelectedDataTags()).toEqual(tags);
+    expect(await mockStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS)).toBe(JSON.stringify(tags));
+  });
 });
