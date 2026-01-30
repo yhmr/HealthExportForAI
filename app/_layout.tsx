@@ -15,14 +15,16 @@ import '../src/services/background/scheduler';
 import { syncBackgroundTask } from '../src/services/background/scheduler';
 import { backgroundSyncConfigService } from '../src/services/config/BackgroundSyncConfigService';
 
-Sentry.init({
-  dsn: 'https://9cbd9eeaca1880f9a2f5ec4367245444@o4510736582770688.ingest.us.sentry.io/4510736586506240',
-  sendDefaultPii: true,
-  enableLogs: true,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration()]
-});
+if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    sendDefaultPii: true,
+    enableLogs: true,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1,
+    integrations: [Sentry.mobileReplayIntegration()]
+  });
+}
 
 function RootLayoutContent() {
   const { colors, activeThemeMode } = useTheme();

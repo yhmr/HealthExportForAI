@@ -59,10 +59,18 @@ npm install
 プロジェクトルートに `.env` ファイルを作成し、以下の変数を設定します。
 
 ```env
-# Google Cloud Console で取得した Web Client ID
+# Google Cloud Console で取得した Web Client ID (必須)
 EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
-# Sentry エラーモニタリング (ビルド時に必要)
+# Expo / EAS 設定 (必須)
+EXPO_PUBLIC_SLUG=your-slug
+EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# Sentry エラーモニタリング (任意)
+# 設定しない場合は Sentry は無効化されます
+EXPO_PUBLIC_SENTRY_DSN=your-sentry-dsn
+
+# Sentry ビルド時設定 (Sentry を使用する場合のみ)
 SENTRY_AUTH_TOKEN=your-sentry-token
 SENTRY_ORG=your-org-slug
 SENTRY_PROJECT=your-project-name
@@ -90,6 +98,13 @@ npm run build:android:all
 npm run build:android:debug   # APK 生成
 npm run build:android:release # AAB 生成
 ```
+
+### Expo / EAS に関する注意点
+
+クローンして自身の環境でビルドする場合、以下の点に注意してください。
+
+1. **プロジェクトIDの更新**: `.env` の `EXPO_PUBLIC_EAS_PROJECT_ID` を自身のプロジェクトIDに書き換えてください。
+2. **Slug の変更**: `.env` の `EXPO_PUBLIC_SLUG` を自身のプロジェクト名に変更してください。
 
 ## プロジェクト構造
 
