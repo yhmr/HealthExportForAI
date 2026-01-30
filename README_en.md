@@ -5,10 +5,9 @@
     <strong>Export Health Connect data for AI analysis</strong>
   </p>
   <p>
-    <a href="./README.md">日本語 (Japanese)</a>
-  </p>
-  <p>
-    <a href="https://yhmr.github.io/HealthExportForAI/">Official Site</a>
+    <a href="./README.md">日本語 (Japanese)</a> | 
+    <a href="https://yhmr.github.io/HealthExportForAI/">Official Site</a> | 
+    <a href="https://yhmr.github.io/HealthExportForAI/privacy/">Privacy Policy</a>
   </p>
 </div>
 
@@ -21,124 +20,115 @@
 
 </div>
 
-Running on Android, built with React Native + Expo. Reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
+An Android application built with React Native + Expo. It reads health data from Health Connect and exports it to Google Drive in flexible formats (Google Sheets, PDF, CSV, JSON) for analysis with AI tools like NotebookLM.
 
-## Features
+## Key Features
 
-- 🏃 **Health Connect Integration**: Aggregates vital data like steps, heart rate, sleep, etc.
-- 📂 **Cloud Sync**: Automatic backup to a specified Google Drive folder
-- 📄 **Multi-Format**: Supports CSV/JSON for AI analysis, and PDF/Sheets for readability
-- 🤖 **AI Ready**: Optimized output structure for LLMs (e.g., NotebookLM)
-- 📱 **Widgets**: Home screen widgets (1x1, 2x1) to execute sync and view sync status at a glance
-- 🔋 **Background Sync(Experimental)**: Supports scheduled automatic synchronization
+- **Health Connect Integration**: Unified access to steps, heart rate, sleep, and more.
+- **Google Drive Sync**: Auto/manual backup to a specific folder.
+- **Multi-Format Export**: AI-ready CSV/JSON and human-readable PDF/Sheets.
+- **Home Screen Widgets**: Perform sync and check status at a glance.
+- **Background Sync (Experimental)**: Automated periodic data updates.
 
 ## Tech Stack
 
 - **Framework**: React Native, Expo (SDK 52+)
-- **Language**: TypeScript
+- **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
-- **Testing**: Vitest
+- **Testing**: Vitest (Unit/Integration)
 - **Error Monitoring**: Sentry
 - **CI**: GitHub Actions
 
 ## Requirements
 
-- Node.js 18 or higher
-- Android 9 (API 28) or higher
-  - Recommended: Android 14 (API 34) or higher (Health Connect is built-in)
-- Health Connect app (for Android 13 and below)
+- Node.js 18+
+- Android 9 (API 28)+
+  - Recommended: Android 14+ (Built-in Health Connect)
+- Google Cloud Console Project (with Google Drive API enabled)
 
 ## Setup
 
-### 1. Prepare Project
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
 npm install
-
-# Prebuild for Android build (Required for Native Modules)
-npx expo prebuild --platform android
 ```
 
 ### 2. Configure Environment Variables
 
-Create a `.env` file in the project root and set the **Web Client ID** obtained from Google Cloud Console.
+Create a `.env` file in the project root and set the following variables:
 
 ```env
+# Web Client ID from Google Cloud Console (Required)
 EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+
+# Expo / EAS Configuration (Required)
+EXPO_PUBLIC_SLUG=your-slug
+EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# Sentry Error Monitoring (Optional)
+# If not set, Sentry will be disabled
+EXPO_PUBLIC_SENTRY_DSN=your-sentry-dsn
+
+# Sentry Build-time Configuration (Only if using Sentry)
+SENTRY_AUTH_TOKEN=your-sentry-token
+SENTRY_ORG=your-org-slug
+SENTRY_PROJECT=your-project-name
 ```
 
-### 3. Start Application
+### 3. Start Development Server
 
 ```bash
-# Start development server
+npx expo prebuild --platform android
 npm run android
 ```
 
-## Google Drive API Configuration
+## Build Process
 
-1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable Google Drive API
-3. Create OAuth 2.0 Client ID (Web application)
-4. Set the obtained Client ID in `.env`
+Local builds are supported via internal build scripts.
+Ensure "Environment Variables" are configured as described above before running builds.
 
-## Development Commands
+### Commands
 
 ```bash
-# Run tests (Vitest)
-npm run test
-
-# Run tests once
-npm run test:run
-
-# Run Linter (ESLint)
-npm run lint
-
-# Run Formatter (Prettier)
-npm run format
-```
-
-## Android Build
-
-You can build Release (AAB) and Debug (APK) versions using the scripts added to `package.json`.
-
-### Prerequisites
-
-- Ensure `EXPO_PUBLIC_WEB_CLIENT_ID`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` are set in your `.env` file.
-
-### Build Commands
-
-```bash
-# Automated Build (Recommended)
-# Installs dependencies -> prebuild -> loads env -> generates AAB & APK
+# Complete Build (prebuild + gradle build)
 npm run build:android:all
 
-# Generate Release AAB only
-npm run build:android:release
-
-# Generate Debug APK only
-npm run build:android:debug
+# Specific Build Modes
+npm run build:android:debug   # Generate APK
+npm run build:android:release # Generate AAB
 ```
 
-### Output Locations
+### Expo / EAS Notes
 
-- **Release AAB (for Google Play)**: `android/app/build/outputs/bundle/release/app-release.aab`
-- **Debug/Test APK**: `android/app/build/outputs/apk/release/app-release.apk` (or `debug/app-debug.apk`)
+When cloning and building in your own environment, please note the following:
+
+1. **Project ID Update**: Update `EXPO_PUBLIC_EAS_PROJECT_ID` in `.env` with your own project ID.
+2. **Slug Change**: Change `EXPO_PUBLIC_SLUG` in `.env` to your own project name.
+
+## Project Structure
 
 ```
 ├── app/                    # Expo Router pages
 ├── src/
-│   ├── components/         # UI components
-│   ├── hooks/              # Custom hooks (useOfflineSync, useDriveAuth, etc.)
-│   ├── stores/             # Zustand stores (Settings, Sync)
-│   ├── services/           # Business logic (HealthConnect, Drive, Export, BackgroundSync)
-│   ├── i18n/               # Internationalization
-│   ├── types/              # Type definitions
-│   ├── utils/              # Utilities
-│   └── config/             # Configuration
-├── __tests__/              # Vitest tests
-└── app.json                # Expo configuration
+│   ├── components/         # UI Components
+│   ├── contexts/           # React Contexts (Language, Theme, etc.)
+│   ├── hooks/              # Custom Hooks (Business UI Logic)
+│   ├── services/           # Core Logic (Internal/External Services)
+│   ├── stores/             # Zustand Stores (Global State)
+│   ├── types/              # TypeScript Definitions
+│   ├── theme/              # Theme & Color Definitions
+│   ├── widgets/            # Android Native Widgets
+│   └── i18n/               # Internationalization Data
+├── __tests__/              # Unit/Integration tests with Vitest
+└── scripts/                # Build and maintenance scripts
 ```
+
+## Development Guidelines
+
+- **Type Safety**: Robust error handling using the `Result<T, E>` type.
+- **Testing**: Always add tests for critical service logic.
+- **Lint/Format**: Use `npm run lint:fix` and `npm run format`.
 
 ## License
 

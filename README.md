@@ -5,10 +5,9 @@
     <strong>Health Connect データを AI 分析のためにエクスポート</strong>
   </p>
   <p>
-    <a href="./README_en.md">英語 (English)</a>
-  </p>
-  <p>
-    <a href="https://yhmr.github.io/HealthExportForAI/">公式サイト (Official Site)</a>
+    <a href="./README_en.md">英語 (English)</a> | 
+    <a href="https://yhmr.github.io/HealthExportForAI/">公式サイト (Official Site)</a> | 
+    <a href="https://yhmr.github.io/HealthExportForAI/privacy/">プライバシーポリシー (Privacy Policy)</a>
   </p>
 </div>
 
@@ -23,122 +22,113 @@
 
 React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、柔軟な形式（Google Sheets, PDF, CSV, JSON）で Google Drive にエクスポートして NotebookLM 等の AI ツールで分析できるようにします。
 
-## 特徴
+## 主な機能
 
-- 🏃 **Health Connect 集約**: 歩数、心拍数、睡眠などのバイタルデータを一元的に取得
-- 📂 **クラウド同期**: 指定した Google Drive フォルダへバックアップ
-- 📄 **マルチフォーマット**: AI分析に適した CSV/JSON や、可読性の高い PDF/Sheets に対応
-- 🤖 **AI Ready**: LLM (NotebookLM等) に食わせやすいデータ構造で出力
-- 📱 **ウィジェット**: ホーム画面から同期を実行、同期状態を確認できるウィジェット (1x1, 2x1)
-- 🔋 **バックグラウンド実行（Experimental）**: 定期的な自動同期をサポート
+- **Health Connect 連携**: 歩数、心拍数、睡眠等のバイタルデータを一元取得。
+- **Google Drive 同期**: 指定フォルダへの自動/手動バックアップ。
+- **柔軟なエクスポート**: AI分析に適した CSV/JSON、可読性の高い PDF/Sheets に対応。
+- **ホーム画面ウィジェット**: 同期の実行と状態確認が可能。
+- **バックグラウンド同期（Experimental）**: 定期的な自動データ更新をサポート。
 
 ## 技術スタック
 
 - **Framework**: React Native, Expo (SDK 52+)
-- **Language**: TypeScript
+- **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
-- **Testing**: Vitest
+- **Testing**: Vitest (Unit/Integration)
 - **Error Monitoring**: Sentry
 - **CI**: GitHub Actions
 
 ## 必要要件
 
-- Node.js 18 以上
-- Android 9 (API 28) 以上
-  - 推奨: Android 14 (API 34) 以上（Health Connect が標準搭載のため）
-- Health Connect アプリ（Android 13以下の場合）
+- Node.js 18+
+- Android 9 (API 28)+
+  - 推奨: Android 14+ (Health Connect 内蔵)
+- Google Cloud Console プロジェクト (Google Drive API 有効化済み)
 
 ## セットアップ
 
-### 1. プロジェクトの準備
+### 1. 依存関係のインストール
 
 ```bash
-# 依存関係をインストール
 npm install
-
-# Android ビルド用に prebuild (Native Moduleを含むため必須)
-npx expo prebuild --platform android
 ```
 
 ### 2. 環境変数の設定
 
-プロジェクトルートに `.env` ファイルを作成し、Google Cloud Console で取得した **Web Client ID** を設定します。
+プロジェクトルートに `.env` ファイルを作成し、以下の変数を設定します。
 
 ```env
+# Google Cloud Console で取得した Web Client ID (必須)
 EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+
+# Expo / EAS 設定 (必須)
+EXPO_PUBLIC_SLUG=your-slug
+EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# Sentry エラーモニタリング (任意)
+# 設定しない場合は Sentry は無効化されます
+EXPO_PUBLIC_SENTRY_DSN=your-sentry-dsn
+
+# Sentry ビルド時設定 (Sentry を使用する場合のみ)
+SENTRY_AUTH_TOKEN=your-sentry-token
+SENTRY_ORG=your-org-slug
+SENTRY_PROJECT=your-project-name
 ```
 
-### 3. アプリの起動
+### 3. 開発サーバーの起動
 
 ```bash
-# 開発サーバーを起動
+npx expo prebuild --platform android
 npm run android
 ```
 
-## Google Drive API 設定
+## ビルド手順
 
-1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成
-2. Google Drive API を有効化
-3. OAuth 2.0 クライアント ID (Web application) を作成
-4. 取得したクライアント ID を `.env` に設定
+ビルドスクリプトを使用して、ローカル環境でビルドが可能です。
+ビルドを実行する前に、上記の「環境変数の設定」が完了していることを確認してください。
 
-## 開発コマンド
+### コマンド
 
 ```bash
-# テストを実行 (Vitest)
-npm run test
-
-# テストを一度だけ実行
-npm run test:run
-
-# Linter (ESLint) を実行
-npm run lint
-
-# Formatter (Prettier) を実行
-npm run format
-```
-
-## Android ビルド
-
-`package.json` に追加されたスクリプトを使用して、リリース用 (AAB) およびテスト用 (APK) のビルドが可能です。
-
-### 必須要件
-
-- `.env` ファイルに `EXPO_PUBLIC_WEB_CLIENT_ID` や `SENTRY_AUTH_TOKEN`、`SENTRY_ORG`、`SENTRY_PROJECT` が設定されていること。
-
-### ビルドコマンド
-
-```bash
-# 全自動ビルド (推奨)
-# 依存関係インストール -> prebuild -> 環境変数読込 -> AAB & APK 生成
+# 全工程ビルド (prebuild + gradle build)
 npm run build:android:all
 
-# リリース用 AAB のみ生成
-npm run build:android:release
-
-# デバッグ用 APK のみ生成
-npm run build:android:debug
+# 特定のモードでビルド
+npm run build:android:debug   # APK 生成
+npm run build:android:release # AAB 生成
 ```
 
-### 生成物の場所
+### Expo / EAS に関する注意点
 
-- **Google Play用 AAB**: `android/app/build/outputs/bundle/release/app-release.aab`
-- **テスト配布用 APK**: `android/app/build/outputs/apk/release/app-release.apk` (または `debug/app-debug.apk`)
+クローンして自身の環境でビルドする場合、以下の点に注意してください。
+
+1. **プロジェクトIDの更新**: `.env` の `EXPO_PUBLIC_EAS_PROJECT_ID` を自身のプロジェクトIDに書き換えてください。
+2. **Slug の変更**: `.env` の `EXPO_PUBLIC_SLUG` を自身のプロジェクト名に変更してください。
+
+## プロジェクト構造
 
 ```
 ├── app/                    # Expo Router ページ
 ├── src/
 │   ├── components/         # UI コンポーネント
-│   ├── hooks/              # カスタムフック (useOfflineSync, useDriveAuth など)
-│   ├── stores/             # Zustand ストア (Settings, Sync利用)
-│   ├── services/           # ビジネスロジック (HealthConnect, Drive, Export, BackgroundSync)
-│   ├── i18n/               # 多言語定義
-│   ├── types/              # 型定義
-│   ├── utils/              # ユーティリティ
-│   └── config/             # 設定
-├── __tests__/              # Vitest テスト
-└── app.json                # Expo 設定
+│   ├── contexts/           # React Contexts (Language, Theme など)
+│   ├── hooks/              # カスタムフック (Business UI Logic)
+│   ├── services/           # コアロジック (Internal/External Services)
+│   ├── stores/             # Zustand ストア (Global State)
+│   ├── types/              # TypeScript 型定義
+│   ├── theme/              # テーマ・カラー定義
+│   ├── widgets/            # Android Native ウィジェット
+│   └── i18n/               # 多言語翻訳データ
+├── __tests__/              # Vitest によるテストコード
+└── scripts/                # ビルド・メンテナス用スクリプト
 ```
+
+## 開発ガイドライン
+
+- **型安全**: `Result<T, E>` 型を用いた堅牢なエラーハンドリング。
+- **テスト**: 重要なサービスロジックには必ずテストを追加してください。
+- **Lint/Format**: `npm run lint:fix` および `npm run format` を活用してください。
 
 ## ライセンス
 

@@ -1,7 +1,6 @@
 {
   "expo": {
     "name": "Health Export For AI",
-    "slug": "connect-health-connect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -92,22 +91,11 @@
           ]
         }
       ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "url": "https://sentry.io/",
-          "project": "health-export-for-ai",
-          "organization": "yhmr"
-        }
-      ],
       "./plugins/withWoAFix",
       "expo-localization"
     ],
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "524e5bbb-60a5-463b-8e55-8f56ccbcf809"
-      }
+      "router": {}
     },
     "ios": {
       "bundleIdentifier": "com.yhmr.healthexportforai"
