@@ -20,7 +20,8 @@ import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { driveConfig, uploadError, loadConfig, clearUploadError } = useGoogleDrive();
+  const { driveConfig, uploadError, loadConfig, clearUploadError, isAuthenticated } =
+    useGoogleDrive();
   const {
     isInitialized,
     isAvailable,
@@ -119,6 +120,12 @@ export default function HomeScreen() {
       if (!granted) return;
     }
 
+    // Google認証チェック
+    if (!isAuthenticated) {
+      Alert.alert(t('common', 'error'), t('home', 'authRequired'));
+      return;
+    }
+
     // 新しい統合メソッドを使用
     const result = await triggerFullSync(); // 引数なしで差分更新または設定値に基づく初期取得
 
@@ -143,7 +150,7 @@ export default function HomeScreen() {
           <StatusCard
             lastSyncTime={lastSyncTime}
             isHealthConnectConnected={isAvailable && hasPermissions}
-            isDriveConnected={!!driveConfig}
+            isDriveConnected={!!driveConfig && isAuthenticated}
             isSetupCompleted={isSetupCompleted}
             autoSyncEnabled={autoSyncEnabled}
             t={t}

@@ -58,7 +58,7 @@ export default function OnboardingScreen() {
     fetchHealthData,
     isLoading: isSyncing,
     openHealthConnectSettings,
-    initialize: checkHcPermissions
+    checkPermissions: checkHcPermissions
   } = useHealthConnect();
   const { healthData } = useHealthStore();
   const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
