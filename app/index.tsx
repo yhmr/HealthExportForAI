@@ -17,7 +17,6 @@ import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { backgroundSyncConfigService } from '../src/services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../src/services/config/ExportConfigService';
-import { checkHealthPermissions } from '../src/services/healthConnect';
 import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
@@ -32,7 +31,8 @@ export default function HomeScreen() {
     isLoading,
     error,
     initialize,
-    requestPermissions
+    requestPermissions,
+    checkPermissions
   } = useHealthConnect();
 
   // 認証状態
@@ -62,8 +62,8 @@ export default function HomeScreen() {
 
         if (!isMounted) return;
 
-        // Health Connectの権限状態を直接チェック
-        const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
+        // Health Connectの権限状態を再チェック (State更新)
+        const currentHealthPermissions = initResult ? await checkPermissions() : false;
 
         // 設定の反映
         if (setupCompletedResult) {
@@ -75,11 +75,9 @@ export default function HomeScreen() {
         setAutoSyncEnabled(config.enabled);
 
         // オンボーディング判定
-        const needsOnboarding =
-          !isAuthenticated ||
-          (initResult && !currentHealthPermissions) ||
-          !configResult ||
-          !setupCompletedResult;
+        // 一度でもセットアップが完了していれば、権限や設定が欠けていても
+        // メイン画面でアラート等を出す形にし、オンボーディングには戻さない
+        const needsOnboarding = !setupCompletedResult;
 
         if (needsOnboarding) {
           router.replace('/onboarding');
@@ -91,7 +89,7 @@ export default function HomeScreen() {
       return () => {
         isMounted = false;
       };
-    }, [initialize, loadConfig, isInitialized, isAuthenticated, router])
+    }, [initialize, loadConfig, isInitialized, isAuthenticated, router, checkPermissions])
   );
 
   // エラー表示

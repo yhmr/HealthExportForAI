@@ -162,6 +162,17 @@ export function useHealthConnect() {
     [setAllData, setLastSyncTime, setLoading, setError]
   );
 
+  /**
+   * 権限状態を明示的に再チェックしてstateを更新する
+   */
+  const checkPermissions = useCallback(async () => {
+    // ローディング表示はしない（バックグラウンドチェック用）
+    const permResult = await checkHealthPermissions();
+    const hasPerms = permResult.unwrapOr(false);
+    setHasPermissions(hasPerms);
+    return hasPerms;
+  }, []);
+
   const requestBackgroundPermissions = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -201,6 +212,7 @@ export function useHealthConnect() {
     fetchHealthData,
     /** Android 14+ 向けのバックグラウンド権限リクエスト */
     requestBackgroundPermissions,
+    checkPermissions,
     /** Health Connectの設定画面を開く */
     openHealthConnectSettings: openHealthConnectDataManagement
   };
