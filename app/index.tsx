@@ -9,7 +9,6 @@ import { ExportCircleButton } from '../src/components/Home/ExportCircleButton';
 import { StatusCard } from '../src/components/Home/StatusCard';
 import { WidgetTips } from '../src/components/Home/WidgetTips';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
@@ -22,7 +21,6 @@ import { ThemeColors } from '../src/theme/types';
 export default function HomeScreen() {
   const router = useRouter();
   const { driveConfig, uploadError, loadConfig, clearUploadError } = useGoogleDrive();
-
   const {
     isInitialized,
     isAvailable,
@@ -34,9 +32,6 @@ export default function HomeScreen() {
     requestPermissions,
     checkPermissions
   } = useHealthConnect();
-
-  // 認証状態
-  const { isAuthenticated } = useAuth();
 
   // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
@@ -54,7 +49,7 @@ export default function HomeScreen() {
 
       const setup = async () => {
         // 並列で初期化と設定読み込みを実行
-        const [initResult, configResult, setupCompletedResult] = await Promise.all([
+        const [initResult, , setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
           loadConfig(),
           exportConfigService.loadIsSetupCompleted()
@@ -63,7 +58,10 @@ export default function HomeScreen() {
         if (!isMounted) return;
 
         // Health Connectの権限状態を再チェック (State更新)
-        const currentHealthPermissions = initResult ? await checkPermissions() : false;
+        // 初期化成功時のみチェックを実行
+        if (initResult) {
+          await checkPermissions();
+        }
 
         // 設定の反映
         if (setupCompletedResult) {
@@ -89,7 +87,7 @@ export default function HomeScreen() {
       return () => {
         isMounted = false;
       };
-    }, [initialize, loadConfig, isInitialized, isAuthenticated, router, checkPermissions])
+    }, [initialize, loadConfig, isInitialized, router, checkPermissions])
   );
 
   // エラー表示
