@@ -3,16 +3,34 @@ import { FlexWidget, ImageWidget } from 'react-native-android-widget';
 import { WIDGET_ICON_BASE64 } from './widget-icon';
 
 interface SyncWidgetSmallProps {
-  status?: 'idle' | 'syncing' | 'success' | 'error';
+  status?: 'idle' | 'syncing' | 'success' | 'error' | 'permission_required' | 'login_required';
 }
 
 export function SyncWidgetSmall({ status = 'idle' }: SyncWidgetSmallProps) {
   const isSyncing = status === 'syncing';
   const isError = status === 'error';
+  const isPermissionRequired = status === 'permission_required';
+  const isLoginRequired = status === 'login_required';
 
   // 背景色: 通常時は薄い緑、同期中は少し濃い緑、エラー時は薄い赤
-  const backgroundColor = isError ? '#FFCDD2' : isSyncing ? '#9ABF9F' : '#CFEAD1';
-  const borderColor = isError ? '#E57373' : isSyncing ? '#6E9672' : '#A3CFA8';
+  const backgroundColor = isLoginRequired
+    ? '#E1BEE7' // 薄い紫
+    : isPermissionRequired
+      ? '#FFF3E0' // 薄いオレンジ
+      : isError
+        ? '#FFCDD2'
+        : isSyncing
+          ? '#9ABF9F'
+          : '#CFEAD1';
+  const borderColor = isLoginRequired
+    ? '#BA68C8' // 紫
+    : isPermissionRequired
+      ? '#FFB74D' // オレンジ
+      : isError
+        ? '#E57373'
+        : isSyncing
+          ? '#6E9672'
+          : '#A3CFA8';
 
   return (
     <FlexWidget
