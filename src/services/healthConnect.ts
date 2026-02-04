@@ -5,6 +5,7 @@ import {
   getGrantedPermissions,
   getSdkStatus,
   initialize,
+  openHealthConnectSettings,
   readRecords,
   requestPermission,
   SdkAvailabilityStatus
@@ -42,9 +43,6 @@ const REQUIRED_PERMISSIONS = [
 /**
  * Health Connectの初期化
  */
-/**
- * Health Connectの初期化
- */
 export async function initializeHealthConnect(): Promise<Result<boolean, HealthConnectError>> {
   try {
     const isInitialized = await initialize();
@@ -56,9 +54,6 @@ export async function initializeHealthConnect(): Promise<Result<boolean, HealthC
   }
 }
 
-/**
- * Health Connect SDKの利用可否をチェック
- */
 /**
  * Health Connect SDKの利用可否をチェック
  */
@@ -85,9 +80,6 @@ export async function checkHealthConnectAvailability(): Promise<
 /**
  * 権限状態を確認（UI表示なし）
  */
-/**
- * 権限状態を確認（UI表示なし）
- */
 export async function checkHealthPermissions(): Promise<Result<boolean, HealthConnectError>> {
   try {
     const grantedPermissions = await getGrantedPermissions();
@@ -107,9 +99,6 @@ export async function checkHealthPermissions(): Promise<Result<boolean, HealthCo
   }
 }
 
-/**
- * 権限をリクエスト
- */
 /**
  * 権限をリクエスト
  */
@@ -155,9 +144,6 @@ export async function requestHealthPermissions(): Promise<Result<boolean, Health
 /**
  * バックグラウンド読み取り権限をリクエスト (Android 14+)
  */
-/**
- * バックグラウンド読み取り権限をリクエスト (Android 14+)
- */
 export async function requestBackgroundHealthPermission(): Promise<
   Result<boolean, HealthConnectError>
 > {
@@ -171,7 +157,7 @@ export async function requestBackgroundHealthPermission(): Promise<
         await addDebugLog('[HealthConnect] Requesting background permission', 'info');
         const granted = await PermissionsAndroid.request(backgroundPermission);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          await addDebugLog('[HealthConnect] Background permission denied', 'error');
+          await addDebugLog('[HealthConnect] Background permission denied', 'warn');
           return ok(false);
         } else {
           await addDebugLog('[HealthConnect] Background permission granted', 'success');
@@ -424,10 +410,6 @@ export async function fetchSleepData(
       }
     });
 
-    // ... (aggregation logic unchanged except wrapper) ...
-    // Note: I will just paste the logic inside try block to be safe, or just use the whole function replacement.
-    // Logic is long, so I'll preserve it.
-
     // 集計用の一時型
     type SleepAggregation = SleepData & { totalDeepSleepMinutes: number };
     const aggregation: DailyAggregation<SleepAggregation> = {};
@@ -645,4 +627,11 @@ export async function fetchAllHealthData(startTime: Date, endTime: Date): Promis
     exercise: exerciseResult.unwrapOr([]),
     nutrition: nutritionResult.unwrapOr([])
   };
+}
+
+/**
+ * Health Connectの設定画面を開く
+ */
+export function openHealthConnectDataManagement(): void {
+  openHealthConnectSettings();
 }

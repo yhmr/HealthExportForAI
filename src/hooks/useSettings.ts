@@ -1,6 +1,6 @@
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
@@ -8,7 +8,11 @@ import { syncBackgroundTask } from '../services/background/scheduler';
 import { backgroundSyncConfigService } from '../services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
-import { requestBackgroundHealthPermission } from '../services/healthConnect';
+import {
+  checkHealthPermissions,
+  openHealthConnectDataManagement,
+  requestBackgroundHealthPermission
+} from '../services/healthConnect';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
 import { type AutoSyncConfig, type SyncInterval } from '../types/exportTypes';
 
@@ -122,35 +126,74 @@ export function useSettings() {
 
   // アクション: 自動同期トグル
   const toggleAutoSync = async (enabled: boolean) => {
-    if (enabled && Platform.OS === 'android') {
-      // 権限チェック
-      const settings = await notifee.requestPermission();
-      if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
-        Alert.alert(
-          t('settings', 'permissionRequired'),
-          t('settings', 'notificationPermissionDesc'),
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-      const bgGranted = await requestBackgroundHealthPermission();
-      if (!bgGranted) {
-        Alert.alert(
-          t('settings', 'permissionRequired'),
-          language === 'ja'
-            ? '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。'
-            : 'Background data read permission is required to use auto sync.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-    }
+    try {
+      if (enabled && Platform.OS === 'android') {
+        // 1. Google認証チェック
+        if (!isAuthenticated || !currentUser) {
+          Alert.alert(t('common', 'error'), t('settings', 'authRequired'), [{ text: 'OK' }]);
+          return;
+        }
 
-    const newConfig = { ...autoSyncConfig, enabled };
-    setAutoSyncConfigState(newConfig);
-    await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
-    await syncBackgroundTask(newConfig);
-    await refreshLogs();
+        // 2. Health Connect権限チェック (Foreground)
+        // UI上ではすでにチェックされているはずだが、念のため
+        const hasPermissions = await checkHealthPermissions();
+        if (!hasPermissions.unwrapOr(false)) {
+          Alert.alert(t('settings', 'permissionRequired'), t('onboarding', 'permissionRequired'), [
+            {
+              text: t('settings', 'openHealthConnect'),
+              onPress: () => openHealthConnectDataManagement()
+            },
+            { text: 'OK', style: 'cancel' }
+          ]);
+          return;
+        }
+
+        // 3. 通知権限チェック
+        const settings = await notifee.requestPermission();
+        if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
+          Alert.alert(
+            t('settings', 'permissionRequired'),
+            t('settings', 'notificationPermissionDesc'),
+            [
+              {
+                text: t('settings', 'openHealthConnect'), // "設定画面を開く"を再利用
+                onPress: () => Linking.openSettings()
+              },
+              { text: 'Cancel', style: 'cancel' }
+            ]
+          );
+          return; // 通知権限がない場合はONにしない
+        }
+
+        const bgResult = await requestBackgroundHealthPermission();
+        const bgGranted = bgResult.unwrapOr(false);
+        if (!bgGranted) {
+          Alert.alert(
+            t('settings', 'permissionRequired'),
+            language === 'ja'
+              ? '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。'
+              : 'Background data read permission is required to use auto sync.',
+            [
+              {
+                text: t('settings', 'openHealthConnect'),
+                onPress: () => openHealthConnectDataManagement()
+              },
+              { text: 'Cancel', style: 'cancel' }
+            ]
+          );
+          return;
+        }
+      }
+
+      const newConfig = { ...autoSyncConfig, enabled };
+      setAutoSyncConfigState(newConfig);
+      await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
+      await syncBackgroundTask(newConfig);
+      await refreshLogs();
+    } catch (error) {
+      console.error('[toggleAutoSync] Error:', error);
+      Alert.alert(t('common', 'error'), String(error));
+    }
   };
 
   // アクション: 同期間隔変更

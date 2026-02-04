@@ -8,6 +8,7 @@ interface PermissionsStepProps {
   hasPermissions: boolean;
   hasAttemptedPermissions: boolean;
   onRequestPermissions: () => void;
+  onOpenSettings?: () => void;
   onNext: () => void;
 }
 
@@ -15,6 +16,7 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
   hasPermissions,
   hasAttemptedPermissions,
   onRequestPermissions,
+  onOpenSettings,
   onNext
 }) => {
   const { t } = useLanguage();
@@ -42,10 +44,16 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
           )}
 
           <SyncButton
-            onPress={onRequestPermissions}
+            onPress={
+              hasAttemptedPermissions && onOpenSettings ? onOpenSettings : onRequestPermissions
+            }
             isLoading={false}
-            label={t('onboarding', 'grantPermissions')}
-            icon="🛡️"
+            label={
+              hasAttemptedPermissions && onOpenSettings
+                ? t('settings', 'openHealthConnect')
+                : t('onboarding', 'grantPermissions')
+            }
+            icon={hasAttemptedPermissions && onOpenSettings ? '⚙️' : '🛡️'}
             variant="primary"
           />
 

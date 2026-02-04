@@ -9,7 +9,6 @@ import { ExportCircleButton } from '../src/components/Home/ExportCircleButton';
 import { StatusCard } from '../src/components/Home/StatusCard';
 import { WidgetTips } from '../src/components/Home/WidgetTips';
 import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
-import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
@@ -17,13 +16,12 @@ import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { backgroundSyncConfigService } from '../src/services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../src/services/config/ExportConfigService';
-import { checkHealthPermissions } from '../src/services/healthConnect';
 import { ThemeColors } from '../src/theme/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { driveConfig, uploadError, loadConfig, clearUploadError } = useGoogleDrive();
-
+  const { driveConfig, uploadError, loadConfig, clearUploadError, isAuthenticated } =
+    useGoogleDrive();
   const {
     isInitialized,
     isAvailable,
@@ -32,13 +30,10 @@ export default function HomeScreen() {
     isLoading,
     error,
     initialize,
-    requestPermissions
+    requestPermissions,
+    checkPermissions
   } = useHealthConnect();
 
-  // 認証状態
-  const { isAuthenticated } = useAuth();
-
-  // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
 
@@ -54,7 +49,7 @@ export default function HomeScreen() {
 
       const setup = async () => {
         // 並列で初期化と設定読み込みを実行
-        const [initResult, configResult, setupCompletedResult] = await Promise.all([
+        const [initResult, , setupCompletedResult] = await Promise.all([
           !isInitialized ? initialize() : Promise.resolve(true),
           loadConfig(),
           exportConfigService.loadIsSetupCompleted()
@@ -62,8 +57,11 @@ export default function HomeScreen() {
 
         if (!isMounted) return;
 
-        // Health Connectの権限状態を直接チェック
-        const currentHealthPermissions = initResult ? await checkHealthPermissions() : false;
+        // Health Connectの権限状態を再チェック (State更新)
+        // 初期化成功時のみチェックを実行
+        if (initResult) {
+          await checkPermissions();
+        }
 
         // 設定の反映
         if (setupCompletedResult) {
@@ -75,11 +73,9 @@ export default function HomeScreen() {
         setAutoSyncEnabled(config.enabled);
 
         // オンボーディング判定
-        const needsOnboarding =
-          !isAuthenticated ||
-          (initResult && !currentHealthPermissions) ||
-          !configResult ||
-          !setupCompletedResult;
+        // 一度でもセットアップが完了していれば、権限や設定が欠けていても
+        // メイン画面でアラート等を出す形にし、オンボーディングには戻さない
+        const needsOnboarding = !setupCompletedResult;
 
         if (needsOnboarding) {
           router.replace('/onboarding');
@@ -91,7 +87,7 @@ export default function HomeScreen() {
       return () => {
         isMounted = false;
       };
-    }, [initialize, loadConfig, isInitialized, isAuthenticated, router])
+    }, [initialize, loadConfig, isInitialized, router, checkPermissions])
   );
 
   // エラー表示
@@ -124,6 +120,12 @@ export default function HomeScreen() {
       if (!granted) return;
     }
 
+    // Google認証チェック
+    if (!isAuthenticated) {
+      Alert.alert(t('common', 'error'), t('home', 'authRequired'));
+      return;
+    }
+
     // 新しい統合メソッドを使用
     const result = await triggerFullSync(); // 引数なしで差分更新または設定値に基づく初期取得
 
@@ -148,7 +150,7 @@ export default function HomeScreen() {
           <StatusCard
             lastSyncTime={lastSyncTime}
             isHealthConnectConnected={isAvailable && hasPermissions}
-            isDriveConnected={!!driveConfig}
+            isDriveConnected={!!driveConfig && isAuthenticated}
             isSetupCompleted={isSetupCompleted}
             autoSyncEnabled={autoSyncEnabled}
             t={t}

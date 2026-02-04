@@ -20,6 +20,7 @@ export const translations = {
       lastSync: '最終取得:',
       emptyState1: '「データを取得」ボタンを押して',
       emptyState2: 'Health Connectからデータを取得してください',
+      authRequired: '先にGoogle Driveへサインインしてください',
       exportButton: 'Sync Now',
       exportSuccess: 'データをエクスポートしました',
       uploadError: 'アップロードエラー',
@@ -41,6 +42,12 @@ export const translations = {
       sectionDrive: 'Google Drive',
       folderLabel: '保存先フォルダ',
       changeFolder: '保存先を変更',
+      // Health Connect
+      sectionHealthConnect: 'Health Connect',
+      openHealthConnect: '設定画面を開く',
+      healthConnectPermissionOk: '権限許可済み',
+      healthConnectPermissionNg: '権限が無効です',
+      authRequired: 'Googleアカウントへのサインインが必要です',
       // エクスポート形式
       sectionExport: 'エクスポート形式',
       exportHint: '複数の形式を選択できます',
@@ -184,6 +191,7 @@ export const translations = {
       lastSync: 'Last sync:',
       emptyState1: 'Press "Fetch Data" to',
       emptyState2: 'retrieve data from Health Connect',
+      authRequired: 'Please sign in to Google Drive first',
       exportButton: 'Sync Now',
       exportSuccess: 'Data exported successfully',
       uploadError: 'Upload Error',
@@ -205,6 +213,12 @@ export const translations = {
       sectionDrive: 'Google Drive',
       folderLabel: 'Destination Folder',
       changeFolder: 'Change Folder',
+      // Health Connect
+      sectionHealthConnect: 'Health Connect',
+      openHealthConnect: 'Open Settings',
+      healthConnectPermissionOk: 'Permissions granted',
+      healthConnectPermissionNg: 'Permissions missing',
+      authRequired: 'Sign in to Google Account is required',
       // Export format
       sectionExport: 'Export Format',
       exportHint: 'You can select multiple formats',

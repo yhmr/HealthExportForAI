@@ -3,6 +3,7 @@ import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { addDebugLog } from '../services/debugLogService';
+import { checkHealthPermissions } from '../services/healthConnect';
 import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
@@ -11,7 +12,7 @@ import { SyncWidgetSmall } from './SyncWidgetSmall';
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   // ウィジェット名に応じてレンダリングする関数
   const renderCurrentWidget = (
-    status: 'idle' | 'syncing' | 'success' | 'error',
+    status: 'idle' | 'syncing' | 'success' | 'error' | 'permission_required' | 'login_required',
     lastSyncTime?: string | null
   ) => {
     const isSmall = props.widgetInfo?.widgetName === 'SyncWidgetSmall';
@@ -43,7 +44,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
         if (!authenticated) {
           await addDebugLog('[Widget] Auth failed', 'error');
-          renderCurrentWidget('error', null);
+          renderCurrentWidget('login_required', null);
           // 数秒後にアイドルに戻す
           await new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -52,7 +53,18 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           return;
         }
 
-        // 4. データ取得 & エクスポート (一括実行)
+        // 4. Health Connect権限チェック
+        const permResult = await checkHealthPermissions();
+        if (!permResult.unwrapOr(false)) {
+          await addDebugLog('[Widget] Permission missing', 'warn');
+          renderCurrentWidget('permission_required', null);
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          const lastTime = await exportConfigService.loadLastSyncTime();
+          renderCurrentWidget('idle', lastTime);
+          return;
+        }
+
+        // 5. データ取得 & エクスポート (一括実行)
         // 前回同期からの差分を取得
         const fullSyncResult = await SyncService.executeFullSync();
 
