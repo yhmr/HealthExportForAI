@@ -53,8 +53,6 @@ export default function SettingsScreen() {
     checkHcPermissions();
   }, [checkHcPermissions]);
 
-  // ... (existing code for Back Handler etc)
-
   // Back Handler
   const handleBack = () => {
     if (state.exportFormats.length === 0) {

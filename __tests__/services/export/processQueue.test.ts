@@ -14,8 +14,7 @@ import { err, ok } from '../../../src/types/result';
 // Mocks
 vi.mock('../../../src/services/networkService', () => ({
   getNetworkStatus: vi.fn(),
-  subscribeToNetworkChanges: vi.fn(),
-  isInternetReachable: vi.fn()
+  subscribeToNetworkChanges: vi.fn()
 }));
 vi.mock('../../../src/services/export/QueueManager', () => ({
   queueManager: {

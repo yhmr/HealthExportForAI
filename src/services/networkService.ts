@@ -46,19 +46,3 @@ export function subscribeToNetworkChanges(callback: (status: NetworkStatus) => v
 
   return unsubscribe;
 }
-
-/**
- * インターネット接続があるかどうかを確認
- * isConnectedだけでなく、isInternetReachableも考慮
- * @returns Promise<boolean> インターネットに到達可能な場合true
- */
-export async function isInternetReachable(): Promise<boolean> {
-  try {
-    const state = await NetInfo.fetch();
-    // isInternetReachableがnullの場合はisConnectedで判断
-    return state.isInternetReachable ?? state.isConnected ?? false;
-  } catch (error) {
-    await addDebugLog(`[NetworkService] Failed to check internet reachability: ${error}`, 'error');
-    return false;
-  }
-}

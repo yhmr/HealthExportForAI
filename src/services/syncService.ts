@@ -210,7 +210,6 @@ export class SyncServiceImpl {
 
     // 2. 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
     if (syncResult.success) {
-      // 取得に成功し、かつ新しいデータがキューに追加された場合、またはキューに未処理が残っている場合
       // オフライン判定等は processExportQueue 側で行われるため、ここでは単に呼び出す
       exportResult = await processExportQueue();
     }

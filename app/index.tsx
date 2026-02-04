@@ -33,7 +33,6 @@ export default function HomeScreen() {
     checkPermissions
   } = useHealthConnect();
 
-  // 取得期間（UIからは削除されたが、設定読み込みなどで使う可能性があれば残すが、Hooks側で管理するので不要）
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
 

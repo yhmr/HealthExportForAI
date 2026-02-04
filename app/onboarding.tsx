@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, AppState, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,11 +17,13 @@ import { WelcomeStep } from '../src/components/Onboarding/WelcomeStep';
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../src/config/driveConfig';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
 import { useHealthConnect } from '../src/hooks/useHealthConnect';
 import { exportConfigService } from '../src/services/config/ExportConfigService';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
 import { useHealthStore } from '../src/stores/healthStore';
+import { ThemeColors } from '../src/theme/types';
 import { ALL_DATA_TAGS, DataTagKey } from '../src/types/health';
 
 // ステップ定義
@@ -41,6 +43,8 @@ type Step = (typeof STEPS)[keyof typeof STEPS];
 export default function OnboardingScreen() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [currentStep, setCurrentStep] = useState<Step>(STEPS.WELCOME);
 
   // Auth state
@@ -320,33 +324,34 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f1a'
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 8
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#2e2e3e'
-  },
-  progressDotActive: {
-    backgroundColor: '#6366f1',
-    width: 24
-  },
-  progressDotCompleted: {
-    backgroundColor: '#10b981'
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24
-  }
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background
+    },
+    progressContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      paddingTop: 20,
+      gap: 8
+    },
+    progressDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.surfaceVariant
+    },
+    progressDotActive: {
+      backgroundColor: colors.primary,
+      width: 24
+    },
+    progressDotCompleted: {
+      backgroundColor: '#10b981' // success color (常に同じ)
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: 24
+    }
+  });
