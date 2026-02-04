@@ -65,8 +65,8 @@ export default function OnboardingScreen() {
       if (nextAppState === 'active' && currentStep === STEPS.PERMISSIONS) {
         const hasPerms = await checkHcPermissions();
         if (hasPerms) {
-          // 権限が付与されていたら自動的に次へ
-          setCurrentStep((prev) => (prev + 1) as Step);
+          // 権限が付与されていたら自動的に次へ (重複防止のため現在のステップを確認)
+          setCurrentStep((prev) => (prev === STEPS.PERMISSIONS ? STEPS.SETUP : prev));
         }
       }
     });
@@ -167,7 +167,8 @@ export default function OnboardingScreen() {
     try {
       const granted = await requestPermissions();
       if (granted) {
-        if (currentStep < STEPS.COMPLETED) setCurrentStep((prev) => (prev + 1) as Step);
+        // 重複防止のため現在のステップを確認して次へ
+        setCurrentStep((prev) => (prev === STEPS.PERMISSIONS ? STEPS.SETUP : prev));
       }
     } catch {
       Alert.alert(t('common', 'error'), 'Permission request failed');

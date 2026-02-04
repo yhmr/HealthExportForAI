@@ -121,6 +121,13 @@ export class SyncServiceImpl {
         'info'
       );
 
+      // 権限チェックを追加し、バックグラウンドでのSecurityExceptionを回避
+      const permResult = await this.accessChecker.hasPermissions();
+      if (!permResult.unwrapOr(false)) {
+        await addDebugLog('[SyncService] Permissions missing, aborting sync', 'warn');
+        return err(new AppError('Permissions missing', 'PERMISSION_DENIED'));
+      }
+
       // 2. データの取得 (Fetcher利用)
       const healthData = await this.fetcher.fetchAllData(startTime, endTime);
 

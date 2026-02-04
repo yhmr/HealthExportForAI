@@ -172,7 +172,7 @@ export async function requestBackgroundHealthPermission(): Promise<
         await addDebugLog('[HealthConnect] Requesting background permission', 'info');
         const granted = await PermissionsAndroid.request(backgroundPermission);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          await addDebugLog('[HealthConnect] Background permission denied', 'error');
+          await addDebugLog('[HealthConnect] Background permission denied', 'warn');
           return ok(false);
         } else {
           await addDebugLog('[HealthConnect] Background permission granted', 'success');
