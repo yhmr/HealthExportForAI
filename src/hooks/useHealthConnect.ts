@@ -85,7 +85,7 @@ export function useHealthConnect() {
         if (savedTime) {
           setLastSyncTime(savedTime);
         }
-        return true;
+        return hasPerms;
       } else {
         setError('Health Connectの初期化に失敗しました');
         setIsInitialized(true);

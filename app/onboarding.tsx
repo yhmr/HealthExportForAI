@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, AppState, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // New Components
@@ -52,10 +52,29 @@ export default function OnboardingScreen() {
     hasPermissions,
     requestPermissions,
     fetchHealthData,
-    isLoading: isSyncing
+    isLoading: isSyncing,
+    openHealthConnectSettings,
+    initialize: checkHcPermissions
   } = useHealthConnect();
   const { healthData } = useHealthStore();
   const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
+
+  // フォアグラウンド復帰時に権限状態を再チェック
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+      if (nextAppState === 'active' && currentStep === STEPS.PERMISSIONS) {
+        const hasPerms = await checkHcPermissions();
+        if (hasPerms) {
+          // 権限が付与されていたら自動的に次へ
+          setCurrentStep((prev) => (prev + 1) as Step);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [currentStep, checkHcPermissions]);
 
   // Drive state
   const {
@@ -217,6 +236,7 @@ export default function OnboardingScreen() {
             hasPermissions={hasPermissions}
             hasAttemptedPermissions={hasAttemptedPermissions}
             onRequestPermissions={handleRequestPermissions}
+            onOpenSettings={openHealthConnectSettings}
             onNext={handleNext}
           />
         );
