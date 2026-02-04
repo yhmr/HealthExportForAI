@@ -1,5 +1,8 @@
+import { WEB_CLIENT_ID } from '../../config/driveConfig';
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
+import { initializeHealthConnect } from '../healthConnect';
+import { googleAuthService } from '../infrastructure/GoogleAuthService';
 import { SyncService } from '../syncService';
 
 // モジュールロード時のログは非同期で実行
@@ -20,6 +23,24 @@ export interface SyncExecutionResult {
  */
 export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExecutionResult> {
   await addDebugLog('[SyncOperation] Starting execution', 'info');
+
+  // Google認証設定 (必須)
+  try {
+    googleAuthService.configure(WEB_CLIENT_ID);
+  } catch (e) {
+    await addDebugLog(`[SyncOperation] Auth config check: ${e}`, 'warn');
+  }
+
+  // Health Connect初期化
+  const initResult = await initializeHealthConnect();
+  if (!initResult.unwrapOr(false)) {
+    await addDebugLog('[SyncOperation] Health Connect init failed', 'error');
+    return {
+      success: false,
+      hasNewData: false,
+      hasQueueProcessed: false
+    };
+  }
 
   const result: SyncExecutionResult = {
     success: true,

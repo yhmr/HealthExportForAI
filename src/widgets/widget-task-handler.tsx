@@ -3,7 +3,7 @@ import { WidgetTaskHandlerProps } from 'react-native-android-widget';
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { addDebugLog } from '../services/debugLogService';
-import { checkHealthPermissions } from '../services/healthConnect';
+import { checkHealthPermissions, initializeHealthConnect } from '../services/healthConnect';
 import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 import { SyncService } from '../services/syncService';
 import { SyncWidget } from './SyncWidget';
@@ -53,7 +53,14 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           return;
         }
 
-        // 4. Health Connect権限チェック
+        // 4. Health Connect初期化 & 権限チェック
+        const initResult = await initializeHealthConnect();
+        if (!initResult.unwrapOr(false)) {
+          await addDebugLog('[Widget] Health Connect init failed', 'error');
+          renderCurrentWidget('error', null);
+          return;
+        }
+
         const permResult = await checkHealthPermissions();
         if (!permResult.unwrapOr(false)) {
           await addDebugLog('[Widget] Permission missing', 'warn');
