@@ -6,6 +6,7 @@ import {
   checkHealthConnectAvailability,
   checkHealthPermissions,
   initializeHealthConnect,
+  openHealthConnectDataManagement,
   requestBackgroundHealthPermission,
   requestHealthPermissions
 } from '../services/healthConnect';
@@ -199,6 +200,8 @@ export function useHealthConnect() {
     requestPermissions,
     fetchHealthData,
     /** Android 14+ 向けのバックグラウンド権限リクエスト */
-    requestBackgroundPermissions
+    requestBackgroundPermissions,
+    /** Health Connectの設定画面を開く */
+    openHealthConnectSettings: openHealthConnectDataManagement
   };
 }

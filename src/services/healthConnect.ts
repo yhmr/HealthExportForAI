@@ -5,6 +5,7 @@ import {
   getGrantedPermissions,
   getSdkStatus,
   initialize,
+  openHealthConnectSettings,
   readRecords,
   requestPermission,
   SdkAvailabilityStatus
@@ -645,4 +646,11 @@ export async function fetchAllHealthData(startTime: Date, endTime: Date): Promis
     exercise: exerciseResult.unwrapOr([]),
     nutrition: nutritionResult.unwrapOr([])
   };
+}
+
+/**
+ * Health Connectの設定画面を開く
+ */
+export function openHealthConnectDataManagement(): void {
+  openHealthConnectSettings();
 }

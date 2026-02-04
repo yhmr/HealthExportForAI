@@ -41,6 +41,11 @@ export const translations = {
       sectionDrive: 'Google Drive',
       folderLabel: '保存先フォルダ',
       changeFolder: '保存先を変更',
+      // Health Connect
+      sectionHealthConnect: 'Health Connect',
+      openHealthConnect: '設定画面を開く',
+      healthConnectPermissionOk: '権限許可済み',
+      healthConnectPermissionNg: '権限が無効です',
       // エクスポート形式
       sectionExport: 'エクスポート形式',
       exportHint: '複数の形式を選択できます',
@@ -205,6 +210,11 @@ export const translations = {
       sectionDrive: 'Google Drive',
       folderLabel: 'Destination Folder',
       changeFolder: 'Change Folder',
+      // Health Connect
+      sectionHealthConnect: 'Health Connect',
+      openHealthConnect: 'Open Settings',
+      healthConnectPermissionOk: 'Permissions granted',
+      healthConnectPermissionNg: 'Permissions missing',
       // Export format
       sectionExport: 'Export Format',
       exportHint: 'You can select multiple formats',
