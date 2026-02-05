@@ -1,8 +1,6 @@
-import { WEB_CLIENT_ID } from '../../config/driveConfig';
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
-import { initializeHealthConnect } from '../healthConnect';
-import { googleAuthService } from '../infrastructure/GoogleAuthService';
+import { initializeForSync } from '../syncInitializer';
 import { SyncService } from '../syncService';
 
 // モジュールロード時のログは非同期で実行
@@ -24,17 +22,10 @@ export interface SyncExecutionResult {
 export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExecutionResult> {
   await addDebugLog('[SyncOperation] Starting execution', 'info');
 
-  // Google認証設定 (必須)
-  try {
-    googleAuthService.configure(WEB_CLIENT_ID);
-  } catch (e) {
-    await addDebugLog(`[SyncOperation] Auth config check: ${e}`, 'warn');
-  }
-
-  // Health Connect初期化
-  const initResult = await initializeHealthConnect();
-  if (!initResult.unwrapOr(false)) {
-    await addDebugLog('[SyncOperation] Health Connect init failed', 'error');
+  // 共通初期化処理（認証 + Health Connect初期化 + 権限チェック）
+  const initResult = await initializeForSync();
+  if (!initResult.success) {
+    await addDebugLog(`[SyncOperation] Initialization failed: ${initResult.error}`, 'error');
     return {
       success: false,
       hasNewData: false,
