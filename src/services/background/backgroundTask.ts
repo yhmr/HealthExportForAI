@@ -1,5 +1,6 @@
 import { AutoSyncConfig } from '../../types/exportTypes';
 import { addDebugLog } from '../debugLogService';
+import { initializeForSync } from '../syncInitializer';
 import { SyncService } from '../syncService';
 
 // モジュールロード時のログは非同期で実行
@@ -21,6 +22,27 @@ export interface SyncExecutionResult {
 export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExecutionResult> {
   await addDebugLog('[SyncOperation] Starting execution', 'info');
 
+  // 意図しないタイミングで同期が行われた場合に備えて、設定を確認する
+  if (!config.enabled) {
+    await addDebugLog('[SyncOperation] Auto sync is disabled', 'info');
+    return {
+      success: false,
+      hasNewData: false,
+      hasQueueProcessed: false
+    };
+  }
+
+  // 共通初期化処理（認証 + Health Connect初期化 + 権限チェック）
+  const initResult = await initializeForSync();
+  if (!initResult.success) {
+    await addDebugLog(`[SyncOperation] Initialization failed: ${initResult.error}`, 'error');
+    return {
+      success: false,
+      hasNewData: false,
+      hasQueueProcessed: false
+    };
+  }
+
   const result: SyncExecutionResult = {
     success: true,
     hasNewData: false,
@@ -28,12 +50,6 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
   };
 
   try {
-    // 意図しないタイミングで同期が行われた場合に備えて、設定を確認する
-    if (!config.enabled) {
-      await addDebugLog('[SyncOperation] Auto sync is disabled', 'info');
-      return { ...result, success: false };
-    }
-
     // === 同期実行（取得〜エクスポートまで一括） ===
     try {
       const fullSyncResult = await SyncService.executeFullSync();
