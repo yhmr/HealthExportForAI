@@ -47,6 +47,9 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "34.0.0"
+          },
+          "ios": {
+            "useFrameworks": "static"
           }
         }
       ],
@@ -98,7 +101,11 @@
       "router": {}
     },
     "ios": {
-      "bundleIdentifier": "com.yhmr.healthexportforai"
+      "bundleIdentifier": "com.yhmr.healthexportforai",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch"]
+      }
     }
   }
 }

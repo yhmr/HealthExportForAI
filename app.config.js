@@ -19,6 +19,27 @@ export default ({ config }) => {
 
   const plugins = config.plugins || [];
 
+  // Google Sign-In設定 (iOS用)
+  // EXPO_PUBLIC_IOS_URL_SCHEME が設定されている場合、プラグイン設定に注入する
+  const iosUrlScheme = process.env.EXPO_PUBLIC_IOS_URL_SCHEME;
+  if (iosUrlScheme) {
+    const googleSigninPluginIndex = plugins.findIndex(
+      (p) =>
+        p === '@react-native-google-signin/google-signin' ||
+        (Array.isArray(p) && p[0] === '@react-native-google-signin/google-signin')
+    );
+
+    if (googleSigninPluginIndex !== -1) {
+      const existingConfig = Array.isArray(plugins[googleSigninPluginIndex])
+        ? plugins[googleSigninPluginIndex][1]
+        : {};
+      plugins[googleSigninPluginIndex] = [
+        '@react-native-google-signin/google-signin',
+        { ...existingConfig, iosUrlScheme }
+      ];
+    }
+  }
+
   // Sentryプラグインの設定
   if (isSentryEnabled) {
     // 既存のSentryプラグイン設定を上書き、または追加

@@ -44,6 +44,8 @@ React Native + Expo で構築された Android 専用アプリケーション。
 - Node.js 18+
 - Android 9 (API 28)+
   - 推奨: Android 14+ (Health Connect 内蔵)
+- iOS 15.1+ (iOS開発の場合)
+  - 必須: macOS, Xcode
 - Google Cloud Console プロジェクト (Google Drive API 有効化済み)
 
 ## セットアップ
@@ -62,6 +64,13 @@ npm install
 # Google Cloud Console で取得した Web Client ID (必須)
 EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
+# iOS Client ID (iOS開発の場合必須)
+EXPO_PUBLIC_IOS_CLIENT_ID=your-ios-client-id.apps.googleusercontent.com
+
+# iOS URL Scheme (iOS開発の場合必須)
+# Client IDの逆転形式 (例: com.googleusercontent.apps.CLIENT_ID)
+EXPO_PUBLIC_IOS_URL_SCHEME=your-ios-url-scheme
+
 # Expo / EAS 設定 (必須)
 EXPO_PUBLIC_SLUG=your-slug
 EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
@@ -79,8 +88,13 @@ SENTRY_PROJECT=your-project-name
 ### 3. 開発サーバーの起動
 
 ```bash
+# Android
 npx expo prebuild --platform android
 npm run android
+
+# iOS
+npx expo prebuild --platform ios
+npm run ios
 ```
 
 ## ビルド手順
