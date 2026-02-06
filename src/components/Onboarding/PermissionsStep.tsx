@@ -1,6 +1,7 @@
 import React from 'react';
 import { BackHandler, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
 
@@ -19,12 +20,15 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
   onOpenSettings,
   onNext
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const serviceName = getHealthServiceName(language);
 
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.icon}>❤️</Text>
-      <Text style={styles.title}>{t('onboarding', 'healthTitle')}</Text>
+      <Text style={styles.title}>
+        {t('onboarding', 'healthTitle').replace('Health Connect', serviceName)}
+      </Text>
       <Text style={styles.description}>{t('onboarding', 'healthDesc')}</Text>
       {hasPermissions ? (
         <View style={styles.completedState}>
@@ -40,7 +44,9 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
       ) : (
         <View style={styles.actionContainer}>
           {hasAttemptedPermissions && (
-            <Text style={styles.warningText}>{t('onboarding', 'permissionRequired')}</Text>
+            <Text style={styles.warningText}>
+              {t('onboarding', 'permissionRequired').replace('Health Connect', serviceName)}
+            </Text>
           )}
 
           <SyncButton

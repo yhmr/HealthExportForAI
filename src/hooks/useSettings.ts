@@ -8,11 +8,7 @@ import { syncBackgroundTask } from '../services/background/scheduler';
 import { backgroundSyncConfigService } from '../services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
-import {
-  checkHealthPermissions,
-  openHealthConnectDataManagement,
-  requestBackgroundHealthPermission
-} from '../services/healthConnect';
+import { healthService } from '../services/health/HealthServiceAdapter';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
 import { type AutoSyncConfig, type SyncInterval } from '../types/exportTypes';
 
@@ -136,12 +132,12 @@ export function useSettings() {
 
         // 2. Health Connect権限チェック (Foreground)
         // UI上ではすでにチェックされているはずだが、念のため
-        const hasPermissions = await checkHealthPermissions();
+        const hasPermissions = await healthService.hasPermissions();
         if (!hasPermissions.unwrapOr(false)) {
           Alert.alert(t('settings', 'permissionRequired'), t('onboarding', 'permissionRequired'), [
             {
               text: t('settings', 'openHealthConnect'),
-              onPress: () => openHealthConnectDataManagement()
+              onPress: () => healthService.openDataManagement()
             },
             { text: 'OK', style: 'cancel' }
           ]);
@@ -165,7 +161,7 @@ export function useSettings() {
           return; // 通知権限がない場合はONにしない
         }
 
-        const bgResult = await requestBackgroundHealthPermission();
+        const bgResult = await healthService.requestBackgroundPermission();
         const bgGranted = bgResult.unwrapOr(false);
         if (!bgGranted) {
           Alert.alert(
@@ -176,7 +172,7 @@ export function useSettings() {
             [
               {
                 text: t('settings', 'openHealthConnect'),
-                onPress: () => openHealthConnectDataManagement()
+                onPress: () => healthService.openDataManagement()
               },
               { text: 'Cancel', style: 'cancel' }
             ]

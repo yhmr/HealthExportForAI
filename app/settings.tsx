@@ -23,7 +23,7 @@ import { useHealthStore } from '../src/stores/healthStore';
 
 // Hooks
 import { useTheme } from '../src/contexts/ThemeContext';
-import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useHealthService } from '../src/hooks/useHealthService';
 import { useSettings } from '../src/hooks/useSettings';
 import { ThemeColors } from '../src/theme/types';
 
@@ -45,7 +45,7 @@ export default function SettingsScreen() {
     openHealthConnectSettings,
     hasPermissions,
     initialize: checkHcPermissions
-  } = useHealthConnect();
+  } = useHealthService();
 
   // マウント時(とフォーカス時)に権限状態をチェック
   // 簡易的にuseEffectで実装(設定から戻った時にも反映させたい場合はuseFocusEffect検討だが、今回は単純化)

@@ -19,7 +19,7 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
-import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useHealthService } from '../src/hooks/useHealthService';
 import { exportConfigService } from '../src/services/config/ExportConfigService';
 import { DEFAULT_FOLDER_NAME } from '../src/services/storage/googleDrive';
 import { useHealthStore } from '../src/stores/healthStore';
@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
     isLoading: isSyncing,
     openHealthConnectSettings,
     checkPermissions: checkHcPermissions
-  } = useHealthConnect();
+  } = useHealthService();
   const { healthData } = useHealthStore();
   const [hasAttemptedPermissions, setHasAttemptedPermissions] = useState(false);
 

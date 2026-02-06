@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../theme/types';
@@ -8,6 +8,8 @@ export function WidgetTips() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  if (Platform.OS !== 'android') return null;
 
   return (
     <View style={styles.container}>

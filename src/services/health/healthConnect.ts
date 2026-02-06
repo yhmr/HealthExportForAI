@@ -10,7 +10,7 @@ import {
   requestPermission,
   SdkAvailabilityStatus
 } from 'react-native-health-connect';
-import { HealthConnectError } from '../types/errors';
+import { HealthConnectError } from '../../types/errors';
 import type {
   BasalMetabolicRateData,
   BodyFatData,
@@ -21,12 +21,12 @@ import type {
   SleepData,
   StepsData,
   WeightData
-} from '../types/health';
-import { err, ok, Result } from '../types/result';
-import { formatDate } from '../utils/formatters';
-import { addDebugLog } from './debugLogService';
+} from '../../types/health';
+import { err, ok, Result } from '../../types/result';
+import { formatDate } from '../../utils/formatters';
+import { addDebugLog } from '../debugLogService';
 
-import { aggregateByLatestPerDay } from '../utils/healthAggregation';
+import { aggregateByLatestPerDay } from '../../utils/healthAggregation';
 
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [

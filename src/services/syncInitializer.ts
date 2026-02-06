@@ -5,7 +5,7 @@
 
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { addDebugLog } from './debugLogService';
-import { checkHealthPermissions, initializeHealthConnect } from './healthConnect';
+import { healthService } from './health/HealthServiceAdapter';
 import { googleAuthService } from './infrastructure/GoogleAuthService';
 
 /**
@@ -58,14 +58,14 @@ export async function initializeForSync(): Promise<InitializationResult> {
   }
 
   // 3. Health Connect初期化
-  const initResult = await initializeHealthConnect();
+  const initResult = await healthService.initialize();
   if (!initResult.unwrapOr(false)) {
-    await addDebugLog('[SyncInitializer] Health Connect init failed', 'error');
+    await addDebugLog('[SyncInitializer] Health SDK init failed', 'error');
     return { success: false, error: 'health_connect_failed' };
   }
 
   // 4. 権限チェック
-  const permResult = await checkHealthPermissions();
+  const permResult = await healthService.hasPermissions();
   if (!permResult.unwrapOr(false)) {
     await addDebugLog('[SyncInitializer] Health Connect permission missing', 'warn');
     return { success: false, error: 'permission_denied' };

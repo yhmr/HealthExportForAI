@@ -30,7 +30,7 @@ describe('SyncServiceImpl', () => {
 
     // モックオブジェクトの作成
     mockAccessChecker = {
-      checkAvailability: vi.fn().mockResolvedValue(ok({ available: true })),
+      checkAvailability: vi.fn().mockResolvedValue(ok(true)),
       initialize: vi.fn().mockResolvedValue(ok(true)),
       hasPermissions: vi.fn().mockResolvedValue(ok(true))
     };
@@ -187,7 +187,7 @@ describe('SyncServiceImpl', () => {
     });
 
     it('should return false if not available', async () => {
-      mockAccessChecker.checkAvailability.mockResolvedValue(ok({ available: false }));
+      mockAccessChecker.checkAvailability.mockResolvedValue(ok(false));
       const result = await syncService.initialize();
       expect(result.isOk()).toBe(true);
       expect(result.unwrap().available).toBe(false);
@@ -204,11 +204,12 @@ describe('SyncServiceImpl', () => {
       mockAccessChecker.initialize.mockResolvedValue(err('Init failed'));
       const result = await syncService.initialize();
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe('Init failed');
+      expect(result.unwrapErr().message).toContain('Init failed');
+      expect(result.unwrapErr().code).toBe('HEALTH_INIT_FAILED');
     });
 
     it('should return ok with initialized=false if initialize returns false', async () => {
-      mockAccessChecker.checkAvailability.mockResolvedValue(ok({ available: true }));
+      mockAccessChecker.checkAvailability.mockResolvedValue(ok(true));
       mockAccessChecker.initialize.mockResolvedValue(ok(false));
 
       const result = await syncService.initialize();
@@ -228,7 +229,8 @@ describe('SyncServiceImpl', () => {
       const result = await syncService.initialize();
 
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe('Perm check error');
+      expect(result.unwrapErr().message).toContain('Perm check error');
+      expect(result.unwrapErr().code).toBe('HEALTH_PERMISSION_FAILED');
     });
   });
 });

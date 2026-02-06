@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../theme/types';
+import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SettingsItem } from './SettingsItem';
 import { SettingsSection } from './SettingsSection';
 
@@ -15,12 +16,12 @@ export const HealthConnectSection: React.FC<HealthConnectSectionProps> = ({
   hasPermissions,
   onOpenSettings
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <SettingsSection title={t('settings', 'sectionHealthConnect')}>
+    <SettingsSection title={getHealthServiceName(language)}>
       <SettingsItem
         label={t('settings', 'openHealthConnect')}
         icon="❤️"

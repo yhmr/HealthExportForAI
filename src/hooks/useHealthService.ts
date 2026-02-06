@@ -2,19 +2,12 @@
 
 import { useCallback, useState } from 'react';
 import { exportConfigService } from '../services/config/ExportConfigService';
-import {
-  checkHealthConnectAvailability,
-  checkHealthPermissions,
-  initializeHealthConnect,
-  openHealthConnectDataManagement,
-  requestBackgroundHealthPermission,
-  requestHealthPermissions
-} from '../services/healthConnect';
+import { healthService } from '../services/health/HealthServiceAdapter';
 import { SyncService } from '../services/syncService';
 import { useHealthStore } from '../stores/healthStore';
 import { DataTagKey } from '../types/health';
 
-export function useHealthConnect() {
+export function useHealthService() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(false);
@@ -40,16 +33,16 @@ export function useHealthConnect() {
 
     try {
       // SDKの利用可否をチェック
-      const availabilityResult = await checkHealthConnectAvailability();
+      const availabilityResult = await healthService.checkAvailability();
       if (!availabilityResult.isOk()) {
         setError(`Health Connect Check Error: ${availabilityResult.unwrapErr()}`);
         setIsInitialized(true);
         return false;
       }
-      const availability = availabilityResult.unwrap();
-      setIsAvailable(availability.available);
+      const available = availabilityResult.unwrap();
+      setIsAvailable(available);
 
-      if (!availability.available) {
+      if (!available) {
         setError('Health Connectが利用できません');
         // 利用不可でも初期化チェック自体は完了とみなす
         setIsInitialized(true);
@@ -57,7 +50,7 @@ export function useHealthConnect() {
       }
 
       // 初期化
-      const initResult = await initializeHealthConnect();
+      const initResult = await healthService.initialize();
       if (!initResult.isOk()) {
         setError(`Health Connect Init Error: ${initResult.unwrapErr()}`);
         setIsInitialized(true);
@@ -69,7 +62,7 @@ export function useHealthConnect() {
 
       if (initialized) {
         // 初期化成功時に権限状態もチェックする
-        const permResult = await checkHealthPermissions();
+        const permResult = await healthService.hasPermissions();
         const hasPerms = permResult.unwrapOr(false);
         setHasPermissions(hasPerms);
 
@@ -108,7 +101,7 @@ export function useHealthConnect() {
     setError(null);
 
     try {
-      const result = await requestHealthPermissions();
+      const result = await healthService.requestPermissions();
       const granted = result.unwrapOr(false);
       setHasPermissions(granted);
 
@@ -167,7 +160,7 @@ export function useHealthConnect() {
    */
   const checkPermissions = useCallback(async () => {
     // ローディング表示はしない（バックグラウンドチェック用）
-    const permResult = await checkHealthPermissions();
+    const permResult = await healthService.hasPermissions();
     const hasPerms = permResult.unwrapOr(false);
     setHasPermissions(hasPerms);
     return hasPerms;
@@ -178,7 +171,7 @@ export function useHealthConnect() {
     setError(null);
 
     try {
-      const result = await requestBackgroundHealthPermission();
+      const result = await healthService.requestBackgroundPermission();
       const granted = result.unwrapOr(false);
       // バックグラウンド権限の結果のみで全体の権限状態を更新してよいかは
       // アプリの仕様によりますが、ここではユーザー実装に合わせて更新します
@@ -214,6 +207,6 @@ export function useHealthConnect() {
     requestBackgroundPermissions,
     checkPermissions,
     /** Health Connectの設定画面を開く */
-    openHealthConnectSettings: openHealthConnectDataManagement
+    openHealthConnectSettings: healthService.openDataManagement
   };
 }

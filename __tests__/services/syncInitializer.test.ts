@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initializeForSync } from '../../src/services/syncInitializer';
 
-import { checkHealthPermissions, initializeHealthConnect } from '../../src/services/healthConnect';
+import { healthService } from '../../src/services/health/HealthServiceAdapter';
 import { googleAuthService } from '../../src/services/infrastructure/GoogleAuthService';
 import { AuthError } from '../../src/types/errors';
 import { err, ok } from '../../src/types/result';
@@ -11,9 +11,11 @@ vi.mock('../../src/services/debugLogService', () => ({
   addDebugLog: vi.fn()
 }));
 
-vi.mock('../../src/services/healthConnect', () => ({
-  initializeHealthConnect: vi.fn(),
-  checkHealthPermissions: vi.fn()
+vi.mock('../../src/services/health/HealthServiceAdapter', () => ({
+  healthService: {
+    initialize: vi.fn(),
+    hasPermissions: vi.fn()
+  }
 }));
 
 vi.mock('../../src/services/infrastructure/GoogleAuthService', () => ({
@@ -40,8 +42,8 @@ describe('syncInitializer', () => {
     it('should return success when all initialization steps succeed', async () => {
       // Arrange
       vi.mocked(googleAuthService.isSignedIn).mockResolvedValue(true);
-      vi.mocked(initializeHealthConnect).mockResolvedValue(ok(true));
-      vi.mocked(checkHealthPermissions).mockResolvedValue(ok(true));
+      vi.mocked(healthService.initialize).mockResolvedValue(ok(true));
+      vi.mocked(healthService.hasPermissions).mockResolvedValue(ok(true));
 
       // Act
       const result = await initializeForSync();
@@ -51,16 +53,16 @@ describe('syncInitializer', () => {
       expect(result.error).toBeUndefined();
       expect(googleAuthService.configure).toHaveBeenCalled();
       expect(googleAuthService.isSignedIn).toHaveBeenCalled();
-      expect(initializeHealthConnect).toHaveBeenCalled();
-      expect(checkHealthPermissions).toHaveBeenCalled();
+      expect(healthService.initialize).toHaveBeenCalled();
+      expect(healthService.hasPermissions).toHaveBeenCalled();
     });
 
     it('should attempt sign-in if not already signed in', async () => {
       // Arrange
       vi.mocked(googleAuthService.isSignedIn).mockResolvedValue(false);
       vi.mocked(googleAuthService.signIn).mockResolvedValue(ok(mockUser));
-      vi.mocked(initializeHealthConnect).mockResolvedValue(ok(true));
-      vi.mocked(checkHealthPermissions).mockResolvedValue(ok(true));
+      vi.mocked(healthService.initialize).mockResolvedValue(ok(true));
+      vi.mocked(healthService.hasPermissions).mockResolvedValue(ok(true));
 
       // Act
       const result = await initializeForSync();
@@ -83,13 +85,13 @@ describe('syncInitializer', () => {
       // Assert
       expect(result.success).toBe(false);
       expect(result.error).toBe('auth_failed');
-      expect(initializeHealthConnect).not.toHaveBeenCalled();
+      expect(healthService.initialize).not.toHaveBeenCalled();
     });
 
     it('should return health_connect_failed when Health Connect init fails', async () => {
       // Arrange
       vi.mocked(googleAuthService.isSignedIn).mockResolvedValue(true);
-      vi.mocked(initializeHealthConnect).mockResolvedValue(ok(false));
+      vi.mocked(healthService.initialize).mockResolvedValue(ok(false));
 
       // Act
       const result = await initializeForSync();
@@ -97,14 +99,14 @@ describe('syncInitializer', () => {
       // Assert
       expect(result.success).toBe(false);
       expect(result.error).toBe('health_connect_failed');
-      expect(checkHealthPermissions).not.toHaveBeenCalled();
+      expect(healthService.hasPermissions).not.toHaveBeenCalled();
     });
 
     it('should return permission_denied when permissions are missing', async () => {
       // Arrange
       vi.mocked(googleAuthService.isSignedIn).mockResolvedValue(true);
-      vi.mocked(initializeHealthConnect).mockResolvedValue(ok(true));
-      vi.mocked(checkHealthPermissions).mockResolvedValue(ok(false));
+      vi.mocked(healthService.initialize).mockResolvedValue(ok(true));
+      vi.mocked(healthService.hasPermissions).mockResolvedValue(ok(false));
 
       // Act
       const result = await initializeForSync();

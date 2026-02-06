@@ -104,7 +104,9 @@
       "bundleIdentifier": "com.yhmr.healthexportforai",
       "supportsTablet": false,
       "infoPlist": {
-        "UIBackgroundModes": ["fetch"]
+        "UIBackgroundModes": ["fetch"],
+        "NSHealthShareUsageDescription": "AIによる健康データ分析のために歩数、睡眠、運動などのデータを取得します。",
+        "NSHealthUpdateUsageDescription": "このアプリはヘルスケアへのデータ書き込みを行いません。"
       }
     }
   }

@@ -12,7 +12,7 @@ import { NetworkStatusBanner } from '../src/components/NetworkStatusBanner';
 import { useLanguage } from '../src/contexts/LanguageContext';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { useGoogleDrive } from '../src/hooks/useGoogleDrive';
-import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useHealthService } from '../src/hooks/useHealthService';
 import { useSyncOperation } from '../src/hooks/useSyncOperation';
 import { backgroundSyncConfigService } from '../src/services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../src/services/config/ExportConfigService';
@@ -32,7 +32,7 @@ export default function HomeScreen() {
     initialize,
     requestPermissions,
     checkPermissions
-  } = useHealthConnect();
+  } = useHealthService();
 
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
