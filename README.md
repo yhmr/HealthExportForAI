@@ -20,15 +20,22 @@
 
 </div>
 
-React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、柔軟な形式（Google Sheets, PDF, CSV, JSON）で Google Drive にエクスポートして NotebookLM 等の AI ツールで分析できるようにします。
+# Health Export For AI
 
-## 主な機能
+**Health Export For AI** は、スマホの健康データ（Google Health Connect および Apple Health）を収集し、AIツール（NotebookLMなど）で分析しやすい形式（CSV, JSON）に変換してGoogle Driveに自動同期するアプリケーションです。
 
-- **Health Connect 連携**: 歩数、心拍数、睡眠等のバイタルデータを一元取得。
-- **Google Drive 同期**: 指定フォルダへの自動/手動バックアップ。
-- **柔軟なエクスポート**: AI分析に適した CSV/JSON、可読性の高い PDF/Sheets に対応。
-- **ホーム画面ウィジェット**: 同期の実行と状態確認が可能。
-- **バックグラウンド同期（Experimental）**: 定期的な自動データ更新をサポート。
+## 特徴
+
+- **クロスプラットフォーム対応**: Android (Google Health Connect) と iOS (Apple HealthKit) の両方をサポート
+- **自動バックグラウンド同期**: 定期的にヘルスデータを取得し、クラウドへアップロード
+- **AIフレンドリーな出力**: LLMが理解しやすい構造化データ (CSV/JSON/PDF) を生成
+- **プライバシーファースト**: データはユーザー自身のGoogle Driveにのみ保存され、外部サーバーを経由しません
+- **ホーム画面ウィジェット**: 同期ステータスを一目で確認（Androidのみ）
+
+## 対応プラットフォーム
+
+- **Android**: Android 9.0 (API Level 28) 以上、Health Connectアプリ導入済み
+- **iOS**: iOS 15.0 以上、ヘルスケアアプリ対応機種
 
 ## 技術スタック
 

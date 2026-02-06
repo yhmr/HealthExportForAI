@@ -76,6 +76,9 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
     } catch (e) {
       console.error('Start notification error:', e);
     }
+  } else {
+    // iOS: 通知は出さず、ログだけ残す
+    await addDebugLog('[Scheduler] Background sync started (iOS)', 'info');
   }
 
   // 処理全体のタイムアウト（60秒）
@@ -116,6 +119,8 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
             console.error('Success notification error:', notifError);
           }
         }
+      } else {
+        await addDebugLog('[Scheduler] Background sync completed with updates (iOS)', 'info');
       }
 
       return result.hasNewData || result.hasQueueProcessed

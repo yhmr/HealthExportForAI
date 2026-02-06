@@ -46,7 +46,12 @@ export class BackgroundSyncConfigService {
   }
 }
 
-/** 利用可能な同期間隔一覧 */
+/**
+ * 利用可能な同期間隔一覧
+ * Note: iOSではシステムが最適なタイミングを決定するため、この設定は「最小間隔の推奨値」として扱われます。
+ * 実際には設定値よりも長い間隔で実行される、あるいはバッテリー状況等により実行されない場合があります。
+ * 最小値は約15分です。
+ */
 export const SYNC_INTERVALS: import('../../types/exportTypes').SyncInterval[] = [
   5, 60, 180, 360, 720, 1440, 2880, 4320
 ];
