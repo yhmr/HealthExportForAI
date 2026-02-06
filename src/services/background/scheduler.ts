@@ -118,9 +118,12 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
           } catch (notifError) {
             console.error('Success notification error:', notifError);
           }
+        } else {
+          // iOS: 通知は出さず、ログだけ残す
+          await addDebugLog('[Scheduler] Background sync completed with updates (iOS)', 'info');
         }
       } else {
-        await addDebugLog('[Scheduler] Background sync completed with updates (iOS)', 'info');
+        await addDebugLog('[Scheduler] Background sync completed (no new data)', 'info');
       }
 
       return result.hasNewData || result.hasQueueProcessed

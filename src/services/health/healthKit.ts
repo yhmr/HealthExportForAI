@@ -9,7 +9,8 @@ export type HealthKitError = 'not_available' | 'permission_denied' | 'init_faile
 
 /**
  * HealthKit API用のオプション型定義
- * react-native-health の型定義が不完全なため、必要なプロパティを明示的に定義
+ * Note: react-native-healthのHealthInputOptionsは実際のAPIと型定義に不整合があるため
+ * (例: HealthUnitに'kg'がない、HealthObserverに必要な値がない)、独自の型を定義して使用
  */
 interface HealthKitQueryOptions {
   startDate: string;
@@ -142,6 +143,7 @@ export const fetchWeightData = async (
   };
 
   return new Promise((resolve) => {
+    // Note: ライブラリの型定義が不完全なためas anyを使用
     AppleHealthKit.getWeightSamples(options as any, (error: string, results: any[]) => {
       if (error) {
         addDebugLog(`[HealthKit] fetchWeight error: ${error}`, 'error');
@@ -192,6 +194,7 @@ export const fetchBodyFatData = async (
   };
 
   return new Promise((resolve) => {
+    // Note: ライブラリの型定義が不完全なためas anyを使用
     AppleHealthKit.getBodyFatPercentageSamples(options as any, (error: string, results: any[]) => {
       if (error) {
         addDebugLog(`[HealthKit] fetchBodyFat error: ${error}`, 'error');
@@ -244,6 +247,7 @@ export const fetchTotalCaloriesData = async (
   };
 
   return new Promise((resolve) => {
+    // Note: ライブラリの型定義が不完全なためas anyを使用
     AppleHealthKit.getActiveEnergyBurned(options as any, (error: string, results: any[]) => {
       if (error) {
         addDebugLog(`[HealthKit] fetchTotalCalories error: ${error}`, 'error');
@@ -288,6 +292,7 @@ export const fetchBasalMetabolicRateData = async (
   };
 
   return new Promise((resolve) => {
+    // Note: ライブラリの型定義が不完全なためas anyを使用
     AppleHealthKit.getBasalEnergyBurned(options as any, (error: string, results: any[]) => {
       if (error) {
         addDebugLog(`[HealthKit] fetchBMR error: ${error}`, 'error');
@@ -414,6 +419,7 @@ export const fetchExerciseData = async (
       ...options,
       type: 'Workout'
     };
+    // Note: ライブラリの型定義が不完全なためas anyを使用
     AppleHealthKit.getSamples(workoutOptions as any, (error: string, results: any[]) => {
       if (error) {
         // Workout取得エラーは許容するか、あるいは0件として扱うか
@@ -428,12 +434,12 @@ export const fetchExerciseData = async (
         // activityName または activityId から運動種別を判別
         const type = item.activityName || 'other';
         // HealthKitのWorkoutのdurationは「秒」単位で返される
-        const durationMinutes = item.duration / 60;
+        const durationMinutes = parseFloat((item.duration / 60).toFixed(1));
 
         exerciseList.push({
           date: item.startDate.substring(0, 10),
           type: type.replace('HKWorkoutActivityType', '').toLowerCase(),
-          durationMinutes: parseFloat((item.duration / 60).toFixed(1))
+          durationMinutes
         });
       });
       // 日付順
