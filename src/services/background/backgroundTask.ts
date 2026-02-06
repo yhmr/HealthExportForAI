@@ -22,6 +22,16 @@ export interface SyncExecutionResult {
 export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExecutionResult> {
   await addDebugLog('[SyncOperation] Starting execution', 'info');
 
+  // 意図しないタイミングで同期が行われた場合に備えて、設定を確認する
+  if (!config.enabled) {
+    await addDebugLog('[SyncOperation] Auto sync is disabled', 'info');
+    return {
+      success: false,
+      hasNewData: false,
+      hasQueueProcessed: false
+    };
+  }
+
   // 共通初期化処理（認証 + Health Connect初期化 + 権限チェック）
   const initResult = await initializeForSync();
   if (!initResult.success) {
@@ -40,12 +50,6 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
   };
 
   try {
-    // 意図しないタイミングで同期が行われた場合に備えて、設定を確認する
-    if (!config.enabled) {
-      await addDebugLog('[SyncOperation] Auto sync is disabled', 'info');
-      return { ...result, success: false };
-    }
-
     // === 同期実行（取得〜エクスポートまで一括） ===
     try {
       const fullSyncResult = await SyncService.executeFullSync();
