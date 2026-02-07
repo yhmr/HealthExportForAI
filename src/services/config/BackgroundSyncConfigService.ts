@@ -1,6 +1,6 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
 import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/exportTypes';
-import { IKeyValueStorage } from '../../types/storage';
+import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
 import { keyValueStorage } from '../infrastructure/keyValueStorage';

@@ -2,15 +2,10 @@
 // テスト容易性とDIのためにアダプター生成を一元管理
 
 import { googleAuthService } from '../../services/infrastructure/GoogleAuthService';
-import { IAuthService } from '../../types/auth';
-import {
-  FileOperations,
-  FolderOperations,
-  Initializable,
-  SpreadsheetAdapter
-} from '../../types/storage';
+import { IAuthService } from '../infrastructure/types';
 import { GoogleDriveAdapter } from './GoogleDriveAdapter';
 import { GoogleSheetsAdapter } from './GoogleSheetsAdapter';
+import { FileOperations, FolderOperations, Initializable, SpreadsheetAdapter } from './types';
 
 /**
  * ストレージアダプターファクトリのインターフェース

@@ -1,7 +1,7 @@
 import type { HealthData } from '../../types/health';
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
-import type { SpreadsheetAdapter } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
+import type { SpreadsheetAdapter } from '../storage/types';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
 /**

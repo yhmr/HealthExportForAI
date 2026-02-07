@@ -1,7 +1,6 @@
-import { IAuthService } from '../../types/auth';
 import { AuthError, NetworkError, StorageError } from '../../types/errors';
 import { Result, err } from '../../types/result';
-import { SpreadsheetAdapter } from '../../types/storage';
+import { IAuthService } from '../infrastructure/types';
 import {
   createSpreadsheet,
   fetchPDF,
@@ -10,6 +9,7 @@ import {
   updateHeaders,
   updateRows
 } from './googleSheets';
+import { SpreadsheetAdapter } from './types';
 
 export class GoogleSheetsAdapter implements SpreadsheetAdapter {
   private accessToken: string | null = null;

@@ -1,6 +1,6 @@
 import { DEFAULT_DRIVE_CONFIG, DriveConfig } from '../../config/driveConfig';
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { IKeyValueStorage } from '../../types/storage';
+import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
 import { keyValueStorage } from '../infrastructure/keyValueStorage';

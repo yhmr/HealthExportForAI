@@ -6,18 +6,18 @@ import { useOfflineStore } from '../../stores/offlineStore';
 import type { ExportConfig, PendingExport } from '../../types/exportTypes';
 import type { DataTagKey, HealthData } from '../../types/health';
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
-import type {
-  FileOperations,
-  FolderOperations,
-  Initializable,
-  SpreadsheetAdapter
-} from '../../types/storage';
 import { filterHealthDataByTags } from '../../utils/dataHelpers';
 import { driveConfigService } from '../config/DriveConfigService';
 import { exportConfigService } from '../config/ExportConfigService';
 import { addDebugLog } from '../debugLogService';
 import { getNetworkStatus } from '../networkService';
 import { storageAdapterFactory } from '../storage/storageAdapterFactory';
+import type {
+  FileOperations,
+  FolderOperations,
+  Initializable,
+  SpreadsheetAdapter
+} from '../storage/types';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';

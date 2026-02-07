@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
+import { SpreadsheetAdapter } from '../../../src/services/storage/types';
 import { err, ok } from '../../../src/types/result';
-import { SpreadsheetAdapter } from '../../../src/types/storage';
 
 // Mock debugLogService
 vi.mock('../../../src/services/debugLogService', () => ({

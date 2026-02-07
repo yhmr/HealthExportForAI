@@ -1,5 +1,5 @@
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
-import type { FileOperations, SpreadsheetAdapter } from '../../types/storage';
+import type { FileOperations, SpreadsheetAdapter } from '../storage/types';
 import { getExportFileName } from './utils';
 
 /**

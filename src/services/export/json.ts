@@ -4,8 +4,8 @@
 
 import type { HealthData } from '../../types/health';
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
-import type { FileOperations } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
+import type { FileOperations } from '../storage/types';
 import { getExportFileName } from './utils';
 
 // 日付ごとのデータ構造
