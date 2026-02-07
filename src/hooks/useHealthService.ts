@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { exportConfigService } from '../services/config/ExportConfigService';
-import { healthService } from '../services/health/HealthServiceAdapter';
+import { healthService } from '../services/health/healthAdapterFactory';
 import { SyncService } from '../services/syncService';
 import { useHealthStore } from '../stores/healthStore';
 import { DataTagKey } from '../types/health';

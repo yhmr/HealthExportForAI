@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initializeForSync } from '../../src/services/syncInitializer';
 
-import { healthService } from '../../src/services/health/HealthServiceAdapter';
+import { healthService } from '../../src/services/health/healthAdapterFactory';
 import { googleAuthService } from '../../src/services/infrastructure/GoogleAuthService';
 import { AuthError } from '../../src/types/errors';
 import { err, ok } from '../../src/types/result';
@@ -11,7 +11,7 @@ vi.mock('../../src/services/debugLogService', () => ({
   addDebugLog: vi.fn()
 }));
 
-vi.mock('../../src/services/health/HealthServiceAdapter', () => ({
+vi.mock('../../src/services/health/healthAdapterFactory', () => ({
   healthService: {
     initialize: vi.fn(),
     hasPermissions: vi.fn()

@@ -7,7 +7,7 @@ import { exportToJSON } from '../../../src/services/export/json';
 import { processExportQueue } from '../../../src/services/export/service';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
-import { adapterFactory } from '../../../src/services/storage/adapterFactory';
+import { storageAdapterFactory } from '../../../src/services/storage/storageAdapterFactory';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
 import { err, ok } from '../../../src/types/result';
 
@@ -25,8 +25,8 @@ vi.mock('../../../src/services/export/QueueManager', () => ({
     addToQueue: vi.fn()
   }
 }));
-vi.mock('../../../src/services/storage/adapterFactory', () => ({
-  adapterFactory: {
+vi.mock('../../../src/services/storage/storageAdapterFactory', () => ({
+  storageAdapterFactory: {
     createStorageAdapter: vi.fn(),
     createSpreadsheetAdapter: vi.fn(),
     createInitializer: vi.fn(),
@@ -81,30 +81,30 @@ describe('ExportService - processExportQueue', () => {
     });
 
     // アダプタのモック
-    vi.mocked(adapterFactory.createStorageAdapter).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createStorageAdapter).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(true), // Initializable so boolean or Promise<boolean>
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       defaultFolderName: 'ConnectHealth'
     } as any);
 
-    vi.mocked(adapterFactory.createInitializer).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createInitializer).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(true)
     });
 
-    vi.mocked(adapterFactory.createFolderOperations).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createFolderOperations).mockReturnValue({
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
       defaultFolderName: 'ConnectHealth'
     });
 
-    vi.mocked(adapterFactory.createFileOperations).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createFileOperations).mockReturnValue({
       findFile: vi.fn(),
       uploadFile: vi.fn(),
       updateFile: vi.fn(),
       downloadFileContent: vi.fn()
     });
 
-    vi.mocked(adapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
+    vi.mocked(storageAdapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
 
     // エクスポート処理の成功モック (Result型を返す)
     vi.mocked(exportToSpreadsheet).mockResolvedValue(
@@ -291,7 +291,7 @@ describe('ExportService - processExportQueue', () => {
       .mockResolvedValue([]);
 
     // Mock initialize failure
-    const mockInitializer = adapterFactory.createInitializer();
+    const mockInitializer = storageAdapterFactory.createInitializer();
     vi.mocked(mockInitializer.initialize).mockResolvedValue(false);
 
     // Act

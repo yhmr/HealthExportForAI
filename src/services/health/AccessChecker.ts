@@ -1,5 +1,5 @@
 import { Result } from '../../types/result';
-import { HealthServiceError, healthService } from './HealthServiceAdapter';
+import { HealthServiceError, healthService } from './healthAdapterFactory';
 
 /**
  * Health SDKの権限と利用可能性を管理するクラス

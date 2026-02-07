@@ -5,7 +5,7 @@
 
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { addDebugLog } from './debugLogService';
-import { healthService } from './health/HealthServiceAdapter';
+import { healthService } from './health/healthAdapterFactory';
 import { googleAuthService } from './infrastructure/GoogleAuthService';
 
 /**

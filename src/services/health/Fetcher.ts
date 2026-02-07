@@ -1,6 +1,6 @@
 import { HealthData } from '../../types/health';
 import { addDebugLog } from '../debugLogService';
-import { healthService } from './HealthServiceAdapter';
+import { healthService } from './healthAdapterFactory';
 
 /**
  * Health SDKからのデータ取得を担当するクラス

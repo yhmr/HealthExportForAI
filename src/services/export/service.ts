@@ -17,7 +17,7 @@ import { driveConfigService } from '../config/DriveConfigService';
 import { exportConfigService } from '../config/ExportConfigService';
 import { addDebugLog } from '../debugLogService';
 import { getNetworkStatus } from '../networkService';
-import { adapterFactory } from '../storage/adapterFactory';
+import { storageAdapterFactory } from '../storage/storageAdapterFactory';
 import { exportToCSV } from './csv';
 import { exportToJSON } from './json';
 import { exportSpreadsheetAsPDF } from './pdf';
@@ -149,10 +149,10 @@ async function processSingleEntry(
 
   try {
     // 必要な機能を個別に取得
-    const initializer = adapterFactory.createInitializer();
-    const folderOps = adapterFactory.createFolderOperations();
-    const fileOps = adapterFactory.createFileOperations();
-    const spreadsheetAdapter = adapterFactory.createSpreadsheetAdapter();
+    const initializer = storageAdapterFactory.createInitializer();
+    const folderOps = storageAdapterFactory.createFolderOperations();
+    const fileOps = storageAdapterFactory.createFileOperations();
+    const spreadsheetAdapter = storageAdapterFactory.createSpreadsheetAdapter();
 
     const config = entry.exportConfig ?? (await createDefaultExportConfig());
     const selectedTags = new Set(entry.selectedTags as DataTagKey[]);
