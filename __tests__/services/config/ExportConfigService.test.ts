@@ -37,6 +37,12 @@ describe('ExportConfigService', () => {
     expect(loadedFormats).not.toContain('pdf');
   });
 
+  it('壊れたエクスポート形式JSONの場合はデフォルトにフォールバックする', async () => {
+    await mockStorage.setItem(STORAGE_KEYS.EXPORT_FORMATS, '{invalid');
+    const loadedFormats = await exportConfigService.loadExportFormats();
+    expect(loadedFormats).toEqual(DEFAULT_EXPORT_FORMATS);
+  });
+
   it('セットアップ完了ステータスを保存・ロードできる', async () => {
     await exportConfigService.saveIsSetupCompleted(true);
     let completed = await exportConfigService.loadIsSetupCompleted();
@@ -93,5 +99,10 @@ describe('ExportConfigService', () => {
     await exportConfigService.saveSelectedDataTags(tags);
     expect(await exportConfigService.loadSelectedDataTags()).toEqual(tags);
     expect(await mockStorage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS)).toBe(JSON.stringify(tags));
+  });
+
+  it('壊れたタグJSONの場合はnullを返す', async () => {
+    await mockStorage.setItem(STORAGE_KEYS.SELECTED_DATA_TAGS, '{invalid');
+    expect(await exportConfigService.loadSelectedDataTags()).toBeNull();
   });
 });

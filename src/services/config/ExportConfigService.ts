@@ -1,5 +1,6 @@
 import { DEFAULT_EXPORT_FORMATS, ExportFormat } from '../../config/driveConfig';
 import { STORAGE_KEYS } from '../../config/storageKeys';
+import { safeJsonParse } from '../infrastructure/json';
 import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
@@ -60,7 +61,9 @@ export class ExportConfigService {
    */
   async loadExportPeriodDays(): Promise<number> {
     const value = await this.storage.getItem(STORAGE_KEYS.EXPORT_PERIOD_DAYS);
-    return value ? parseInt(value, 10) : 7;
+    if (!value) return 7;
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
   }
 
   /**
@@ -76,9 +79,14 @@ export class ExportConfigService {
   async loadExportFormats(): Promise<ExportFormat[]> {
     const json = await this.storage.getItem(STORAGE_KEYS.EXPORT_FORMATS);
     if (json) {
-      // 古い'pdf'形式が含まれていたら除外
-      const formats = JSON.parse(json) as string[];
-      return formats.filter((f) => f !== 'pdf') as ExportFormat[];
+      const parsed = safeJsonParse<unknown>(json);
+      if (Array.isArray(parsed)) {
+        // 文字列配列のみ受け入れ、許可された形式以外は除外して安全側に倒す。
+        // 古い'pdf'形式が含まれていたら除外
+        return parsed.filter(
+          (f): f is ExportFormat => f === 'googleSheets' || f === 'csv' || f === 'json'
+        );
+      }
     }
     return DEFAULT_EXPORT_FORMATS;
   }
@@ -111,7 +119,11 @@ export class ExportConfigService {
   async loadSelectedDataTags(): Promise<string[] | null> {
     const json = await this.storage.getItem(STORAGE_KEYS.SELECTED_DATA_TAGS);
     if (json) {
-      return JSON.parse(json) as string[];
+      const parsed = safeJsonParse<unknown>(json);
+      if (Array.isArray(parsed)) {
+        // 文字列以外が混入していても落とし、正常なタグだけ復元する。
+        return parsed.filter((tag): tag is string => typeof tag === 'string');
+      }
     }
     return null;
   }

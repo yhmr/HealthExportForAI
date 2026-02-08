@@ -31,4 +31,10 @@ describe('DriveConfigService', () => {
     const storedJson = await mockStorage.getItem(STORAGE_KEYS.DRIVE_CONFIG);
     expect(JSON.parse(storedJson!)).toEqual(newConfig);
   });
+
+  it('壊れたJSONの場合はデフォルト設定を返す', async () => {
+    await mockStorage.setItem(STORAGE_KEYS.DRIVE_CONFIG, '{invalid');
+    const loadedConfig = await driveConfigService.loadDriveConfig();
+    expect(loadedConfig).toEqual(DEFAULT_DRIVE_CONFIG);
+  });
 });

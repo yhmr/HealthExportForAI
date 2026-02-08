@@ -38,4 +38,19 @@ describe('BackgroundSyncConfigService', () => {
     const loadedTime = await backgroundSyncConfigService.loadLastBackgroundSync();
     expect(loadedTime).toBe(testTime);
   });
+
+  it('壊れたJSONや不正なintervalの場合はデフォルト設定を返す', async () => {
+    await mockStorage.setItem(STORAGE_KEYS.BACKGROUND_SYNC_CONFIG, '{invalid');
+    expect(await backgroundSyncConfigService.loadBackgroundSyncConfig()).toEqual(
+      DEFAULT_AUTO_SYNC_CONFIG
+    );
+
+    await mockStorage.setItem(
+      STORAGE_KEYS.BACKGROUND_SYNC_CONFIG,
+      JSON.stringify({ enabled: true, intervalMinutes: 7, wifiOnly: true })
+    );
+    expect(await backgroundSyncConfigService.loadBackgroundSyncConfig()).toEqual(
+      DEFAULT_AUTO_SYNC_CONFIG
+    );
+  });
 });

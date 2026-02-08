@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
 import { OfflineQueueData, PendingExport } from '../../types/export';
 import { addDebugLog } from '../debugLogService';
+import { safeJsonParse } from '../infrastructure/json';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 
 const STORAGE_KEY = STORAGE_KEYS.OFFLINE_EXPORT_QUEUE;
@@ -19,6 +20,8 @@ export class QueueManager {
   }
 
   private sanitizeQueueData(value: unknown): OfflineQueueData | null {
+    // 永続化データから必要最小限の項目だけを検証・抽出して再構築する。
+    // 不正フォーマットは破棄し、空キューへフォールバックするための前処理。
     if (!value || typeof value !== 'object') return null;
     const raw = value as Record<string, unknown>;
     if (!Array.isArray(raw.pending)) return null;
@@ -157,7 +160,11 @@ export class QueueManager {
       if (!json) {
         return this.createEmptyQueueData();
       }
-      const parsed = JSON.parse(json) as unknown;
+      const parsed = safeJsonParse<unknown>(json);
+      if (parsed === null) {
+        await addDebugLog('[QueueManager] Invalid JSON format, resetting queue', 'warn');
+        return this.createEmptyQueueData();
+      }
       const sanitized = this.sanitizeQueueData(parsed);
       if (sanitized) return sanitized;
       await addDebugLog('[QueueManager] Invalid queue format, resetting queue', 'warn');

@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/export';
+import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG, SyncInterval } from '../../types/export';
+import { safeJsonParse } from '../infrastructure/json';
 import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
@@ -10,6 +11,28 @@ import { keyValueStorage } from '../infrastructure/keyValueStorage';
  */
 export class BackgroundSyncConfigService {
   constructor(private storage: IKeyValueStorage) {}
+
+  private sanitizeInterval(value: unknown): SyncInterval | null {
+    if (typeof value !== 'number') return null;
+    return SYNC_INTERVALS.includes(value as SyncInterval) ? (value as SyncInterval) : null;
+  }
+
+  private sanitizeConfig(value: unknown): AutoSyncConfig | null {
+    // enabled/wifiOnly が boolean、interval が許可値のみのときだけ採用する。
+    // それ以外は null を返して DEFAULT_AUTO_SYNC_CONFIG にフォールバックする。
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    const interval = this.sanitizeInterval(raw.intervalMinutes);
+    if (typeof raw.enabled !== 'boolean' || typeof raw.wifiOnly !== 'boolean' || !interval) {
+      return null;
+    }
+
+    return {
+      enabled: raw.enabled,
+      intervalMinutes: interval,
+      wifiOnly: raw.wifiOnly
+    };
+  }
 
   /**
    * テスト用にストレージを差し替える
@@ -32,7 +55,11 @@ export class BackgroundSyncConfigService {
   async loadBackgroundSyncConfig(): Promise<AutoSyncConfig> {
     const json = await this.storage.getItem(STORAGE_KEYS.BACKGROUND_SYNC_CONFIG);
     if (json) {
-      return JSON.parse(json);
+      const parsed = safeJsonParse<unknown>(json);
+      const sanitized = this.sanitizeConfig(parsed);
+      if (sanitized) {
+        return sanitized;
+      }
     }
     return DEFAULT_AUTO_SYNC_CONFIG;
   }
