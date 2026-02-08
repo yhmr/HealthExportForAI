@@ -103,6 +103,27 @@ describe('Sheets Export Service', () => {
     expect(result.unwrapErr()).toContain('作成に失敗しました');
   });
 
+  it('should fail if updating rows fails', async () => {
+    (mockSpreadsheetAdapter.findSpreadsheet as any).mockResolvedValue(ok('existing-sheet-id'));
+    (mockSpreadsheetAdapter.getSheetData as any).mockResolvedValue(
+      ok({ headers: ['Date'], rows: [] })
+    );
+    (mockSpreadsheetAdapter.updateHeaders as any).mockResolvedValue(ok(true));
+    (mockSpreadsheetAdapter.updateRows as any).mockResolvedValue(
+      err(new Error('Update rows failed'))
+    );
+
+    const result = await exportToSpreadsheet(
+      mockHealthData,
+      'folder-123',
+      mockSpreadsheetAdapter,
+      new Set()
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('データ書き込みに失敗しました');
+  });
+
   it('should return error if no health data to export', async () => {
     const emptyHealthData = {
       steps: [],

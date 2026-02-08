@@ -152,10 +152,9 @@ export async function exportToSpreadsheet(
       if (allRows.length > 0) {
         const updateRowsResult = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
         if (updateRowsResult.isErr()) {
-          await addDebugLog(
-            `データ書き込みに失敗しました: ${updateRowsResult.unwrapErr().message}`,
-            'error'
-          );
+          const errorMsg = updateRowsResult.unwrapErr().message;
+          await addDebugLog(`データ書き込みに失敗しました: ${errorMsg}`, 'error');
+          return err(`${year}年のデータ書き込みに失敗しました: ${errorMsg}`);
         }
       }
 
