@@ -21,6 +21,8 @@ export function aggregateByLatestPerDay<TRecord, TData extends Dated & { time?: 
 
   for (const record of records) {
     const time = getTime(record);
+    // formatDateはローカルタイムゾーン基準。
+    // そのため「1日の区切り」は端末ローカル時間で判定される。
     const date = formatDate(time);
     const current = aggregation[date];
 
@@ -45,6 +47,7 @@ export function reduceByDate<TRecord, TData extends Dated>(
   const aggregation: Record<string, TData> = {};
 
   for (const record of records) {
+    // aggregateByLatestPerDayと同じくローカル日付で集計する。
     const date = formatDate(getTime(record));
     const current = aggregation[date] ?? createInitial(date);
     merge(current, record);
