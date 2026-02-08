@@ -19,7 +19,7 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
   onOpenSettings,
   onNext
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const serviceName = t('common', 'healthServiceName');
 
   return (

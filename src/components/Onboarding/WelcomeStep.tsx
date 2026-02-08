@@ -9,7 +9,7 @@ interface WelcomeStepProps {
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <View style={styles.stepContainer}>

@@ -15,7 +15,7 @@ export const HealthServiceSection: React.FC<HealthServiceSectionProps> = ({
   hasPermissions,
   onOpenSettings
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
   const serviceName = t('common', 'healthServiceName');
