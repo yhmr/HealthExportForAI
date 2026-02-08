@@ -11,6 +11,12 @@ export default {
       SleepAnalysis: 'SleepAnalysis',
       AppleExerciseTime: 'AppleExerciseTime',
       Workout: 'Workout',
+      EnergyConsumed: 'EnergyConsumed',
+      Protein: 'Protein',
+      FatTotal: 'FatTotal',
+      Carbohydrates: 'Carbohydrates',
+      Fiber: 'Fiber',
+      FatSaturated: 'FatSaturated',
       DietaryEnergyConsumed: 'DietaryEnergyConsumed',
       DietaryProtein: 'DietaryProtein',
       DietaryCarbohydrates: 'DietaryCarbohydrates',
@@ -50,6 +56,21 @@ export default {
     callback(null, []);
   },
   getSamples: (options, callback) => {
+    callback(null, []);
+  },
+  getEnergyConsumedSamples: (options, callback) => {
+    callback(null, []);
+  },
+  getProteinSamples: (options, callback) => {
+    callback(null, []);
+  },
+  getFiberSamples: (options, callback) => {
+    callback(null, []);
+  },
+  getTotalFatSamples: (options, callback) => {
+    callback(null, []);
+  },
+  getCarbohydratesSamples: (options, callback) => {
     callback(null, []);
   }
 };

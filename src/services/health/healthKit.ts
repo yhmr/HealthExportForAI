@@ -1,4 +1,5 @@
 import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
+import { NutritionData } from '../../types/health';
 import { Result, err, ok } from '../../types/result';
 import { addDebugLog } from '../debugLogService';
 import { HealthServiceError } from './types';
@@ -33,7 +34,13 @@ const permissions: HealthKitPermissions = {
       AppleHealthKit.Constants.Permissions.BasalEnergyBurned,
       AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
       AppleHealthKit.Constants.Permissions.SleepAnalysis,
-      AppleHealthKit.Constants.Permissions.Workout // 運動データ
+      AppleHealthKit.Constants.Permissions.Workout, // 運動データ
+      AppleHealthKit.Constants.Permissions.EnergyConsumed,
+      AppleHealthKit.Constants.Permissions.Protein,
+      AppleHealthKit.Constants.Permissions.FatTotal,
+      AppleHealthKit.Constants.Permissions.Carbohydrates,
+      AppleHealthKit.Constants.Permissions.Fiber,
+      AppleHealthKit.Constants.Permissions.FatSaturated
     ],
     write: [] // 書き込みは行わない
   }
@@ -551,9 +558,131 @@ export const fetchExerciseData = async (
  * 現時点ではデータ構造の複雑さから未実装
  */
 export const fetchNutritionData = async (
-  _startTime: Date,
-  _endTime: Date
-): Promise<Result<any[], HealthKitError>> => {
-  // TODO: 栄養データの取得を実装
-  return ok([]);
+  startTime: Date,
+  endTime: Date
+): Promise<Result<NutritionData[], HealthKitError>> => {
+  interface HealthKitNutritionSample {
+    startDate?: unknown;
+    start?: unknown;
+    value?: unknown;
+    quantity?: unknown;
+  }
+
+  interface ParsedNutritionSample {
+    date: string;
+    value: number;
+  }
+
+  type NutritionMetricKey =
+    | 'calories'
+    | 'protein'
+    | 'totalFat'
+    | 'totalCarbohydrate'
+    | 'dietaryFiber'
+    | 'saturatedFat';
+
+  const parseNutritionSamples = (samples: HealthKitNutritionSample[]): ParsedNutritionSample[] => {
+    return samples
+      .map((sample): ParsedNutritionSample | null => {
+        const rawDate =
+          typeof sample.startDate === 'string'
+            ? sample.startDate
+            : typeof sample.start === 'string'
+              ? sample.start
+              : null;
+        if (!rawDate) return null;
+
+        const rawValue = sample.value ?? sample.quantity;
+        const value = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+        if (!Number.isFinite(value)) return null;
+
+        return {
+          date: rawDate.substring(0, 10),
+          value
+        };
+      })
+      .filter((sample): sample is ParsedNutritionSample => sample !== null);
+  };
+
+  const queryNutritionSamples = (
+    metricName: string,
+    query: (
+      options: HealthKitQueryOptions,
+      callback: (error: string, results: HealthKitNutritionSample[]) => void
+    ) => void,
+    options: HealthKitQueryOptions
+  ): Promise<{ success: boolean; samples: ParsedNutritionSample[] }> => {
+    return new Promise((resolve) => {
+      query(options, (error: string, results: HealthKitNutritionSample[]) => {
+        if (error) {
+          void addDebugLog(`[HealthKit] fetchNutrition ${metricName} error: ${error}`, 'warn');
+          resolve({ success: false, samples: [] });
+          return;
+        }
+        resolve({
+          success: true,
+          samples: parseNutritionSamples(Array.isArray(results) ? results : [])
+        });
+      });
+    });
+  };
+
+  const baseOptions: HealthKitQueryOptions = {
+    startDate: startTime.toISOString(),
+    endDate: endTime.toISOString()
+  };
+  const gramOptions: HealthKitQueryOptions = { ...baseOptions, unit: 'gram' };
+  const kcalOptions: HealthKitQueryOptions = { ...baseOptions, unit: 'kilocalorie' };
+
+  const [
+    energyResult,
+    proteinResult,
+    totalFatResult,
+    carbsResult,
+    fiberResult,
+    saturatedFatResult
+  ] = await Promise.all([
+    queryNutritionSamples('energy', AppleHealthKit.getEnergyConsumedSamples, kcalOptions),
+    queryNutritionSamples('protein', AppleHealthKit.getProteinSamples, gramOptions),
+    queryNutritionSamples('totalFat', AppleHealthKit.getTotalFatSamples, gramOptions),
+    queryNutritionSamples('carbohydrates', AppleHealthKit.getCarbohydratesSamples, gramOptions),
+    queryNutritionSamples('dietaryFiber', AppleHealthKit.getFiberSamples, gramOptions),
+    queryNutritionSamples('saturatedFat', AppleHealthKit.getSamples, {
+      ...gramOptions,
+      type: 'FatSaturated'
+    })
+  ]);
+
+  const queryResults = [
+    energyResult,
+    proteinResult,
+    totalFatResult,
+    carbsResult,
+    fiberResult,
+    saturatedFatResult
+  ];
+
+  if (!queryResults.some((result) => result.success)) {
+    return err('fetch_error');
+  }
+
+  const dailyMap = new Map<string, NutritionData>();
+
+  const aggregate = (samples: ParsedNutritionSample[], field: NutritionMetricKey) => {
+    for (const sample of samples) {
+      const current = dailyMap.get(sample.date) ?? { date: sample.date };
+      current[field] = (current[field] || 0) + sample.value;
+      dailyMap.set(sample.date, current);
+    }
+  };
+
+  aggregate(energyResult.samples, 'calories');
+  aggregate(proteinResult.samples, 'protein');
+  aggregate(totalFatResult.samples, 'totalFat');
+  aggregate(carbsResult.samples, 'totalCarbohydrate');
+  aggregate(fiberResult.samples, 'dietaryFiber');
+  aggregate(saturatedFatResult.samples, 'saturatedFat');
+
+  const data = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  return ok(data);
 };
