@@ -1,7 +1,6 @@
 import React from 'react';
-import { BackHandler, Platform, Text, View } from 'react-native';
+import { BackHandler, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
 
@@ -21,7 +20,7 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
   onNext
 }) => {
   const { t, language } = useLanguage();
-  const serviceName = getHealthServiceName(language);
+  const serviceName = t('common', 'healthServiceName');
 
   return (
     <View style={styles.stepContainer}>
@@ -56,11 +55,7 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
             isLoading={false}
             label={
               hasAttemptedPermissions && onOpenSettings
-                ? Platform.OS === 'ios'
-                  ? language === 'ja'
-                    ? '設定を開く'
-                    : 'Open Settings'
-                  : t('settings', 'openHealthConnect')
+                ? t('settings', 'openHealthConnect')
                 : t('onboarding', 'grantPermissions')
             }
             icon={hasAttemptedPermissions && onOpenSettings ? '⚙️' : '🛡️'}

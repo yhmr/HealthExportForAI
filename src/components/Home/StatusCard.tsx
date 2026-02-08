@@ -4,7 +4,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../theme/types';
 
 import { TranslationKeys } from '../../i18n/translations';
-import { getHealthServiceName } from '../../utils/healthServiceName';
 
 interface StatusCardProps {
   lastSyncTime: string | null;
@@ -63,7 +62,7 @@ export function StatusCard({
           </Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>{getHealthServiceName(language)}</Text>
+          <Text style={styles.label}>{t('common', 'healthServiceName')}</Text>
           <Text style={[styles.value, { color: isHealthServiceConnected ? '#10b981' : '#f59e0b' }]}>
             {isHealthServiceConnected ? 'Connected' : 'Disconnected'}
           </Text>

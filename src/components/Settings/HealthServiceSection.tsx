@@ -1,9 +1,8 @@
 import React from 'react';
-import { Platform, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeColors } from '../../theme/types';
-import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SettingsItem } from './SettingsItem';
 import { SettingsSection } from './SettingsSection';
 
@@ -19,16 +18,10 @@ export const HealthServiceSection: React.FC<HealthServiceSectionProps> = ({
   const { t, language } = useLanguage();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
-  const serviceName = getHealthServiceName(language);
+  const serviceName = t('common', 'healthServiceName');
 
-  // iOSの設定画面へ誘導する際などの文言
-  // TODO: 翻訳ファイルに追加すべきだが、まずはここで分岐
-  const openSettingsLabel =
-    Platform.OS === 'ios'
-      ? language === 'ja'
-        ? 'ヘルスケア設定を開く'
-        : 'Open Health Settings'
-      : t('settings', 'openHealthConnect');
+  // iOS/Androidで自動的に文言が切り替わる (LanguageContext参照)
+  const openSettingsLabel = t('settings', 'openHealthConnect');
 
   return (
     <SettingsSection title={serviceName}>

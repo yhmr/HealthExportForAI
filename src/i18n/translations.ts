@@ -11,7 +11,10 @@ export const translations = {
       cancel: 'キャンセル',
       ok: 'OK',
       error: 'エラー',
-      success: '成功'
+      success: '成功',
+      healthServiceName: 'Health Connect',
+      healthServiceName_android: 'Health Connect',
+      healthServiceName_ios: 'ヘルスケア'
     },
     // ホーム画面
     home: {
@@ -45,6 +48,8 @@ export const translations = {
       // Health Connect
       sectionHealthConnect: 'Health Connect',
       openHealthConnect: '設定画面を開く',
+      openHealthConnect_android: 'Health Connect設定を開く',
+      openHealthConnect_ios: 'ヘルスケア設定を開く',
       healthConnectPermissionOk: '権限許可済み',
       healthConnectPermissionNg: '権限が無効です',
       authRequired: 'Googleアカウントへのサインインが必要です',
@@ -79,6 +84,10 @@ export const translations = {
         'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
       goBackAnyway: 'このまま戻る',
       permissionRequired: '権限が必要です',
+      backgroundPermissionRequired_android:
+        '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。',
+      backgroundPermissionRequired_ios:
+        '自動同期を使用するには、ヘルスケアデータのバックグラウンド更新を有効にする必要があります。',
       // 通知
       notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
     },
@@ -182,7 +191,10 @@ export const translations = {
       cancel: 'Cancel',
       ok: 'OK',
       error: 'Error',
-      success: 'Success'
+      success: 'Success',
+      healthServiceName: 'Health Connect',
+      healthServiceName_android: 'Health Connect',
+      healthServiceName_ios: 'Apple Health'
     },
     // Home screen
     home: {
@@ -216,6 +228,8 @@ export const translations = {
       // Health Connect
       sectionHealthConnect: 'Health Connect',
       openHealthConnect: 'Open Settings',
+      openHealthConnect_android: 'Open Health Connect',
+      openHealthConnect_ios: 'Open Health Settings',
       healthConnectPermissionOk: 'Permissions granted',
       healthConnectPermissionNg: 'Permissions missing',
       authRequired: 'Sign in to Google Account is required',
@@ -249,6 +263,9 @@ export const translations = {
       noFormatSelected: 'No export format selected. Please select at least one format.',
       goBackAnyway: 'Go Back Anyway',
       permissionRequired: 'Permission Required',
+      backgroundPermissionRequired_android:
+        'Background data read permission is required to use auto sync.',
+      backgroundPermissionRequired_ios: 'Background delivery must be enabled for auto sync.',
       // Notifications
       notificationPermissionDesc: 'Notification permission is required to run background sync.'
     },

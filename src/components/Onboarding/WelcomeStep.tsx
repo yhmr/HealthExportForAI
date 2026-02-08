@@ -1,7 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SyncButton } from '../SyncButton';
 import { onboardingStyles as styles } from './styles';
 
@@ -17,7 +16,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
       <Text style={styles.icon}>👋</Text>
       <Text style={styles.title}>{t('onboarding', 'welcomeTitle')}</Text>
       <Text style={styles.description}>
-        {t('onboarding', 'welcomeDesc').replace('Health Connect', getHealthServiceName(language))}
+        {t('onboarding', 'welcomeDesc').replace('Health Connect', t('common', 'healthServiceName'))}
       </Text>
       <SyncButton
         onPress={onNext}

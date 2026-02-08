@@ -1,6 +1,6 @@
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
@@ -135,10 +135,7 @@ export function useSettings() {
         if (!hasPermissions.unwrapOr(false)) {
           Alert.alert(t('settings', 'permissionRequired'), t('onboarding', 'permissionRequired'), [
             {
-              text:
-                Platform.OS === 'ios' && language === 'ja'
-                  ? '設定を開く'
-                  : t('settings', 'openHealthConnect'),
+              text: t('settings', 'openHealthConnect'),
               onPress: () => healthService.openDataManagement()
             },
             { text: 'OK', style: 'cancel' }
@@ -154,10 +151,7 @@ export function useSettings() {
             t('settings', 'notificationPermissionDesc'),
             [
               {
-                text:
-                  Platform.OS === 'ios' && language === 'ja'
-                    ? '設定を開く'
-                    : t('settings', 'openHealthConnect'),
+                text: t('settings', 'openHealthConnect'),
                 onPress: () => Linking.openSettings()
               },
               { text: 'Cancel', style: 'cancel' }
@@ -170,24 +164,12 @@ export function useSettings() {
         const bgResult = await healthService.requestBackgroundPermission();
         const bgGranted = bgResult.unwrapOr(false);
         if (!bgGranted) {
-          const messageJa =
-            Platform.OS === 'ios'
-              ? '自動同期を使用するには、ヘルスケアデータのバックグラウンド更新を有効にする必要があります。'
-              : '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。';
-          const messageEn =
-            Platform.OS === 'ios'
-              ? 'Background delivery must be enabled for auto sync.'
-              : 'Background data read permission is required to use auto sync.';
-
           Alert.alert(
             t('settings', 'permissionRequired'),
-            language === 'ja' ? messageJa : messageEn,
+            t('settings', 'backgroundPermissionRequired'),
             [
               {
-                text:
-                  Platform.OS === 'ios' && language === 'ja'
-                    ? '設定を開く'
-                    : t('settings', 'openHealthConnect'),
+                text: t('settings', 'openHealthConnect'),
                 onPress: () => healthService.openDataManagement()
               },
               { text: 'Cancel', style: 'cancel' }
