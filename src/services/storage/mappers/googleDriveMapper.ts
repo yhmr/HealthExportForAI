@@ -1,4 +1,4 @@
-import { GoogleDriveFile } from '../../../types/external/googleDrive';
+import { GoogleDriveFile } from '../externalTypes';
 import { FileInfo } from '../types';
 
 /**
