@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/exportTypes';
+import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/export';
 import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
@@ -52,28 +52,27 @@ export class BackgroundSyncConfigService {
  * 実際には設定値よりも長い間隔で実行される、あるいはバッテリー状況等により実行されない場合があります。
  * 最小値は約15分です。
  */
-export const SYNC_INTERVALS: import('../../types/exportTypes').SyncInterval[] = [
+export const SYNC_INTERVALS: import('../../types/export').SyncInterval[] = [
   5, 60, 180, 360, 720, 1440, 2880, 4320
 ];
 
 /**
  * 同期間隔のラベルを取得
  */
-export function getSyncIntervalLabel(interval: import('../../types/exportTypes').SyncInterval): {
+export function getSyncIntervalLabel(interval: import('../../types/export').SyncInterval): {
   ja: string;
   en: string;
 } {
-  const labels: Record<import('../../types/exportTypes').SyncInterval, { ja: string; en: string }> =
-    {
-      5: { ja: '5分 (テスト用)', en: '5 minutes (Test)' },
-      60: { ja: '1時間', en: '1 hour' },
-      180: { ja: '3時間', en: '3 hours' },
-      360: { ja: '6時間', en: '6 hours' },
-      720: { ja: '12時間', en: '12 hours' },
-      1440: { ja: '24時間', en: '24 hours' },
-      2880: { ja: '48時間', en: '48 hours' },
-      4320: { ja: '72時間', en: '72 hours' }
-    };
+  const labels: Record<import('../../types/export').SyncInterval, { ja: string; en: string }> = {
+    5: { ja: '5分 (テスト用)', en: '5 minutes (Test)' },
+    60: { ja: '1時間', en: '1 hour' },
+    180: { ja: '3時間', en: '3 hours' },
+    360: { ja: '6時間', en: '6 hours' },
+    720: { ja: '12時間', en: '12 hours' },
+    1440: { ja: '24時間', en: '24 hours' },
+    2880: { ja: '48時間', en: '48 hours' },
+    4320: { ja: '72時間', en: '72 hours' }
+  };
   return labels[interval];
 }
 export const backgroundSyncConfigService = new BackgroundSyncConfigService(keyValueStorage);

@@ -7,7 +7,7 @@ import {
   getSyncIntervalLabel
 } from '../../services/config/BackgroundSyncConfigService';
 import { ThemeColors } from '../../theme/types';
-import { AutoSyncConfig, SyncInterval } from '../../types/exportTypes';
+import { AutoSyncConfig, SyncInterval } from '../../types/export';
 import { SettingsItem } from './SettingsItem';
 import { SettingsSection } from './SettingsSection';
 

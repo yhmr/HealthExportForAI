@@ -10,7 +10,7 @@ import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
 import { healthService } from '../services/health/healthAdapterFactory';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
-import { type AutoSyncConfig, type SyncInterval } from '../types/exportTypes';
+import { type AutoSyncConfig, type SyncInterval } from '../types/export';
 
 export function useSettings() {
   const {

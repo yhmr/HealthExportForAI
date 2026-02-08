@@ -3,7 +3,7 @@
 
 import type { ExportFormat } from '../../config/driveConfig';
 import { useOfflineStore } from '../../stores/offlineStore';
-import type { ExportConfig, PendingExport } from '../../types/exportTypes';
+import type { ExportConfig, PendingExport } from '../../types/export';
 import type { DataTagKey, HealthData } from '../../types/health';
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
 import { filterHealthDataByTags } from '../../utils/dataHelpers';

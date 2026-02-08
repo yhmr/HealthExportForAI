@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { executeSyncLogic } from '../../../src/services/background/backgroundTask';
 import { initializeForSync } from '../../../src/services/syncInitializer';
 import { SyncService } from '../../../src/services/syncService';
-import { AutoSyncConfig } from '../../../src/types/exportTypes';
+import { AutoSyncConfig } from '../../../src/types/export';
 
 // Mocks
 vi.mock('../../../src/services/syncInitializer');

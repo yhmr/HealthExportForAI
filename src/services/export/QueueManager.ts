@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { OfflineQueueData, PendingExport } from '../../types/exportTypes';
+import { OfflineQueueData, PendingExport } from '../../types/export';
 import { addDebugLog } from '../debugLogService';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { STORAGE_KEYS } from '../../../src/config/storageKeys';
 import { backgroundSyncConfigService } from '../../../src/services/config/BackgroundSyncConfigService';
-import { DEFAULT_AUTO_SYNC_CONFIG } from '../../../src/types/exportTypes';
+import { DEFAULT_AUTO_SYNC_CONFIG } from '../../../src/types/export';
 import { MockKeyValueStorage } from '../../mocks/MockKeyValueStorage';
 
 describe('BackgroundSyncConfigService', () => {

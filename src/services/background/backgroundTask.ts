@@ -1,4 +1,4 @@
-import { AutoSyncConfig } from '../../types/exportTypes';
+import { AutoSyncConfig } from '../../types/export';
 import { addDebugLog } from '../debugLogService';
 import { initializeForSync } from '../syncInitializer';
 import { SyncService } from '../syncService';
