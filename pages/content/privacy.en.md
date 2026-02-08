@@ -13,9 +13,14 @@ layout: 'page'
 
 This app accesses the following data to provide its features:
 
-### Health Connect Data
+### Health Data Usage (Health Connect / Apple Health)
 
-This app reads health data (steps, calories, distance, heart rate, sleep, weight, etc.) stored on your device via **Health Connect**.
+This app reads health data from your device using:
+
+- **Android:** Google Health Connect API
+- **iOS:** Apple HealthKit
+
+It collects data such as steps, calories, distance, heart rate, sleep, weight, etc.
 
 - **Purpose of use:** To generate CSV/JSON files or Google Sheets for the user's personal analysis.
 - **Data sharing:** This data is **NOT** sent to the developer's server or any third parties. It is only uploaded to the user's own Google Drive.
@@ -32,9 +37,15 @@ This app uses **Google Sign-In** to access your Google Drive.
 All health data acquired by this app is processed on your device and saved directly to the Google Drive account you signed in with.
 The developer does not store any of your data.
 
-## 3. Limited Use Policy
+## 3. Platform Specific Policies
 
-The use of information received from Health Connect will adhere to the [Health Connect Permissions Policy](https://support.google.com/googleplay/android-developer/answer/9888170), including the Limited Use requirements.
+### Android (Google Play)
+
+The use of information received from Health Connect will adhere to the [Health Connect Permissions Policy](https://support.google.com/googleplay/android-developer/answer/9888170), including the [Limited Use](https://support.google.com/googleplay/android-developer/answer/9888170#limited-use) requirements.
+
+### iOS (App Store)
+
+This app handles health data in accordance with Apple's [HealthKit](https://developer.apple.com/documentation/healthkit) guidelines and privacy policies. Health data is not sent externally, except for iCloud backups.
 
 ## 4. Contact Us
 

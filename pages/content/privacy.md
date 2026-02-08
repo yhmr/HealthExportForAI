@@ -11,9 +11,12 @@ layout: 'page'
 
 ## 1. 情報の収集と利用
 
-### Health Connectデータの利用
+### 健康データの利用 (Health Connect / Apple Health)
 
-本アプリは、Google Health Connect APIを使用して、ユーザーのデバイスから以下の健康データを取得します。
+本アプリは、ユーザーのデバイスから以下の健康データを取得します。
+
+- **Android:** Google Health Connect API を使用
+- **iOS:** Apple HealthKit を使用
 
 - 歩数 (Steps)
 - 消費カロリー (Total Calories Burned)
@@ -42,9 +45,15 @@ layout: 'page'
 本アプリは、ユーザーの同意がある場合や法令に基づく場合を除き、取得した個人情報を第三者に提供することはありません。
 また、健康データを広告目的で使用することはありません。
 
-## 3. Play Store のデータ安全性に関する宣言
+## 3. プラットフォーム固有のポリシー
+
+### Android (Google Play)
 
 本アプリによる Health Connect からの情報の使用は、[Health Connect Permissions policy](https://support.google.com/googleplay/android-developer/answer/9888170) に準拠します（これには [Limited Use](https://support.google.com/googleplay/android-developer/answer/9888170#limited-use) 要件も含まれます）。
+
+### iOS (App Store)
+
+本アプリは Apple の [HealthKit](https://developer.apple.com/documentation/healthkit) ガイドラインおよびプライバシーポリシーに準拠して健康データを取り扱います。iCloud へのバックアップを除き、健康データを外部へ送信することはありません。
 
 ## 4. お問い合わせ
 
