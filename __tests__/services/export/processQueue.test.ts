@@ -302,6 +302,62 @@ describe('ExportService - processExportQueue', () => {
     expect(result.errors[0]).toContain('No access context');
   });
 
+  it('should fail when folder creation fails during context preparation', async () => {
+    const mockEntry = {
+      id: 'entry-folder-fail',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      retryCount: 0,
+      exportConfig: { formats: ['csv'] }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([mockEntry] as any);
+
+    vi.mocked(storageAdapterFactory.createFolderOperations).mockReturnValueOnce({
+      findOrCreateFolder: vi.fn().mockResolvedValue(err(new Error('folder fail'))),
+      checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
+      defaultFolderName: 'ConnectHealth'
+    } as any);
+
+    const result = await processExportQueue();
+
+    expect(result.failCount).toBe(1);
+    expect(result.errors[0]).toContain('folder fail');
+    expect(exportToCSV).not.toHaveBeenCalled();
+  });
+
+  it('should fail when all selected formats fail (csv/json)', async () => {
+    const mockEntry = {
+      id: 'entry-format-fail',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      retryCount: 0,
+      exportConfig: {
+        formats: ['csv', 'json'],
+        targetFolder: { id: 'f1' }
+      }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([mockEntry] as any);
+
+    vi.mocked(exportToCSV).mockResolvedValue(err('csv failed'));
+    vi.mocked(exportToJSON).mockResolvedValue(err('json failed'));
+
+    const result = await processExportQueue();
+
+    expect(result.successCount).toBe(0);
+    expect(result.failCount).toBe(1);
+    expect(result.errors[0]).toContain('Export failed partially or completely');
+    expect(queueManager.incrementRetry).toHaveBeenCalledWith(
+      'entry-format-fail',
+      expect.stringContaining('Export failed')
+    );
+    expect(exportToCSV).toHaveBeenCalled();
+    expect(exportToJSON).toHaveBeenCalled();
+  });
+
   it('should handle unexpected exception during processing', async () => {
     // Arrange
     const mockEntry = { id: 'entry-except', exportConfig: { formats: ['googleSheets'] } };

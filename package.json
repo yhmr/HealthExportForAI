@@ -61,7 +61,7 @@
     "prettier": "^3.8.0",
     "prettier-plugin-organize-imports": "^4.3.0",
     "typescript": "~5.9.2",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "private": false,
   "license": "GPL-3.0"
