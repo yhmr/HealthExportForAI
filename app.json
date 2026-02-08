@@ -40,6 +40,13 @@
       "expo-router",
       "@react-native-google-signin/google-signin",
       [
+        "react-native-health",
+        {
+          "healthSharePermission": "AIによる健康データ分析のために歩数、睡眠、運動などのデータを取得します。",
+          "healthUpdatePermission": "このアプリはヘルスケアへのデータ書き込みを行いません。"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
