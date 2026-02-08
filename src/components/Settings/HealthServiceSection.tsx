@@ -6,23 +6,27 @@ import { ThemeColors } from '../../theme/types';
 import { SettingsItem } from './SettingsItem';
 import { SettingsSection } from './SettingsSection';
 
-interface HealthConnectSectionProps {
+interface HealthServiceSectionProps {
   hasPermissions: boolean;
   onOpenSettings: () => void;
 }
 
-export const HealthConnectSection: React.FC<HealthConnectSectionProps> = ({
+export const HealthServiceSection: React.FC<HealthServiceSectionProps> = ({
   hasPermissions,
   onOpenSettings
 }) => {
   const { t } = useLanguage();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const serviceName = t('common', 'healthServiceName');
+
+  // iOS/Androidで自動的に文言が切り替わる (LanguageContext参照)
+  const openSettingsLabel = t('settings', 'openHealthConnect');
 
   return (
-    <SettingsSection title={t('settings', 'sectionHealthConnect')}>
+    <SettingsSection title={serviceName}>
       <SettingsItem
-        label={t('settings', 'openHealthConnect')}
+        label={openSettingsLabel}
         icon="❤️"
         onPress={onOpenSettings}
         rightElement={

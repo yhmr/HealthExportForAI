@@ -1,7 +1,6 @@
-import { IAuthService } from '../../types/auth';
-import { AuthError, NetworkError, StorageError } from '../../types/errors';
+import { NetworkError, StorageError } from '../../types/errors';
 import { Result, err } from '../../types/result';
-import { SpreadsheetAdapter } from '../../types/storage';
+import { IAuthService } from '../infrastructure/types';
 import {
   createSpreadsheet,
   fetchPDF,
@@ -10,27 +9,12 @@ import {
   updateHeaders,
   updateRows
 } from './googleSheets';
+import { SpreadsheetAdapter } from './types';
 
 export class GoogleSheetsAdapter implements SpreadsheetAdapter {
   private accessToken: string | null = null;
 
   constructor(private authService: IAuthService) {}
-
-  private async ensureAccessToken(): Promise<Result<string, AuthError>> {
-    if (!this.accessToken) {
-      const result = await this.authService.getOrRefreshAccessToken();
-      if (result.isOk()) {
-        this.accessToken = result.unwrap();
-      } else {
-        return result;
-      }
-    }
-    if (!this.accessToken) {
-      return err(new AuthError('Google Sheets access token is missing', 'NO_TOKEN_SHEETS'));
-    }
-    return { isOk: () => true, isErr: () => false, unwrap: () => this.accessToken! } as any; // Hack: wrap in Result-like or just use Result.ok
-    // Actually, I should just return Result<string, AuthError> properly.
-  }
 
   // Helper to run auth-protected operation
   private async runWithAuth<T>(

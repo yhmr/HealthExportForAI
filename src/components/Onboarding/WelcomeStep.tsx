@@ -15,7 +15,9 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onNext }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.icon}>👋</Text>
       <Text style={styles.title}>{t('onboarding', 'welcomeTitle')}</Text>
-      <Text style={styles.description}>{t('onboarding', 'welcomeDesc')}</Text>
+      <Text style={styles.description}>
+        {t('onboarding', 'welcomeDesc').replace('Health Connect', t('common', 'healthServiceName'))}
+      </Text>
       <SyncButton
         onPress={onNext}
         isLoading={false}

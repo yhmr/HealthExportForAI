@@ -15,7 +15,7 @@ import { AutoSyncSection } from '../src/components/Settings/AutoSyncSection';
 import { DataTypesSection } from '../src/components/Settings/DataTypesSection';
 import { DriveSection } from '../src/components/Settings/DriveSection';
 import { ExportSection } from '../src/components/Settings/ExportSection';
-import { HealthConnectSection } from '../src/components/Settings/HealthConnectSection';
+import { HealthServiceSection } from '../src/components/Settings/HealthServiceSection';
 
 // Services/Stores
 import { exportConfigService } from '../src/services/config/ExportConfigService';
@@ -23,7 +23,7 @@ import { useHealthStore } from '../src/stores/healthStore';
 
 // Hooks
 import { useTheme } from '../src/contexts/ThemeContext';
-import { useHealthConnect } from '../src/hooks/useHealthConnect';
+import { useHealthService } from '../src/hooks/useHealthService';
 import { useSettings } from '../src/hooks/useSettings';
 import { ThemeColors } from '../src/theme/types';
 
@@ -41,11 +41,7 @@ export default function SettingsScreen() {
   // ストアからデータタグ関連を取得
   const { selectedDataTags, toggleDataTag } = useHealthStore();
 
-  const {
-    openHealthConnectSettings,
-    hasPermissions,
-    initialize: checkHcPermissions
-  } = useHealthConnect();
+  const { openHealthSettings, hasPermissions, initialize: checkHcPermissions } = useHealthService();
 
   // マウント時(とフォーカス時)に権限状態をチェック
   // 簡易的にuseEffectで実装(設定から戻った時にも反映させたい場合はuseFocusEffect検討だが、今回は単純化)
@@ -97,10 +93,7 @@ export default function SettingsScreen() {
           onOpenFolderPicker={() => setPickerVisible(true)}
         />
 
-        <HealthConnectSection
-          hasPermissions={hasPermissions}
-          onOpenSettings={openHealthConnectSettings}
-        />
+        <HealthServiceSection hasPermissions={hasPermissions} onOpenSettings={openHealthSettings} />
 
         <DataTypesSection selectedTags={selectedDataTags} onToggleTag={toggleDataTag} />
 

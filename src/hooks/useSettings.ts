@@ -4,17 +4,14 @@ import { Alert, Linking, Platform } from 'react-native';
 import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
-import { syncBackgroundTask } from '../services/background/scheduler';
+import { isBackgroundSyncRegistered, syncBackgroundTask } from '../services/background/scheduler';
 import { backgroundSyncConfigService } from '../services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
-import {
-  checkHealthPermissions,
-  openHealthConnectDataManagement,
-  requestBackgroundHealthPermission
-} from '../services/healthConnect';
+import { healthService } from '../services/health/healthAdapterFactory';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
-import { type AutoSyncConfig, type SyncInterval } from '../types/exportTypes';
+import { type AutoSyncConfig, type SyncInterval } from '../types/export';
+import { shouldRequestNotificationPermission } from './useSettingsPolicy';
 
 export function useSettings() {
   const {
@@ -27,6 +24,7 @@ export function useSettings() {
     resolveAndSaveFolder
   } = useGoogleDrive();
   const { t, language, setLanguage } = useLanguage();
+  const isIOS = Platform.OS === 'ios';
 
   const [isLoading, setIsLoading] = useState(true);
   const [folderId, setFolderId] = useState('');
@@ -127,56 +125,58 @@ export function useSettings() {
   // アクション: 自動同期トグル
   const toggleAutoSync = async (enabled: boolean) => {
     try {
-      if (enabled && Platform.OS === 'android') {
+      const previousConfig = autoSyncConfig;
+
+      if (enabled) {
         // 1. Google認証チェック
         if (!isAuthenticated || !currentUser) {
           Alert.alert(t('common', 'error'), t('settings', 'authRequired'), [{ text: 'OK' }]);
           return;
         }
 
-        // 2. Health Connect権限チェック (Foreground)
-        // UI上ではすでにチェックされているはずだが、念のため
-        const hasPermissions = await checkHealthPermissions();
+        // 2. ヘルスケア権限チェック
+        const hasPermissions = await healthService.hasPermissions();
         if (!hasPermissions.unwrapOr(false)) {
           Alert.alert(t('settings', 'permissionRequired'), t('onboarding', 'permissionRequired'), [
             {
               text: t('settings', 'openHealthConnect'),
-              onPress: () => openHealthConnectDataManagement()
+              onPress: () => healthService.openDataManagement()
             },
             { text: 'OK', style: 'cancel' }
           ]);
           return;
         }
 
-        // 3. 通知権限チェック
-        const settings = await notifee.requestPermission();
-        if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
-          Alert.alert(
-            t('settings', 'permissionRequired'),
-            t('settings', 'notificationPermissionDesc'),
-            [
-              {
-                text: t('settings', 'openHealthConnect'), // "設定画面を開く"を再利用
-                onPress: () => Linking.openSettings()
-              },
-              { text: 'Cancel', style: 'cancel' }
-            ]
-          );
-          return; // 通知権限がない場合はONにしない
+        // 3. 通知権限チェック（通知を利用するAndroidのみ）
+        if (shouldRequestNotificationPermission(Platform.OS)) {
+          const settings = await notifee.requestPermission();
+          if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
+            Alert.alert(
+              t('settings', 'permissionRequired'),
+              t('settings', 'notificationPermissionDesc'),
+              [
+                {
+                  text: t('settings', 'openHealthConnect'),
+                  onPress: () => Linking.openSettings()
+                },
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
+            return; // 通知権限がない場合はONにしない
+          }
         }
 
-        const bgResult = await requestBackgroundHealthPermission();
+        // 4. バックグラウンド権限 (Android) / 配信登録 (iOS)
+        const bgResult = await healthService.requestBackgroundPermission();
         const bgGranted = bgResult.unwrapOr(false);
         if (!bgGranted) {
           Alert.alert(
             t('settings', 'permissionRequired'),
-            language === 'ja'
-              ? '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。'
-              : 'Background data read permission is required to use auto sync.',
+            t('settings', 'backgroundPermissionRequired'),
             [
               {
                 text: t('settings', 'openHealthConnect'),
-                onPress: () => openHealthConnectDataManagement()
+                onPress: () => healthService.openDataManagement()
               },
               { text: 'Cancel', style: 'cancel' }
             ]
@@ -188,7 +188,32 @@ export function useSettings() {
       const newConfig = { ...autoSyncConfig, enabled };
       setAutoSyncConfigState(newConfig);
       await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
-      await syncBackgroundTask(newConfig);
+      const syncApplied = await syncBackgroundTask(newConfig);
+
+      // 実際にタスク登録/解除ができなかった場合、UIと保存状態を元に戻す。
+      if (!syncApplied) {
+        setAutoSyncConfigState(previousConfig);
+        await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+        Alert.alert(t('common', 'error'), t('settings', 'backgroundSyncApplyFailed'));
+        await refreshLogs();
+        return;
+      }
+
+      // ON時は「登録済みか」を最終確認し、登録失敗なら元に戻す。
+      if (enabled) {
+        const registered = await isBackgroundSyncRegistered();
+        if (!registered) {
+          setAutoSyncConfigState(previousConfig);
+          await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+          Alert.alert(
+            t('settings', 'permissionRequired'),
+            t('settings', 'backgroundSyncUnavailable')
+          );
+          await refreshLogs();
+          return;
+        }
+      }
+
       await refreshLogs();
     } catch (error) {
       console.error('[toggleAutoSync] Error:', error);
@@ -198,10 +223,21 @@ export function useSettings() {
 
   // アクション: 同期間隔変更
   const changeSyncInterval = async (interval: SyncInterval) => {
+    // iOS はOS主導で実行タイミングが決まるため、アプリ側の間隔変更は受け付けない
+    if (isIOS) return;
+
+    const previousConfig = autoSyncConfig;
     const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
     setAutoSyncConfigState(newConfig);
     await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
-    await syncBackgroundTask(newConfig);
+    const syncApplied = await syncBackgroundTask(newConfig);
+    if (!syncApplied) {
+      setAutoSyncConfigState(previousConfig);
+      await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+      Alert.alert(t('common', 'error'), t('settings', 'backgroundSyncApplyFailed'));
+      await refreshLogs();
+      return;
+    }
     await refreshLogs();
   };
 

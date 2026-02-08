@@ -1,7 +1,7 @@
 import type { HealthData } from '../../types/health';
 import { type Result, err, ok } from '../../types/result'; // Result型をインポート
-import type { SpreadsheetAdapter } from '../../types/storage';
 import { addDebugLog } from '../debugLogService';
+import type { SpreadsheetAdapter } from '../storage/types';
 import { formatHealthDataToRows, getExportFileName } from './utils';
 
 /**
@@ -62,7 +62,12 @@ export async function exportToSpreadsheet(
       const fileName = getExportFileName(year);
       // ファイル名を渡す
       const findResult = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
-      let spreadsheetId = findResult.isOk() ? findResult.unwrap() : null;
+      if (findResult.isErr()) {
+        return err(
+          `${year}年のスプレッドシート検索に失敗しました: ${findResult.unwrapErr().message}`
+        );
+      }
+      let spreadsheetId = findResult.unwrap();
       let existingHeaders: string[] = [];
       let existingRows: string[][] = [];
 
@@ -152,10 +157,9 @@ export async function exportToSpreadsheet(
       if (allRows.length > 0) {
         const updateRowsResult = await spreadsheetAdapter.updateRows(spreadsheetId, 2, allRows);
         if (updateRowsResult.isErr()) {
-          await addDebugLog(
-            `データ書き込みに失敗しました: ${updateRowsResult.unwrapErr().message}`,
-            'error'
-          );
+          const errorMsg = updateRowsResult.unwrapErr().message;
+          await addDebugLog(`データ書き込みに失敗しました: ${errorMsg}`, 'error');
+          return err(`${year}年のデータ書き込みに失敗しました: ${errorMsg}`);
         }
       }
 

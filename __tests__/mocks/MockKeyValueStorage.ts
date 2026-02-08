@@ -1,4 +1,4 @@
-import { IKeyValueStorage } from '../../src/types/storage';
+import { IKeyValueStorage } from '../../src/services/infrastructure/types';
 
 export class MockKeyValueStorage implements IKeyValueStorage {
   private data: Record<string, string> = {};

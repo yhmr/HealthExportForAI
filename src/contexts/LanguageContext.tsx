@@ -10,6 +10,7 @@ import React, {
   useEffect,
   useState
 } from 'react';
+import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../config/storageKeys';
 import { Language, translations } from '../i18n/translations';
 import { keyValueStorage } from '../services/infrastructure/keyValueStorage';
@@ -74,6 +75,13 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const t = useCallback(
     (section: keyof Translations, key: string): string => {
       const sectionData = translations[language][section] as Record<string, string>;
+
+      // プラットフォーム固有のキーをチェック (例: permissionRequired_ios)
+      const platformKey = `${key}_${Platform.OS}`;
+      if (sectionData[platformKey]) {
+        return sectionData[platformKey];
+      }
+
       return sectionData[key] ?? `${section}.${key}`;
     },
     [language]

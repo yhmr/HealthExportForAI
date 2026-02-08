@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG } from '../../types/exportTypes';
-import { IKeyValueStorage } from '../../types/storage';
+import { AutoSyncConfig, DEFAULT_AUTO_SYNC_CONFIG, SyncInterval } from '../../types/export';
+import { safeJsonParse } from '../infrastructure/json';
+import { IKeyValueStorage } from '../infrastructure/types';
 
 // シングルトンインスタンスの作成
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
@@ -10,6 +11,28 @@ import { keyValueStorage } from '../infrastructure/keyValueStorage';
  */
 export class BackgroundSyncConfigService {
   constructor(private storage: IKeyValueStorage) {}
+
+  private sanitizeInterval(value: unknown): SyncInterval | null {
+    if (typeof value !== 'number') return null;
+    return SYNC_INTERVALS.includes(value as SyncInterval) ? (value as SyncInterval) : null;
+  }
+
+  private sanitizeConfig(value: unknown): AutoSyncConfig | null {
+    // enabled/wifiOnly が boolean、interval が許可値のみのときだけ採用する。
+    // それ以外は null を返して DEFAULT_AUTO_SYNC_CONFIG にフォールバックする。
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    const interval = this.sanitizeInterval(raw.intervalMinutes);
+    if (typeof raw.enabled !== 'boolean' || typeof raw.wifiOnly !== 'boolean' || !interval) {
+      return null;
+    }
+
+    return {
+      enabled: raw.enabled,
+      intervalMinutes: interval,
+      wifiOnly: raw.wifiOnly
+    };
+  }
 
   /**
    * テスト用にストレージを差し替える
@@ -32,7 +55,11 @@ export class BackgroundSyncConfigService {
   async loadBackgroundSyncConfig(): Promise<AutoSyncConfig> {
     const json = await this.storage.getItem(STORAGE_KEYS.BACKGROUND_SYNC_CONFIG);
     if (json) {
-      return JSON.parse(json);
+      const parsed = safeJsonParse<unknown>(json);
+      const sanitized = this.sanitizeConfig(parsed);
+      if (sanitized) {
+        return sanitized;
+      }
     }
     return DEFAULT_AUTO_SYNC_CONFIG;
   }
@@ -46,29 +73,32 @@ export class BackgroundSyncConfigService {
   }
 }
 
-/** 利用可能な同期間隔一覧 */
-export const SYNC_INTERVALS: import('../../types/exportTypes').SyncInterval[] = [
+/**
+ * 利用可能な同期間隔一覧
+ * 主にAndroid向けのユーザー選択肢として利用する。
+ * iOSでは実行タイミングをOSが決めるため、アプリ側では固定の最小間隔で登録する。
+ */
+export const SYNC_INTERVALS: import('../../types/export').SyncInterval[] = [
   5, 60, 180, 360, 720, 1440, 2880, 4320
 ];
 
 /**
  * 同期間隔のラベルを取得
  */
-export function getSyncIntervalLabel(interval: import('../../types/exportTypes').SyncInterval): {
+export function getSyncIntervalLabel(interval: import('../../types/export').SyncInterval): {
   ja: string;
   en: string;
 } {
-  const labels: Record<import('../../types/exportTypes').SyncInterval, { ja: string; en: string }> =
-    {
-      5: { ja: '5分 (テスト用)', en: '5 minutes (Test)' },
-      60: { ja: '1時間', en: '1 hour' },
-      180: { ja: '3時間', en: '3 hours' },
-      360: { ja: '6時間', en: '6 hours' },
-      720: { ja: '12時間', en: '12 hours' },
-      1440: { ja: '24時間', en: '24 hours' },
-      2880: { ja: '48時間', en: '48 hours' },
-      4320: { ja: '72時間', en: '72 hours' }
-    };
+  const labels: Record<import('../../types/export').SyncInterval, { ja: string; en: string }> = {
+    5: { ja: '5分 (テスト用)', en: '5 minutes (Test)' },
+    60: { ja: '1時間', en: '1 hour' },
+    180: { ja: '3時間', en: '3 hours' },
+    360: { ja: '6時間', en: '6 hours' },
+    720: { ja: '12時間', en: '12 hours' },
+    1440: { ja: '24時間', en: '24 hours' },
+    2880: { ja: '48時間', en: '48 hours' },
+    4320: { ja: '72時間', en: '72 hours' }
+  };
   return labels[interval];
 }
 export const backgroundSyncConfigService = new BackgroundSyncConfigService(keyValueStorage);

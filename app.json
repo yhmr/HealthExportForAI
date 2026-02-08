@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Health Export For AI",
-    "version": "1.1.1",
+
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,6 @@
       "backgroundColor": "#FFFFFF"
     },
     "android": {
-      "package": "com.yhmr.healthexportforai",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -40,6 +39,13 @@
       "expo-router",
       "@react-native-google-signin/google-signin",
       [
+        "react-native-health",
+        {
+          "healthSharePermission": "AIによる健康データ分析のために歩数、睡眠、運動などのデータを取得します。",
+          "healthUpdatePermission": "このアプリはヘルスケアへのデータ書き込みを行いません。"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
@@ -47,6 +53,9 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "34.0.0"
+          },
+          "ios": {
+            "useFrameworks": "static"
           }
         }
       ],
@@ -98,7 +107,13 @@
       "router": {}
     },
     "ios": {
-      "bundleIdentifier": "com.yhmr.healthexportforai"
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch"],
+        "NSHealthShareUsageDescription": "AIによる健康データ分析のために歩数、睡眠、運動などのデータを取得します。",
+        "NSHealthUpdateUsageDescription": "このアプリはヘルスケアへのデータ書き込みを行いません。",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   }
 }

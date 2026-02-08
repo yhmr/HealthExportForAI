@@ -1,10 +1,10 @@
 // Google Drive サービス
 // フォルダ操作に特化したサービス
 import { NetworkError, StorageError } from '../../types/errors';
-import { GoogleDriveFile, GoogleDriveFileListResponse } from '../../types/external/googleDrive';
 import { Result, err, ok } from '../../types/result';
 import { addDebugLog, logError } from '../debugLogService';
 import { escapeDriveQuery } from './driveUtils';
+import { GoogleDriveFile, GoogleDriveFileListResponse } from './externalTypes';
 import {
   mapGoogleDriveFileToBasicInfo,
   mapGoogleDriveFileToExistence

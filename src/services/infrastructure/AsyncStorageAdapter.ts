@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { IKeyValueStorage } from '../../types/storage';
+import { IKeyValueStorage } from './types';
 
 export class AsyncStorageAdapter implements IKeyValueStorage {
   async getItem(key: string): Promise<string | null> {

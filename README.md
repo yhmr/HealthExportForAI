@@ -15,24 +15,31 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square)
-![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020?style=flat-square)
 ![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square)
 
 </div>
 
-React Native + Expo で構築された Android 専用アプリケーション。Health Connect からヘルスデータを読み取り、柔軟な形式（Google Sheets, PDF, CSV, JSON）で Google Drive にエクスポートして NotebookLM 等の AI ツールで分析できるようにします。
+# Health Export For AI
 
-## 主な機能
+**Health Export For AI** は、スマホの健康データ（Google Health Connect および Apple Health）を収集し、AIツール（NotebookLMなど）で分析しやすい形式（CSV, JSON）に変換してGoogle Driveに自動同期するアプリケーションです。
 
-- **Health Connect 連携**: 歩数、心拍数、睡眠等のバイタルデータを一元取得。
-- **Google Drive 同期**: 指定フォルダへの自動/手動バックアップ。
-- **柔軟なエクスポート**: AI分析に適した CSV/JSON、可読性の高い PDF/Sheets に対応。
-- **ホーム画面ウィジェット**: 同期の実行と状態確認が可能。
-- **バックグラウンド同期（Experimental）**: 定期的な自動データ更新をサポート。
+## 特徴
+
+- **クロスプラットフォーム対応**: Android (Google Health Connect) と iOS (Apple HealthKit) の両方をサポート
+- **自動バックグラウンド同期**: 定期的にヘルスデータを取得し、クラウドへアップロード
+- **AIフレンドリーな出力**: LLMが理解しやすい構造化データ (CSV/JSON/PDF) を生成
+- **プライバシーファースト**: データはユーザー自身のGoogle Driveにのみ保存され、外部サーバーを経由しません
+- **ホーム画面ウィジェット**: 同期ステータスを一目で確認（Androidのみ）
+
+## 対応プラットフォーム
+
+- **Android**: Android 9.0 (API Level 28) 以上、Health Connectアプリ導入済み
+- **iOS**: iOS 15.0 以上、ヘルスケアアプリ対応機種
 
 ## 技術スタック
 
-- **Framework**: React Native, Expo (SDK 52+)
+- **Framework**: React Native, Expo (SDK 54+)
 - **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
 - **Testing**: Vitest (Unit/Integration)
@@ -44,6 +51,8 @@ React Native + Expo で構築された Android 専用アプリケーション。
 - Node.js 18+
 - Android 9 (API 28)+
   - 推奨: Android 14+ (Health Connect 内蔵)
+- iOS 15.1+ (iOS開発の場合)
+  - 必須: macOS, Xcode
 - Google Cloud Console プロジェクト (Google Drive API 有効化済み)
 
 ## セットアップ
@@ -62,9 +71,19 @@ npm install
 # Google Cloud Console で取得した Web Client ID (必須)
 EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
+# iOS Client ID (iOS開発の場合必須)
+EXPO_PUBLIC_IOS_CLIENT_ID=your-ios-client-id.apps.googleusercontent.com
+
+# iOS URL Scheme (iOS開発の場合必須)
+# Client IDの逆転形式 (例: com.googleusercontent.apps.CLIENT_ID)
+EXPO_PUBLIC_IOS_URL_SCHEME=your-ios-url-scheme
+
 # Expo / EAS 設定 (必須)
 EXPO_PUBLIC_SLUG=your-slug
 EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# App Bundle Identifier / Package Name (必須)
+EXPO_PUBLIC_BUNDLE_IDENTIFIER=your.bundle.identifier
 
 # Sentry エラーモニタリング (任意)
 # 設定しない場合は Sentry は無効化されます
@@ -79,8 +98,13 @@ SENTRY_PROJECT=your-project-name
 ### 3. 開発サーバーの起動
 
 ```bash
+# Android
 npx expo prebuild --platform android
 npm run android
+
+# iOS
+npx expo prebuild --platform ios
+npm run ios
 ```
 
 ## ビルド手順
@@ -105,6 +129,7 @@ npm run build:android:release # AAB 生成
 
 1. **プロジェクトIDの更新**: `.env` の `EXPO_PUBLIC_EAS_PROJECT_ID` を自身のプロジェクトIDに書き換えてください。
 2. **Slug の変更**: `.env` の `EXPO_PUBLIC_SLUG` を自身のプロジェクト名に変更してください。
+3. **Bundle ID の変更**: `.env` の `EXPO_PUBLIC_BUNDLE_IDENTIFIER` を自身のアプリのバンドルID/パッケージ名に変更してください。
 
 ## プロジェクト構造
 

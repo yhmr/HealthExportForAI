@@ -1,21 +1,16 @@
-// アダプターファクトリ
+// ストレージアダプターファクトリ
 // テスト容易性とDIのためにアダプター生成を一元管理
 
 import { googleAuthService } from '../../services/infrastructure/GoogleAuthService';
-import { IAuthService } from '../../types/auth';
-import {
-  FileOperations,
-  FolderOperations,
-  Initializable,
-  SpreadsheetAdapter
-} from '../../types/storage';
+import { IAuthService } from '../infrastructure/types';
 import { GoogleDriveAdapter } from './GoogleDriveAdapter';
 import { GoogleSheetsAdapter } from './GoogleSheetsAdapter';
+import { FileOperations, FolderOperations, Initializable, SpreadsheetAdapter } from './types';
 
 /**
- * アダプターファクトリのインターフェース
+ * ストレージアダプターファクトリのインターフェース
  */
-export interface AdapterFactory {
+export interface StorageAdapterFactory {
   // 目的別のメソッド
   createInitializer(): Initializable;
   createFolderOperations(): FolderOperations;
@@ -28,10 +23,10 @@ export interface AdapterFactory {
 }
 
 /**
- * デフォルトのアダプターファクトリ実装
+ * Google用ストレージアダプターファクトリ実装
  * GoogleDrive/GoogleSheetsアダプターを生成
  */
-export class DefaultAdapterFactory implements AdapterFactory {
+export class GoogleStorageAdapterFactory implements StorageAdapterFactory {
   constructor(private authService: IAuthService) {}
 
   createInitializer(): Initializable {
@@ -56,4 +51,6 @@ export class DefaultAdapterFactory implements AdapterFactory {
 }
 
 // シングルトンインスタンス（デフォルトでgoogleAuthServiceを使用）
-export const adapterFactory: AdapterFactory = new DefaultAdapterFactory(googleAuthService);
+export const storageAdapterFactory: StorageAdapterFactory = new GoogleStorageAdapterFactory(
+  googleAuthService
+);

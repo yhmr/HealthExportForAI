@@ -1,16 +1,7 @@
-import { NetworkError, StorageError } from './errors';
-import { Result } from './result';
+// ストレージ層共通型定義
 
-/**
- * Key-Value形式のストレージインターフェース
- * (AsyncStorageの抽象化)
- */
-export interface IKeyValueStorage {
-  getItem(key: string): Promise<string | null>;
-  setItem(key: string, value: string): Promise<void>;
-  removeItem(key: string): Promise<void>;
-  // 必要に応じて clear() や getAllKeys() などを追加
-}
+import { NetworkError, StorageError } from '../../types/errors';
+import { Result } from '../../types/result';
 
 export interface FileInfo {
   id: string;

@@ -7,7 +7,7 @@ import { exportToJSON } from '../../../src/services/export/json';
 import { processExportQueue } from '../../../src/services/export/service';
 import { exportToSpreadsheet } from '../../../src/services/export/sheets';
 import { getNetworkStatus } from '../../../src/services/networkService';
-import { adapterFactory } from '../../../src/services/storage/adapterFactory';
+import { storageAdapterFactory } from '../../../src/services/storage/storageAdapterFactory';
 import { useOfflineStore } from '../../../src/stores/offlineStore';
 import { err, ok } from '../../../src/types/result';
 
@@ -25,8 +25,8 @@ vi.mock('../../../src/services/export/QueueManager', () => ({
     addToQueue: vi.fn()
   }
 }));
-vi.mock('../../../src/services/storage/adapterFactory', () => ({
-  adapterFactory: {
+vi.mock('../../../src/services/storage/storageAdapterFactory', () => ({
+  storageAdapterFactory: {
     createStorageAdapter: vi.fn(),
     createSpreadsheetAdapter: vi.fn(),
     createInitializer: vi.fn(),
@@ -81,30 +81,30 @@ describe('ExportService - processExportQueue', () => {
     });
 
     // アダプタのモック
-    vi.mocked(adapterFactory.createStorageAdapter).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createStorageAdapter).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(true), // Initializable so boolean or Promise<boolean>
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       defaultFolderName: 'ConnectHealth'
     } as any);
 
-    vi.mocked(adapterFactory.createInitializer).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createInitializer).mockReturnValue({
       initialize: vi.fn().mockResolvedValue(true)
     });
 
-    vi.mocked(adapterFactory.createFolderOperations).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createFolderOperations).mockReturnValue({
       findOrCreateFolder: vi.fn().mockResolvedValue(ok('folder-id')),
       checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
       defaultFolderName: 'ConnectHealth'
     });
 
-    vi.mocked(adapterFactory.createFileOperations).mockReturnValue({
+    vi.mocked(storageAdapterFactory.createFileOperations).mockReturnValue({
       findFile: vi.fn(),
       uploadFile: vi.fn(),
       updateFile: vi.fn(),
       downloadFileContent: vi.fn()
     });
 
-    vi.mocked(adapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
+    vi.mocked(storageAdapterFactory.createSpreadsheetAdapter).mockReturnValue({} as any);
 
     // エクスポート処理の成功モック (Result型を返す)
     vi.mocked(exportToSpreadsheet).mockResolvedValue(
@@ -291,7 +291,7 @@ describe('ExportService - processExportQueue', () => {
       .mockResolvedValue([]);
 
     // Mock initialize failure
-    const mockInitializer = adapterFactory.createInitializer();
+    const mockInitializer = storageAdapterFactory.createInitializer();
     vi.mocked(mockInitializer.initialize).mockResolvedValue(false);
 
     // Act
@@ -300,6 +300,62 @@ describe('ExportService - processExportQueue', () => {
     // Assert
     expect(result.failCount).toBe(1);
     expect(result.errors[0]).toContain('No access context');
+  });
+
+  it('should fail when folder creation fails during context preparation', async () => {
+    const mockEntry = {
+      id: 'entry-folder-fail',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      retryCount: 0,
+      exportConfig: { formats: ['csv'] }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([mockEntry] as any);
+
+    vi.mocked(storageAdapterFactory.createFolderOperations).mockReturnValueOnce({
+      findOrCreateFolder: vi.fn().mockResolvedValue(err(new Error('folder fail'))),
+      checkFolderExists: vi.fn().mockResolvedValue(ok(true)),
+      defaultFolderName: 'ConnectHealth'
+    } as any);
+
+    const result = await processExportQueue();
+
+    expect(result.failCount).toBe(1);
+    expect(result.errors[0]).toContain('folder fail');
+    expect(exportToCSV).not.toHaveBeenCalled();
+  });
+
+  it('should fail when all selected formats fail (csv/json)', async () => {
+    const mockEntry = {
+      id: 'entry-format-fail',
+      healthData: { steps: [] },
+      selectedTags: ['steps'],
+      retryCount: 0,
+      exportConfig: {
+        formats: ['csv', 'json'],
+        targetFolder: { id: 'f1' }
+      }
+    };
+    vi.mocked(queueManager.getQueue)
+      .mockResolvedValueOnce([mockEntry] as any)
+      .mockResolvedValue([mockEntry] as any);
+
+    vi.mocked(exportToCSV).mockResolvedValue(err('csv failed'));
+    vi.mocked(exportToJSON).mockResolvedValue(err('json failed'));
+
+    const result = await processExportQueue();
+
+    expect(result.successCount).toBe(0);
+    expect(result.failCount).toBe(1);
+    expect(result.errors[0]).toContain('Export failed partially or completely');
+    expect(queueManager.incrementRetry).toHaveBeenCalledWith(
+      'entry-format-fail',
+      expect.stringContaining('Export failed')
+    );
+    expect(exportToCSV).toHaveBeenCalled();
+    expect(exportToJSON).toHaveBeenCalled();
   });
 
   it('should handle unexpected exception during processing', async () => {

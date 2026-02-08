@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { GoogleDriveFile } from '../../../../src/services/storage/externalTypes';
 import {
   mapGoogleDriveFileToBasicInfo,
   mapGoogleDriveFileToExistence,
   mapGoogleDriveFileToFileInfo
 } from '../../../../src/services/storage/mappers/googleDriveMapper';
-import { GoogleDriveFile } from '../../../../src/types/external/googleDrive';
 
 describe('googleDriveMapper', () => {
   describe('mapGoogleDriveFileToFileInfo', () => {

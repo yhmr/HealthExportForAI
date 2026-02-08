@@ -57,27 +57,23 @@ export class SyncServiceImpl {
   > {
     const availabilityResult = await this.accessChecker.checkAvailability();
     if (!availabilityResult.isOk()) {
-      await addDebugLog(
-        `[SyncService] Availability check failed: ${availabilityResult.unwrapErr()}`,
-        'error'
-      );
+      const errorStr = availabilityResult.unwrapErr();
+      await addDebugLog(`[SyncService] Availability check failed: ${errorStr}`, 'error');
 
-      return err(availabilityResult.unwrapErr());
+      return err(new AppError(`Availability check failed: ${errorStr}`, 'HEALTH_CHECK_FAILED'));
     }
-    const availability = availabilityResult.unwrap();
+    const isAvailable = availabilityResult.unwrap();
 
-    if (!availability.available) {
+    if (!isAvailable) {
       return ok({ available: false, initialized: false, hasPermissions: false });
     }
 
     const initResult = await this.accessChecker.initialize();
     if (!initResult.isOk()) {
-      await addDebugLog(
-        `[SyncService] Initialization check failed: ${initResult.unwrapErr()}`,
-        'error'
-      );
+      const errorStr = initResult.unwrapErr();
+      await addDebugLog(`[SyncService] Initialization check failed: ${errorStr}`, 'error');
       // 初期化チェックが失敗した場合のエラー処理
-      return err(initResult.unwrapErr());
+      return err(new AppError(`Initialization failed: ${errorStr}`, 'HEALTH_INIT_FAILED'));
     }
     const initialized = initResult.unwrap();
 
@@ -87,11 +83,9 @@ export class SyncServiceImpl {
 
     const permResult = await this.accessChecker.hasPermissions();
     if (!permResult.isOk()) {
-      await addDebugLog(
-        `[SyncService] Permission check failed: ${permResult.unwrapErr()}`,
-        'error'
-      );
-      return err(permResult.unwrapErr());
+      const errorStr = permResult.unwrapErr();
+      await addDebugLog(`[SyncService] Permission check failed: ${errorStr}`, 'error');
+      return err(new AppError(`Permission check failed: ${errorStr}`, 'HEALTH_PERMISSION_FAILED'));
     }
     const hasPermissions = permResult.unwrap();
 

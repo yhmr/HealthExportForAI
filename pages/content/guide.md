@@ -9,16 +9,24 @@ layout: 'page'
 
 **Health Export For AI** を使って、Google ヘルスコネクトのデータを手軽にエクスポートする方法を説明します。
 
+> [!NOTE]
+> 本ガイドの画像は Android 版のものですが、iOS 版でも基本的な操作は同じです。iOS 版では "Health Connect" の代わりに "Apple Health (ヘルスケア)" が使用されます。
+
 ## 1. 初期設定
 
 ### ヘルスコネクトのインストール
 
-本アプリは Health Connect（ヘルスコネクト）を利用します。  
-Android 14 以降では標準搭載されていますが、以前のバージョンをご利用の場合は Play ストアからのインストールが必要です。
+本アプリは Android では **Health Connect（ヘルスコネクト）**、iOS では **Apple Health（ヘルスケア）** を利用します。
+
+- **Android:** Android 14 以降では Health Connect が標準搭載されています。以前のバージョンをご利用の場合は Play ストアからのインストールが必要です。
+- **iOS:** 特に追加のインストールは不要です。
 
 ### 権限の許可
 
-1. アプリを初めて起動すると、ヘルスコネクトへのアクセス権限と、Google ドライブへのアクセス権限（サインイン）が求められます。それぞれ「許可」を選択してください。
+1. アプリを初めて起動すると、健康データへのアクセス権限と、Google ドライブへのアクセス権限（サインイン）が求められます。
+
+- **Android:** Health Connect の権限リクエスト画面が表示されます。「すべて許可」などを選択してください。
+- **iOS:** Apple Health のアクセス許可画面が表示されます。「すべてオンにする」を選択し、画面右上の「許可」をタップしてください。
 
 <div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
 <img src="/HealthExportForAI/img/onboard-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
@@ -27,7 +35,7 @@ Android 14 以降では標準搭載されていますが、以前のバージョ
 </div>
 
 - **Google サインイン:** エクスポートしたファイルを Google ドライブにアップロードするために必要です。
-- **ヘルスコネクト権限:** 歩数・体重・睡眠などのデータを読み取るために必要です。
+- **健康データへのアクセス権限:** 歩数・体重・睡眠などのデータを読み取るために必要です。
 
 2. 続けて初期設定を行います。まずは、ヘルスコネクトから取得するデータの履歴範囲を指定します。データの読み取りが完了したら、次に「どのデータをエクスポートするか」を選択します。
 
@@ -59,9 +67,9 @@ Android 14 以降では標準搭載されていますが、以前のバージョ
 <img src="/HealthExportForAI/img/home-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />
 </div>
 
-## 3. ウィジェットによる同期
+## 3. ウィジェットによる同期 (Androidのみ)
 
-ホーム画面にウィジェットを追加すると、ワンタップで同期を実行できます。
+Android 版では、ホーム画面にウィジェットを追加すると、ワンタップで同期を実行できます。
 
 <div style="display: flex; flex-wrap: nowrap; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 10px;">
 <img src="/HealthExportForAI/img/widget-01.png" width="200" style="scroll-snap-align: start; flex: 0 0 auto;" />

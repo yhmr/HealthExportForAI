@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToJSON } from '../../../src/services/export/json';
+import { FileOperations } from '../../../src/services/storage/types';
 import { err, ok } from '../../../src/types/result';
-import { FileOperations } from '../../../src/types/storage';
 
 // Mock debugLogService to prevent AsyncStorage usage
 vi.mock('../../../src/services/debugLogService', () => ({
@@ -151,6 +151,15 @@ describe('JSON Export Service', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toContain('Upload failed');
+  });
+
+  it('should fail when finding existing JSON file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(err(new Error('Find failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('JSONファイルの検索に失敗しました');
   });
 
   it('should return failure on unexpected exception', async () => {

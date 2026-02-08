@@ -4,7 +4,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      'react-native': './__tests__/mocks/react-native.js'
+      'react-native': './__tests__/mocks/react-native.js',
+      'react-native-health': './__tests__/mocks/react-native-health.js'
     }
   },
   define: {
@@ -13,7 +14,7 @@ export default defineConfig({
   test: {
     server: {
       deps: {
-        inline: ['react-native-health-connect']
+        inline: ['react-native-health-connect', 'react-native-health']
       }
     },
     globals: true,

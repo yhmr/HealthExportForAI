@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
 import { formatHealthDataToRows } from '../../../src/services/export/utils';
+import { FileOperations } from '../../../src/services/storage/types';
 import { ok } from '../../../src/types/result';
-import { FileOperations } from '../../../src/types/storage';
 
 // Mock dependencies
 vi.mock('../../../src/services/export/utils', () => ({

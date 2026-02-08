@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../config/storageKeys';
-import { OfflineQueueData, PendingExport } from '../../types/exportTypes';
+import { OfflineQueueData, PendingExport } from '../../types/export';
 import { addDebugLog } from '../debugLogService';
+import { safeJsonParse } from '../infrastructure/json';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 
 const STORAGE_KEY = STORAGE_KEYS.OFFLINE_EXPORT_QUEUE;
@@ -10,6 +11,56 @@ export const MAX_RETRY_COUNT = 3;
  * エクスポートキューを管理するクラス
  */
 export class QueueManager {
+  private createEmptyQueueData(): OfflineQueueData {
+    return { pending: [], updatedAt: new Date().toISOString() };
+  }
+
+  private isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every((item) => typeof item === 'string');
+  }
+
+  private sanitizeQueueData(value: unknown): OfflineQueueData | null {
+    // 永続化データから必要最小限の項目だけを検証・抽出して再構築する。
+    // 不正フォーマットは破棄し、空キューへフォールバックするための前処理。
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    if (!Array.isArray(raw.pending)) return null;
+
+    const pending: PendingExport[] = raw.pending
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+      .filter(
+        (entry) =>
+          typeof entry.id === 'string' &&
+          typeof entry.createdAt === 'string' &&
+          typeof entry.retryCount === 'number' &&
+          !!entry.healthData &&
+          typeof entry.healthData === 'object' &&
+          this.isStringArray(entry.selectedTags) &&
+          (entry.syncDateRange === null || this.isStringArray(entry.syncDateRange))
+      )
+      .map((entry) => ({
+        id: entry.id as string,
+        createdAt: entry.createdAt as string,
+        healthData: entry.healthData as PendingExport['healthData'],
+        selectedTags: (entry.selectedTags as string[]).filter((tag) => typeof tag === 'string'),
+        syncDateRange:
+          entry.syncDateRange === null
+            ? null
+            : (entry.syncDateRange as string[]).filter((date) => typeof date === 'string'),
+        retryCount: Math.max(0, Math.floor(entry.retryCount as number)),
+        lastError: typeof entry.lastError === 'string' ? entry.lastError : undefined,
+        exportConfig:
+          entry.exportConfig && typeof entry.exportConfig === 'object'
+            ? (entry.exportConfig as PendingExport['exportConfig'])
+            : undefined
+      }));
+
+    return {
+      pending,
+      updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date().toISOString()
+    };
+  }
+
   /**
    * 現在のキュー一覧を取得
    */
@@ -107,12 +158,20 @@ export class QueueManager {
     try {
       const json = await keyValueStorage.getItem(STORAGE_KEY);
       if (!json) {
-        return { pending: [], updatedAt: new Date().toISOString() };
+        return this.createEmptyQueueData();
       }
-      return JSON.parse(json);
+      const parsed = safeJsonParse<unknown>(json);
+      if (parsed === null) {
+        await addDebugLog('[QueueManager] Invalid JSON format, resetting queue', 'warn');
+        return this.createEmptyQueueData();
+      }
+      const sanitized = this.sanitizeQueueData(parsed);
+      if (sanitized) return sanitized;
+      await addDebugLog('[QueueManager] Invalid queue format, resetting queue', 'warn');
+      return this.createEmptyQueueData();
     } catch (error) {
       await addDebugLog(`[QueueManager] Load failed: ${error}`, 'error');
-      return { pending: [], updatedAt: new Date().toISOString() };
+      return this.createEmptyQueueData();
     }
   }
 

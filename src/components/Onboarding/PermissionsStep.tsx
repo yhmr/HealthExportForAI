@@ -20,11 +20,14 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
   onNext
 }) => {
   const { t } = useLanguage();
+  const serviceName = t('common', 'healthServiceName');
 
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.icon}>❤️</Text>
-      <Text style={styles.title}>{t('onboarding', 'healthTitle')}</Text>
+      <Text style={styles.title}>
+        {t('onboarding', 'healthTitle').replace('Health Connect', serviceName)}
+      </Text>
       <Text style={styles.description}>{t('onboarding', 'healthDesc')}</Text>
       {hasPermissions ? (
         <View style={styles.completedState}>
@@ -40,7 +43,9 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
       ) : (
         <View style={styles.actionContainer}>
           {hasAttemptedPermissions && (
-            <Text style={styles.warningText}>{t('onboarding', 'permissionRequired')}</Text>
+            <Text style={styles.warningText}>
+              {t('onboarding', 'permissionRequired').replace('Health Connect', serviceName)}
+            </Text>
           )}
 
           <SyncButton

@@ -11,7 +11,10 @@ export const translations = {
       cancel: 'キャンセル',
       ok: 'OK',
       error: 'エラー',
-      success: '成功'
+      success: '成功',
+      healthServiceName: 'Health Connect',
+      healthServiceName_android: 'Health Connect',
+      healthServiceName_ios: 'ヘルスケア'
     },
     // ホーム画面
     home: {
@@ -45,6 +48,8 @@ export const translations = {
       // Health Connect
       sectionHealthConnect: 'Health Connect',
       openHealthConnect: '設定画面を開く',
+      openHealthConnect_android: 'Health Connect設定を開く',
+      openHealthConnect_ios: 'ヘルスケア設定を開く',
       healthConnectPermissionOk: '権限許可済み',
       healthConnectPermissionNg: '権限が無効です',
       authRequired: 'Googleアカウントへのサインインが必要です',
@@ -79,6 +84,16 @@ export const translations = {
         'エクスポート形式が選択されていません。少なくとも1つの形式を選択してください。',
       goBackAnyway: 'このまま戻る',
       permissionRequired: '権限が必要です',
+      backgroundPermissionRequired_android:
+        '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。',
+      backgroundPermissionRequired_ios:
+        '自動同期を使用するには、ヘルスケアデータのバックグラウンド更新を有効にする必要があります。',
+      backgroundSyncUnavailable_android:
+        'OS設定によりバックグラウンド同期を有効化できませんでした。端末設定を確認してください。',
+      backgroundSyncUnavailable_ios:
+        'OS設定によりバックグラウンド同期を有効化できませんでした。バックグラウンド更新設定を確認してください。',
+      backgroundSyncApplyFailed:
+        'バックグラウンド同期設定の反映に失敗しました。時間をおいて再試行してください。',
       // 通知
       notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
     },
@@ -125,7 +140,9 @@ export const translations = {
       lastSync: '最終バックグラウンド同期',
       never: '未実行',
       nextSync: '次回同期予定',
-      note: '※OSの制限により、正確な間隔での実行は保証されません。充電中やWi-Fi接続時に実行される傾向があります。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。'
+      note: '※OSの制限により、正確な間隔での実行は保証されません。充電中やWi-Fi接続時に実行される傾向があります。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。',
+      note_ios:
+        '※iOSではバックグラウンド実行タイミングはOSが決定するため、同期間隔は変更できません。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。'
     },
     // 通知
     notification: {
@@ -182,7 +199,10 @@ export const translations = {
       cancel: 'Cancel',
       ok: 'OK',
       error: 'Error',
-      success: 'Success'
+      success: 'Success',
+      healthServiceName: 'Health Connect',
+      healthServiceName_android: 'Health Connect',
+      healthServiceName_ios: 'Apple Health'
     },
     // Home screen
     home: {
@@ -216,6 +236,8 @@ export const translations = {
       // Health Connect
       sectionHealthConnect: 'Health Connect',
       openHealthConnect: 'Open Settings',
+      openHealthConnect_android: 'Open Health Connect',
+      openHealthConnect_ios: 'Open Health Settings',
       healthConnectPermissionOk: 'Permissions granted',
       healthConnectPermissionNg: 'Permissions missing',
       authRequired: 'Sign in to Google Account is required',
@@ -249,6 +271,15 @@ export const translations = {
       noFormatSelected: 'No export format selected. Please select at least one format.',
       goBackAnyway: 'Go Back Anyway',
       permissionRequired: 'Permission Required',
+      backgroundPermissionRequired_android:
+        'Background data read permission is required to use auto sync.',
+      backgroundPermissionRequired_ios: 'Background delivery must be enabled for auto sync.',
+      backgroundSyncUnavailable_android:
+        'Auto sync could not be enabled due to OS restrictions. Check your device settings.',
+      backgroundSyncUnavailable_ios:
+        'Auto sync could not be enabled due to OS restrictions. Check background app refresh settings.',
+      backgroundSyncApplyFailed:
+        'Failed to apply background sync settings. Please try again later.',
       // Notifications
       notificationPermissionDesc: 'Notification permission is required to run background sync.'
     },
@@ -295,7 +326,9 @@ export const translations = {
       lastSync: 'Last Background Sync',
       never: 'Never',
       nextSync: 'Next Sync',
-      note: '*Execution at exact intervals is not guaranteed due to OS restrictions. It tends to run when charging or on Wi-Fi.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.'
+      note: '*Execution at exact intervals is not guaranteed due to OS restrictions. It tends to run when charging or on Wi-Fi.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.',
+      note_ios:
+        '*On iOS, background run timing is controlled by the system, so sync interval cannot be changed.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.'
     },
     // Notifications
     notification: {

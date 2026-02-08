@@ -1,5 +1,6 @@
-import { AutoSyncConfig } from '../../types/exportTypes';
+import { AutoSyncConfig } from '../../types/export';
 import { addDebugLog } from '../debugLogService';
+import { getConnectionType } from '../networkService';
 import { initializeForSync } from '../syncInitializer';
 import { SyncService } from '../syncService';
 
@@ -30,6 +31,22 @@ export async function executeSyncLogic(config: AutoSyncConfig): Promise<SyncExec
       hasNewData: false,
       hasQueueProcessed: false
     };
+  }
+
+  if (config.wifiOnly) {
+    const connectionType = await getConnectionType();
+    const isWifiLikeConnection = connectionType === 'wifi' || connectionType === 'ethernet';
+    if (!isWifiLikeConnection) {
+      await addDebugLog(
+        `[SyncOperation] Wi-Fi only is enabled. Current connection: ${connectionType}. Skipping sync.`,
+        'info'
+      );
+      return {
+        success: true,
+        hasNewData: false,
+        hasQueueProcessed: false
+      };
+    }
   }
 
   // 共通初期化処理（認証 + Health Connect初期化 + 権限チェック）

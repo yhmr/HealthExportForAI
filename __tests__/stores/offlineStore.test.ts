@@ -114,9 +114,7 @@ describe('offlineStore', () => {
 
       await useOfflineStore.getState().refreshPendingCount();
 
-      await useOfflineStore.getState().refreshPendingCount();
-
-      expect(queueManager.getQueue).toHaveBeenCalled();
+      expect(queueManager.getQueue).toHaveBeenCalledTimes(1);
       expect(useOfflineStore.getState().pendingCount).toBe(10); // 変更なし
       expect(consoleSpy).toHaveBeenCalledWith(
         '[OfflineStore] Failed to refresh pending count:',

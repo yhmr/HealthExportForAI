@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToCSV } from '../../../src/services/export/csv';
+import { FileOperations } from '../../../src/services/storage/types';
 import { StorageError } from '../../../src/types/errors';
 import { err, ok } from '../../../src/types/result';
-import { FileOperations } from '../../../src/types/storage';
 
 // Mock StorageAdapter
 const mockFileOps = {
@@ -83,5 +83,14 @@ describe('CSV Export Service', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toContain('アップロードに失敗');
+  });
+
+  it('should fail when finding existing CSV file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(err(new StorageError('Find failed')));
+
+    const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('CSVファイルの検索に失敗しました');
   });
 });

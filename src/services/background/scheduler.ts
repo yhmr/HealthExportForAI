@@ -6,17 +6,19 @@ import notifee, { AndroidImportance } from '@notifee/react-native';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 import { Language, translations } from '../../i18n/translations';
-import { AutoSyncConfig } from '../../types/exportTypes';
+import { AutoSyncConfig } from '../../types/export';
 import { backgroundSyncConfigService } from '../config/BackgroundSyncConfigService';
 import { addDebugLog } from '../debugLogService';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 import { executeSyncLogic } from './backgroundTask';
+import { resolveBackgroundFetchIntervalMinutes } from './intervalPolicy';
 
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';
 const NOTIFICATION_CHANNEL_ID = 'background-sync';
-const LANGUAGE_KEY = 'app_language';
+const LANGUAGE_KEY = STORAGE_KEYS.APP_LANGUAGE;
 
 addDebugLog('[Scheduler] Module loaded', 'info').catch(() => {});
 
@@ -76,6 +78,9 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
     } catch (e) {
       console.error('Start notification error:', e);
     }
+  } else {
+    // iOS: 通知は出さず、ログだけ残す
+    await addDebugLog('[Scheduler] Background sync started (iOS)', 'info');
   }
 
   // 処理全体のタイムアウト（60秒）
@@ -115,7 +120,12 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
           } catch (notifError) {
             console.error('Success notification error:', notifError);
           }
+        } else {
+          // iOS: 通知は出さず、ログだけ残す
+          await addDebugLog('[Scheduler] Background sync completed with updates (iOS)', 'info');
         }
+      } else {
+        await addDebugLog('[Scheduler] Background sync completed (no new data)', 'info');
       }
 
       return result.hasNewData || result.hasQueueProcessed
@@ -168,9 +178,17 @@ const RETRY_DELAY_MS = 2000;
 export async function registerBackgroundSync(
   intervalMinutes: number,
   retryCount = 0
-): Promise<void> {
+): Promise<boolean> {
+  const effectiveIntervalMinutes = resolveBackgroundFetchIntervalMinutes(
+    Platform.OS,
+    intervalMinutes
+  );
+
   if (retryCount === 0) {
-    await addDebugLog(`[Scheduler] Registering task (interval: ${intervalMinutes}min)`, 'info');
+    await addDebugLog(
+      `[Scheduler] Registering task (requested: ${intervalMinutes}min, effective: ${effectiveIntervalMinutes}min)`,
+      'info'
+    );
   } else {
     console.warn(`[Scheduler] Retry registering task (${retryCount}/${MAX_RETRIES})...`);
   }
@@ -186,13 +204,14 @@ export async function registerBackgroundSync(
         `[Scheduler] Background fetch is restricted or denied. Status: ${status}`,
         'warn'
       );
-      return;
+      return false;
     }
 
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-      minimumInterval: intervalMinutes * 60 // 秒に変換
+      minimumInterval: effectiveIntervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
+    return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -208,17 +227,15 @@ export async function registerBackgroundSync(
       `[Scheduler] Failed to register task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
       'warn'
     );
+    return false;
   }
 }
 
 /**
  * バックグラウンド同期タスクを解除
- */
-/**
- * バックグラウンド同期タスクを解除
  * @param retryCount 現在のリトライ回数（内部用）
  */
-export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
+export async function unregisterBackgroundSync(retryCount = 0): Promise<boolean> {
   if (retryCount === 0) {
     await addDebugLog('[Scheduler] Unregistering task', 'info');
   } else {
@@ -234,8 +251,10 @@ export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
     if (isRegistered) {
       await BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
       await addDebugLog('[Scheduler] Task unregistered successfully', 'success');
+      return true;
     } else {
       await addDebugLog('[Scheduler] Task was not registered', 'info');
+      return true;
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -252,6 +271,7 @@ export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
       `[Scheduler] Failed to unregister task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
       'warn'
     );
+    return false;
   }
 }
 
@@ -273,22 +293,28 @@ export async function getBackgroundFetchStatus(): Promise<BackgroundFetch.Backgr
  * 設定に基づいてバックグラウンド同期を有効化/無効化
  * @param config バックグラウンド同期設定
  */
-export async function syncBackgroundTask(config: AutoSyncConfig): Promise<void> {
+export async function syncBackgroundTask(config: AutoSyncConfig): Promise<boolean> {
   try {
     const isRegistered = await isBackgroundSyncRegistered();
 
     if (config.enabled && !isRegistered) {
-      await registerBackgroundSync(config.intervalMinutes);
+      return registerBackgroundSync(config.intervalMinutes);
     } else if (!config.enabled && isRegistered) {
-      await unregisterBackgroundSync();
+      return unregisterBackgroundSync();
     } else if (config.enabled && isRegistered) {
       // 設定上の間隔と現在の登録状況の整合性はここではチェックせず、
       // 呼び出し側で変更があった場合に明示的に呼ばれることを想定するが、
       // 念のため再登録して確実に最新の間隔を反映させる
-      await unregisterBackgroundSync();
-      await registerBackgroundSync(config.intervalMinutes);
+      const unregistered = await unregisterBackgroundSync();
+      if (!unregistered) {
+        return false;
+      }
+      return registerBackgroundSync(config.intervalMinutes);
     }
+
+    return true;
   } catch (error) {
     await addDebugLog(`[Scheduler] Config sync failed: ${error}`, 'error');
+    return false;
   }
 }

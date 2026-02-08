@@ -5,7 +5,7 @@
 
 import { WEB_CLIENT_ID } from '../config/driveConfig';
 import { addDebugLog } from './debugLogService';
-import { checkHealthPermissions, initializeHealthConnect } from './healthConnect';
+import { healthService } from './health/healthAdapterFactory';
 import { googleAuthService } from './infrastructure/GoogleAuthService';
 
 /**
@@ -25,7 +25,7 @@ export interface InitializationResult {
  * ウィジェット/バックグラウンドタスク用の初期化処理
  *
  * 以下の順序で初期化を実行:
- * 1. Google認証設定 + サインイン確認（未ログインの場合はサイレントサインイン試行）
+ * 1. Google認証設定 + 既存ログイン確認 + サイレントトークン取得
  * 2. Health Connect SDK初期化
  * 3. Health Connect権限チェック
  *
@@ -39,16 +39,23 @@ export async function initializeForSync(): Promise<InitializationResult> {
     await addDebugLog(`[SyncInitializer] Auth config error: ${e}`, 'warn');
   }
 
-  // 2. 認証状態チェック + サインイン試行
+  // 2. 認証状態チェック + サイレントトークン取得
   try {
-    let authenticated = await googleAuthService.isSignedIn();
-    if (!authenticated) {
-      await addDebugLog('[SyncInitializer] Not signed in, attempting silent sign-in', 'info');
-      const signInResult = await googleAuthService.signIn();
-      authenticated = signInResult.isOk();
+    const signedIn = await googleAuthService.isSignedIn();
+    if (!signedIn) {
+      await addDebugLog(
+        '[SyncInitializer] Not signed in (interactive sign-in is not allowed)',
+        'warn'
+      );
+      return { success: false, error: 'auth_failed' };
     }
 
-    if (!authenticated) {
+    const tokenResult = await googleAuthService.getOrRefreshAccessToken();
+    if (!tokenResult.isOk()) {
+      await addDebugLog(
+        `[SyncInitializer] Silent token fetch failed: ${tokenResult.unwrapErr().message}`,
+        'error'
+      );
       await addDebugLog('[SyncInitializer] Authentication failed', 'error');
       return { success: false, error: 'auth_failed' };
     }
@@ -58,14 +65,14 @@ export async function initializeForSync(): Promise<InitializationResult> {
   }
 
   // 3. Health Connect初期化
-  const initResult = await initializeHealthConnect();
+  const initResult = await healthService.initialize();
   if (!initResult.unwrapOr(false)) {
-    await addDebugLog('[SyncInitializer] Health Connect init failed', 'error');
+    await addDebugLog('[SyncInitializer] Health SDK init failed', 'error');
     return { success: false, error: 'health_connect_failed' };
   }
 
   // 4. 権限チェック
-  const permResult = await checkHealthPermissions();
+  const permResult = await healthService.hasPermissions();
   if (!permResult.unwrapOr(false)) {
     await addDebugLog('[SyncInitializer] Health Connect permission missing', 'warn');
     return { success: false, error: 'permission_denied' };

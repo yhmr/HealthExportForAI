@@ -1,7 +1,7 @@
 import * as HealthConnect from 'react-native-health-connect';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DebugLogService from '../../src/services/debugLogService';
-import { requestHealthPermissions } from '../../src/services/healthConnect';
+import { requestHealthPermissions } from '../../src/services/health/healthConnect';
 import { aggregateByLatestPerDay } from '../../src/utils/healthAggregation';
 
 vi.mock('../../src/services/debugLogService', () => ({
