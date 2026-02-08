@@ -1,6 +1,7 @@
 import AppleHealthKit from 'react-native-health';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  enableBackgroundDelivery,
   fetchExerciseData,
   fetchNutritionData,
   probeHealthKitReadPermission
@@ -64,6 +65,13 @@ describe('healthKit', () => {
     });
 
     const result = await probeHealthKitReadPermission();
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(true);
+  });
+
+  it('enableBackgroundDelivery should succeed without native background API calls', async () => {
+    const result = await enableBackgroundDelivery();
 
     expect(result.isOk()).toBe(true);
     expect(result.unwrap()).toBe(true);

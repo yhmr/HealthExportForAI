@@ -35,16 +35,6 @@ const PERMISSION_ERROR_PATTERNS = [
   'not permitted'
 ];
 
-const BACKGROUND_DELIVERY_FREQUENCY = 'hourly';
-
-// react-native-healthの型に enableBackgroundDelivery が載っていないため補助型を定義。
-interface HealthKitWithBackgroundDelivery {
-  enableBackgroundDelivery: (
-    options: { type: string; frequency: string },
-    callback: (error: string) => void
-  ) => void;
-}
-
 function isLikelyPermissionError(error: unknown): boolean {
   const message = String(error).toLowerCase();
   return PERMISSION_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
@@ -87,39 +77,10 @@ export const initializeHealthKit = async (): Promise<Result<boolean, HealthKitEr
 };
 
 export const enableBackgroundDelivery = async (): Promise<Result<boolean, HealthServiceError>> => {
-  try {
-    const read = permissions.permissions.read;
-    if (read.length === 0) {
-      return ok(false);
-    }
-
-    const healthKit = AppleHealthKit as unknown as HealthKitWithBackgroundDelivery;
-
-    // 取得対象に対して個別に配信登録する。
-    // 失敗があっても他の型の登録を継続するため、ここでは警告ログのみ残す。
-    for (const permission of read) {
-      healthKit.enableBackgroundDelivery(
-        {
-          type: permission,
-          frequency: BACKGROUND_DELIVERY_FREQUENCY
-        },
-        (deliveryError: string) => {
-          if (deliveryError) {
-            void addDebugLog(
-              `[HealthKit] Failed to enable background delivery for ${permission}: ${deliveryError}`,
-              'warn'
-            );
-          }
-        }
-      );
-    }
-
-    await addDebugLog('[HealthKit] Background delivery enabled', 'info');
-    return ok(true);
-  } catch (error) {
-    await addDebugLog(`[HealthKit] Background delivery setup error: ${error}`, 'warn');
-    return err('not_available');
-  }
+  // iOSでは追加のランタイム権限は不要。
+  // バックグラウンド実行可否はOS判断・アプリ状態に依存するため、ここでは失敗要因にしない。
+  await addDebugLog('[HealthKit] No additional runtime background permission is required', 'info');
+  return ok(true);
 };
 
 export const checkHealthKitAvailability = async (): Promise<Result<boolean, HealthKitError>> => {

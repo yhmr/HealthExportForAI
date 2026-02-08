@@ -88,6 +88,12 @@ export const translations = {
         '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。',
       backgroundPermissionRequired_ios:
         '自動同期を使用するには、ヘルスケアデータのバックグラウンド更新を有効にする必要があります。',
+      backgroundSyncUnavailable_android:
+        'OS設定によりバックグラウンド同期を有効化できませんでした。端末設定を確認してください。',
+      backgroundSyncUnavailable_ios:
+        'OS設定によりバックグラウンド同期を有効化できませんでした。バックグラウンド更新設定を確認してください。',
+      backgroundSyncApplyFailed:
+        'バックグラウンド同期設定の反映に失敗しました。時間をおいて再試行してください。',
       // 通知
       notificationPermissionDesc: 'バックグラウンド同期を実行するには通知の権限が必要です。'
     },
@@ -268,6 +274,12 @@ export const translations = {
       backgroundPermissionRequired_android:
         'Background data read permission is required to use auto sync.',
       backgroundPermissionRequired_ios: 'Background delivery must be enabled for auto sync.',
+      backgroundSyncUnavailable_android:
+        'Auto sync could not be enabled due to OS restrictions. Check your device settings.',
+      backgroundSyncUnavailable_ios:
+        'Auto sync could not be enabled due to OS restrictions. Check background app refresh settings.',
+      backgroundSyncApplyFailed:
+        'Failed to apply background sync settings. Please try again later.',
       // Notifications
       notificationPermissionDesc: 'Notification permission is required to run background sync.'
     },

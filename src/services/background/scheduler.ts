@@ -178,7 +178,7 @@ const RETRY_DELAY_MS = 2000;
 export async function registerBackgroundSync(
   intervalMinutes: number,
   retryCount = 0
-): Promise<void> {
+): Promise<boolean> {
   const effectiveIntervalMinutes = resolveBackgroundFetchIntervalMinutes(
     Platform.OS,
     intervalMinutes
@@ -204,13 +204,14 @@ export async function registerBackgroundSync(
         `[Scheduler] Background fetch is restricted or denied. Status: ${status}`,
         'warn'
       );
-      return;
+      return false;
     }
 
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
       minimumInterval: effectiveIntervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
+    return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -226,17 +227,15 @@ export async function registerBackgroundSync(
       `[Scheduler] Failed to register task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
       'warn'
     );
+    return false;
   }
 }
 
 /**
  * バックグラウンド同期タスクを解除
- */
-/**
- * バックグラウンド同期タスクを解除
  * @param retryCount 現在のリトライ回数（内部用）
  */
-export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
+export async function unregisterBackgroundSync(retryCount = 0): Promise<boolean> {
   if (retryCount === 0) {
     await addDebugLog('[Scheduler] Unregistering task', 'info');
   } else {
@@ -252,8 +251,10 @@ export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
     if (isRegistered) {
       await BackgroundFetch.unregisterTaskAsync(BACKGROUND_SYNC_TASK);
       await addDebugLog('[Scheduler] Task unregistered successfully', 'success');
+      return true;
     } else {
       await addDebugLog('[Scheduler] Task was not registered', 'info');
+      return true;
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -270,6 +271,7 @@ export async function unregisterBackgroundSync(retryCount = 0): Promise<void> {
       `[Scheduler] Failed to unregister task after ${MAX_RETRIES} retries (giving up): ${errorMessage}`,
       'warn'
     );
+    return false;
   }
 }
 
@@ -291,22 +293,28 @@ export async function getBackgroundFetchStatus(): Promise<BackgroundFetch.Backgr
  * 設定に基づいてバックグラウンド同期を有効化/無効化
  * @param config バックグラウンド同期設定
  */
-export async function syncBackgroundTask(config: AutoSyncConfig): Promise<void> {
+export async function syncBackgroundTask(config: AutoSyncConfig): Promise<boolean> {
   try {
     const isRegistered = await isBackgroundSyncRegistered();
 
     if (config.enabled && !isRegistered) {
-      await registerBackgroundSync(config.intervalMinutes);
+      return registerBackgroundSync(config.intervalMinutes);
     } else if (!config.enabled && isRegistered) {
-      await unregisterBackgroundSync();
+      return unregisterBackgroundSync();
     } else if (config.enabled && isRegistered) {
       // 設定上の間隔と現在の登録状況の整合性はここではチェックせず、
       // 呼び出し側で変更があった場合に明示的に呼ばれることを想定するが、
       // 念のため再登録して確実に最新の間隔を反映させる
-      await unregisterBackgroundSync();
-      await registerBackgroundSync(config.intervalMinutes);
+      const unregistered = await unregisterBackgroundSync();
+      if (!unregistered) {
+        return false;
+      }
+      return registerBackgroundSync(config.intervalMinutes);
     }
+
+    return true;
   } catch (error) {
     await addDebugLog(`[Scheduler] Config sync failed: ${error}`, 'error');
+    return false;
   }
 }

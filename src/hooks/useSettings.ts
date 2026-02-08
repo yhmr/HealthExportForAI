@@ -4,13 +4,14 @@ import { Alert, Linking, Platform } from 'react-native';
 import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
-import { syncBackgroundTask } from '../services/background/scheduler';
+import { isBackgroundSyncRegistered, syncBackgroundTask } from '../services/background/scheduler';
 import { backgroundSyncConfigService } from '../services/config/BackgroundSyncConfigService';
 import { exportConfigService } from '../services/config/ExportConfigService';
 import { clearDebugLogs, loadDebugLogs, type DebugLogEntry } from '../services/debugLogService';
 import { healthService } from '../services/health/healthAdapterFactory';
 import { DEFAULT_FOLDER_NAME } from '../services/storage/googleDrive';
 import { type AutoSyncConfig, type SyncInterval } from '../types/export';
+import { shouldRequestNotificationPermission } from './useSettingsPolicy';
 
 export function useSettings() {
   const {
@@ -124,6 +125,8 @@ export function useSettings() {
   // アクション: 自動同期トグル
   const toggleAutoSync = async (enabled: boolean) => {
     try {
+      const previousConfig = autoSyncConfig;
+
       if (enabled) {
         // 1. Google認証チェック
         if (!isAuthenticated || !currentUser) {
@@ -144,21 +147,23 @@ export function useSettings() {
           return;
         }
 
-        // 3. 通知権限チェック
-        const settings = await notifee.requestPermission();
-        if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
-          Alert.alert(
-            t('settings', 'permissionRequired'),
-            t('settings', 'notificationPermissionDesc'),
-            [
-              {
-                text: t('settings', 'openHealthConnect'),
-                onPress: () => Linking.openSettings()
-              },
-              { text: 'Cancel', style: 'cancel' }
-            ]
-          );
-          return; // 通知権限がない場合はONにしない
+        // 3. 通知権限チェック（通知を利用するAndroidのみ）
+        if (shouldRequestNotificationPermission(Platform.OS)) {
+          const settings = await notifee.requestPermission();
+          if (settings.authorizationStatus < AuthorizationStatus.AUTHORIZED) {
+            Alert.alert(
+              t('settings', 'permissionRequired'),
+              t('settings', 'notificationPermissionDesc'),
+              [
+                {
+                  text: t('settings', 'openHealthConnect'),
+                  onPress: () => Linking.openSettings()
+                },
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
+            return; // 通知権限がない場合はONにしない
+          }
         }
 
         // 4. バックグラウンド権限 (Android) / 配信登録 (iOS)
@@ -183,7 +188,32 @@ export function useSettings() {
       const newConfig = { ...autoSyncConfig, enabled };
       setAutoSyncConfigState(newConfig);
       await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
-      await syncBackgroundTask(newConfig);
+      const syncApplied = await syncBackgroundTask(newConfig);
+
+      // 実際にタスク登録/解除ができなかった場合、UIと保存状態を元に戻す。
+      if (!syncApplied) {
+        setAutoSyncConfigState(previousConfig);
+        await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+        Alert.alert(t('common', 'error'), t('settings', 'backgroundSyncApplyFailed'));
+        await refreshLogs();
+        return;
+      }
+
+      // ON時は「登録済みか」を最終確認し、登録失敗なら元に戻す。
+      if (enabled) {
+        const registered = await isBackgroundSyncRegistered();
+        if (!registered) {
+          setAutoSyncConfigState(previousConfig);
+          await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+          Alert.alert(
+            t('settings', 'permissionRequired'),
+            t('settings', 'backgroundSyncUnavailable')
+          );
+          await refreshLogs();
+          return;
+        }
+      }
+
       await refreshLogs();
     } catch (error) {
       console.error('[toggleAutoSync] Error:', error);
@@ -196,10 +226,18 @@ export function useSettings() {
     // iOS はOS主導で実行タイミングが決まるため、アプリ側の間隔変更は受け付けない
     if (isIOS) return;
 
+    const previousConfig = autoSyncConfig;
     const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
     setAutoSyncConfigState(newConfig);
     await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
-    await syncBackgroundTask(newConfig);
+    const syncApplied = await syncBackgroundTask(newConfig);
+    if (!syncApplied) {
+      setAutoSyncConfigState(previousConfig);
+      await backgroundSyncConfigService.saveBackgroundSyncConfig(previousConfig);
+      Alert.alert(t('common', 'error'), t('settings', 'backgroundSyncApplyFailed'));
+      await refreshLogs();
+      return;
+    }
     await refreshLogs();
   };
 

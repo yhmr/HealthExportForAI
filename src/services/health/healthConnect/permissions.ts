@@ -107,11 +107,11 @@ export async function requestBackgroundHealthPermission(): Promise<
     // Android 14+ のみ追加権限が必要。その他環境は常に true 扱い。
     if (Platform.OS === 'android' && Platform.Version >= 34) {
       const backgroundPermission = 'android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND';
-      const hasBackgroundPermission = await PermissionsAndroid.check(backgroundPermission);
+      const hasBackgroundPermission = await PermissionsAndroid.check(backgroundPermission as any);
 
       if (!hasBackgroundPermission) {
         await addDebugLog('[HealthConnect] Requesting background permission', 'info');
-        const granted = await PermissionsAndroid.request(backgroundPermission);
+        const granted = await PermissionsAndroid.request(backgroundPermission as any);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           await addDebugLog('[HealthConnect] Background permission denied', 'warn');
           return ok(false);

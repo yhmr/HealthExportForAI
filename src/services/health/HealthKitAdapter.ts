@@ -114,7 +114,8 @@ export class HealthKitAdapter implements IHealthService {
   }
 
   async requestBackgroundPermission(): Promise<Result<boolean, HealthServiceError>> {
-    // iOSでは HealthKit.enableBackgroundDelivery を呼び出してバックグラウンド更新を有効化する
+    // iOSでは追加のランタイム権限は不要。
+    // ここでは「自動同期ON時の前提チェック」を共通化するために呼び出す。
     return HealthKit.enableBackgroundDelivery();
   }
 

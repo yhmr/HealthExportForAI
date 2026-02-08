@@ -2,14 +2,20 @@ import * as ReactNative from 'react-native';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { err, ok } from '../../src/types/result';
 
-const { checkHealthKitAvailabilityMock, probeHealthKitReadPermissionMock } = vi.hoisted(() => ({
+const {
+  checkHealthKitAvailabilityMock,
+  probeHealthKitReadPermissionMock,
+  enableBackgroundDeliveryMock
+} = vi.hoisted(() => ({
   checkHealthKitAvailabilityMock: vi.fn(),
-  probeHealthKitReadPermissionMock: vi.fn()
+  probeHealthKitReadPermissionMock: vi.fn(),
+  enableBackgroundDeliveryMock: vi.fn()
 }));
 
 vi.mock('../../src/services/health/healthKit', () => ({
   checkHealthKitAvailability: checkHealthKitAvailabilityMock,
   probeHealthKitReadPermission: probeHealthKitReadPermissionMock,
+  enableBackgroundDelivery: enableBackgroundDeliveryMock,
   initializeHealthKit: vi.fn(),
   fetchStepsData: vi.fn(),
   fetchWeightData: vi.fn(),
@@ -38,6 +44,7 @@ describe('HealthKitAdapter', () => {
     vi.spyOn(ReactNative.Linking, 'openSettings').mockResolvedValue(undefined);
     checkHealthKitAvailabilityMock.mockResolvedValue(ok(true));
     probeHealthKitReadPermissionMock.mockResolvedValue(ok(true));
+    enableBackgroundDeliveryMock.mockResolvedValue(ok(true));
   });
 
   it('openDataManagement should open Apple Health app when URL scheme is available', async () => {
@@ -77,6 +84,16 @@ describe('HealthKitAdapter', () => {
 
     const result = await adapter.hasPermissions();
 
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(true);
+  });
+
+  it('requestBackgroundPermission should succeed when HealthKit background setup is ready', async () => {
+    const adapter = await createAdapter();
+
+    const result = await adapter.requestBackgroundPermission();
+
+    expect(enableBackgroundDeliveryMock).toHaveBeenCalled();
     expect(result.isOk()).toBe(true);
     expect(result.unwrap()).toBe(true);
   });
