@@ -1,6 +1,7 @@
 // HealthKit Adapter
 // IHealthServiceを実装するiOS用アダプター
 
+import { Linking } from 'react-native';
 import {
   BasalMetabolicRateData,
   BodyFatData,
@@ -12,18 +13,32 @@ import {
   WeightData
 } from '../../types/health';
 import { Result, ok } from '../../types/result';
-import { HealthServiceError, IHealthService } from './types';
-
+import { addDebugLog } from '../debugLogService';
 import * as HealthKit from './healthKit';
+import { HealthServiceError, IHealthService } from './types';
 
 /**
  * HealthKit (iOS) 用アダプター実装
  */
 export class HealthKitAdapter implements IHealthService {
   async openDataManagement(): Promise<void> {
-    // TODO: iOS では x-apple-health:// スキームでヘルスケアアプリを開くことを検討
-    // 現時点では対応するDeep Linkが公式にサポートされていないため未実装
-    console.log('openDataManagement not implemented for iOS');
+    const healthAppUrl = 'x-apple-health://';
+
+    try {
+      const canOpenHealthApp = await Linking.canOpenURL(healthAppUrl);
+      if (canOpenHealthApp) {
+        await Linking.openURL(healthAppUrl);
+        return;
+      }
+      await Linking.openSettings();
+    } catch (error) {
+      await addDebugLog(`[HealthKitAdapter] Failed to open health settings: ${error}`, 'error');
+      try {
+        await Linking.openSettings();
+      } catch {
+        // 最終フォールバック失敗時はUI側の処理継続を優先して握りつぶす
+      }
+    }
   }
 
   async checkAvailability(): Promise<Result<boolean, HealthServiceError>> {
@@ -104,9 +119,18 @@ export class HealthKitAdapter implements IHealthService {
   }
 
   async hasPermissions(): Promise<Result<boolean, HealthServiceError>> {
-    // NOTE: iOSのHealthKitでは、ユーザーが権限を拒否したかどうかを
-    // アプリ側から直接確認することはできない（プライバシー保護の設計）。
-    // initializeHealthKit が成功すれば、少なくとも一部の権限は付与されていると見なす。
-    return ok(true);
+    const availability = await HealthKit.checkHealthKitAvailability();
+    if (!availability.unwrapOr(false)) {
+      return ok(false);
+    }
+
+    const probe = await HealthKit.probeHealthKitReadPermission();
+    if (probe.isOk()) {
+      return ok(probe.unwrap());
+    }
+
+    // read権限は厳密判定できないため、明確な拒否のみ false とし、
+    // それ以外の取得失敗は「判定不能」として true 扱いにする（過剰ブロック回避）。
+    return ok(probe.unwrapErr() !== 'permission_denied');
   }
 }

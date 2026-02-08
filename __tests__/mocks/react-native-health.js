@@ -34,6 +34,12 @@ export default {
   getBodyFatPercentageSamples: (options, callback) => {
     callback(null, []);
   },
+  getActiveEnergyBurned: (options, callback) => {
+    callback(null, []);
+  },
+  getBasalEnergyBurned: (options, callback) => {
+    callback(null, []);
+  },
   getActiveEnergyBurnedSamples: (options, callback) => {
     callback(null, []);
   },

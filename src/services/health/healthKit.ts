@@ -38,6 +38,19 @@ const permissions: HealthKitPermissions = {
   }
 };
 
+const PERMISSION_ERROR_PATTERNS = [
+  'authorization',
+  'not authorized',
+  'permission',
+  'denied',
+  'not permitted'
+];
+
+function isLikelyPermissionError(error: unknown): boolean {
+  const message = String(error).toLowerCase();
+  return PERMISSION_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
+}
+
 /**
  * HealthKitの初期化と権限リクエストを行う
  */
@@ -89,6 +102,40 @@ export const checkHealthKitAvailability = async (): Promise<Result<boolean, Heal
         return;
       }
       resolve(ok(available));
+    });
+  });
+};
+
+/**
+ * HealthKitの読み取り権限を推定チェック
+ * iOS仕様上、read権限の厳密判定はできないため、軽量な読み取りを実行して
+ * 権限エラーらしき応答のみを permission_denied として扱う。
+ */
+export const probeHealthKitReadPermission = async (): Promise<Result<boolean, HealthKitError>> => {
+  const endTime = new Date();
+  const startTime = new Date(endTime);
+  startTime.setDate(startTime.getDate() - 1);
+
+  const options = {
+    startDate: startTime.toISOString(),
+    endDate: endTime.toISOString(),
+    includeManuallyAdded: true
+  };
+
+  return new Promise((resolve) => {
+    AppleHealthKit.getDailyStepCountSamples(options, (error: unknown) => {
+      if (!error) {
+        resolve(ok(true));
+        return;
+      }
+
+      if (isLikelyPermissionError(error)) {
+        resolve(err('permission_denied'));
+        return;
+      }
+
+      addDebugLog(`[HealthKit] Permission probe failed: ${String(error)}`, 'warn');
+      resolve(err('fetch_error'));
     });
   });
 };
@@ -431,13 +478,25 @@ export const fetchExerciseData = async (
       const exerciseList: { date: string; type: string; durationMinutes: number }[] = [];
 
       results.forEach((item) => {
+        const start = item.startDate ?? item.start;
+        const end = item.endDate ?? item.end;
+        if (!start) {
+          return;
+        }
+
         // activityName または activityId から運動種別を判別
-        const type = item.activityName || 'other';
-        // HealthKitのWorkoutのdurationは「秒」単位で返される
-        const durationMinutes = parseFloat((item.duration / 60).toFixed(1));
+        const type = typeof item.activityName === 'string' ? item.activityName : 'other';
+        // duration（秒）がなければ start/end から補完
+        const durationSeconds =
+          typeof item.duration === 'number'
+            ? item.duration
+            : end
+              ? Math.max(0, (new Date(end).getTime() - new Date(start).getTime()) / 1000)
+              : 0;
+        const durationMinutes = parseFloat((durationSeconds / 60).toFixed(1));
 
         exerciseList.push({
-          date: item.startDate.substring(0, 10),
+          date: String(start).substring(0, 10),
           type: type.replace('HKWorkoutActivityType', '').toLowerCase(),
           durationMinutes
         });

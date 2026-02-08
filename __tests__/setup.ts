@@ -35,6 +35,11 @@ vi.mock('react-native', () => ({
     request: vi.fn(() => Promise.resolve('granted')),
     RESULTS: { GRANTED: 'granted' }
   },
+  Linking: {
+    canOpenURL: vi.fn(() => Promise.resolve(false)),
+    openURL: vi.fn(() => Promise.resolve()),
+    openSettings: vi.fn(() => Promise.resolve())
+  },
   Platform: {
     OS: 'android',
     Version: 34,
