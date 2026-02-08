@@ -15,7 +15,7 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square)
-![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020?style=flat-square)
 ![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square)
 
 </div>
@@ -39,7 +39,7 @@
 
 ## 技術スタック
 
-- **Framework**: React Native, Expo (SDK 52+)
+- **Framework**: React Native, Expo (SDK 54+)
 - **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
 - **Testing**: Vitest (Unit/Integration)
@@ -81,6 +81,9 @@ EXPO_PUBLIC_IOS_URL_SCHEME=your-ios-url-scheme
 # Expo / EAS 設定 (必須)
 EXPO_PUBLIC_SLUG=your-slug
 EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# App Bundle Identifier / Package Name (必須)
+EXPO_PUBLIC_BUNDLE_IDENTIFIER=your.bundle.identifier
 
 # Sentry エラーモニタリング (任意)
 # 設定しない場合は Sentry は無効化されます
@@ -126,6 +129,7 @@ npm run build:android:release # AAB 生成
 
 1. **プロジェクトIDの更新**: `.env` の `EXPO_PUBLIC_EAS_PROJECT_ID` を自身のプロジェクトIDに書き換えてください。
 2. **Slug の変更**: `.env` の `EXPO_PUBLIC_SLUG` を自身のプロジェクト名に変更してください。
+3. **Bundle ID の変更**: `.env` の `EXPO_PUBLIC_BUNDLE_IDENTIFIER` を自身のアプリのバンドルID/パッケージ名に変更してください。
 
 ## プロジェクト構造
 

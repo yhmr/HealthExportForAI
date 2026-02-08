@@ -15,7 +15,7 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?style=flat-square)
-![Expo](https://img.shields.io/badge/Expo-SDK%2052-000020?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020?style=flat-square)
 ![Android](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square)
 
 </div>
@@ -32,7 +32,7 @@ An Android application built with React Native + Expo. It reads health data from
 
 ## Tech Stack
 
-- **Framework**: React Native, Expo (SDK 52+)
+- **Framework**: React Native, Expo (SDK 54+)
 - **Language**: TypeScript (Strict Mode)
 - **State Management**: Zustand
 - **Testing**: Vitest (Unit/Integration)
@@ -65,6 +65,9 @@ EXPO_PUBLIC_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 # Expo / EAS Configuration (Required)
 EXPO_PUBLIC_SLUG=your-slug
 EXPO_PUBLIC_EAS_PROJECT_ID=your-project-id
+
+# App Bundle Identifier / Package Name (Required)
+EXPO_PUBLIC_BUNDLE_IDENTIFIER=your.bundle.identifier
 
 # Sentry Error Monitoring (Optional)
 # If not set, Sentry will be disabled
@@ -105,6 +108,7 @@ When cloning and building in your own environment, please note the following:
 
 1. **Project ID Update**: Update `EXPO_PUBLIC_EAS_PROJECT_ID` in `.env` with your own project ID.
 2. **Slug Change**: Change `EXPO_PUBLIC_SLUG` in `.env` to your own project name.
+3. **Bundle ID Change**: Change `EXPO_PUBLIC_BUNDLE_IDENTIFIER` in `.env` to your own app bundle identifier / package name.
 
 ## Project Structure
 
