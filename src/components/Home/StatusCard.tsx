@@ -8,7 +8,7 @@ import { getHealthServiceName } from '../../utils/healthServiceName';
 
 interface StatusCardProps {
   lastSyncTime: string | null;
-  isHealthConnectConnected: boolean;
+  isHealthServiceConnected: boolean;
   isDriveConnected: boolean;
   isSetupCompleted: boolean;
   autoSyncEnabled: boolean;
@@ -18,7 +18,7 @@ interface StatusCardProps {
 
 export function StatusCard({
   lastSyncTime,
-  isHealthConnectConnected,
+  isHealthServiceConnected,
   isDriveConnected,
   isSetupCompleted,
   autoSyncEnabled,
@@ -28,7 +28,7 @@ export function StatusCard({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const isReady = isHealthConnectConnected && isDriveConnected && isSetupCompleted;
+  const isReady = isHealthServiceConnected && isDriveConnected && isSetupCompleted;
   const statusColor = isReady ? '#10b981' : '#f59e0b';
   const statusText = isReady ? t('home', 'statusReady') : t('home', 'statusSetupRequired');
 
@@ -64,8 +64,8 @@ export function StatusCard({
         </View>
         <View style={styles.gridItem}>
           <Text style={styles.label}>{getHealthServiceName(language)}</Text>
-          <Text style={[styles.value, { color: isHealthConnectConnected ? '#10b981' : '#f59e0b' }]}>
-            {isHealthConnectConnected ? 'Connected' : 'Disconnected'}
+          <Text style={[styles.value, { color: isHealthServiceConnected ? '#10b981' : '#f59e0b' }]}>
+            {isHealthServiceConnected ? 'Connected' : 'Disconnected'}
           </Text>
         </View>
         <View style={styles.gridItem}>

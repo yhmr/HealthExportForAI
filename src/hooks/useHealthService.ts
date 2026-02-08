@@ -43,7 +43,7 @@ export function useHealthService() {
       setIsAvailable(available);
 
       if (!available) {
-        setError('Health Connectが利用できません');
+        setError('ヘルスケアサービスが利用できません');
         // 利用不可でも初期化チェック自体は完了とみなす
         setIsInitialized(true);
         return false;
@@ -80,7 +80,7 @@ export function useHealthService() {
         }
         return true;
       } else {
-        setError('Health Connectの初期化に失敗しました');
+        setError('ヘルスケアサービスの初期化に失敗しました');
         setIsInitialized(true);
         return false;
       }
@@ -206,7 +206,7 @@ export function useHealthService() {
     /** Android 14+ 向けのバックグラウンド権限リクエスト */
     requestBackgroundPermissions,
     checkPermissions,
-    /** Health Connectの設定画面を開く */
-    openHealthConnectSettings: healthService.openDataManagement
+    /** ヘルスケア設定画面を開く */
+    openHealthSettings: healthService.openDataManagement
   };
 }

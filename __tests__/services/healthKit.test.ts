@@ -16,13 +16,16 @@ describe('healthKit', () => {
 
   it('fetchExerciseData should parse workout records that have start/end fields', async () => {
     const getSamplesMock = vi.spyOn(AppleHealthKit, 'getSamples').mockImplementation((_o, cb) => {
-      cb(null, [
-        {
-          start: '2026-02-01T10:00:00.000Z',
-          end: '2026-02-01T11:30:00.000Z',
-          activityName: 'HKWorkoutActivityTypeRunning'
-        }
-      ]);
+      cb(
+        null as any,
+        [
+          {
+            start: '2026-02-01T10:00:00.000Z',
+            end: '2026-02-01T11:30:00.000Z',
+            activityName: 'HKWorkoutActivityTypeRunning'
+          }
+        ] as any[]
+      );
     });
 
     const result = await fetchExerciseData(new Date('2026-02-01T00:00:00.000Z'), new Date());
@@ -54,7 +57,7 @@ describe('healthKit', () => {
 
   it('probeHealthKitReadPermission should return true when probe succeeds', async () => {
     vi.spyOn(AppleHealthKit, 'getDailyStepCountSamples').mockImplementation((_o, cb) => {
-      cb(null, [
+      cb(null as any, [
         // no-op: 権限判定用なのでデータ件数は問わない
       ]);
     });

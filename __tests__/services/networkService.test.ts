@@ -83,7 +83,7 @@ describe('networkService', () => {
     expect(unsubscribe).toBe(unsubscribeMock);
     expect(listener).not.toBeNull();
 
-    await listener?.({ isConnected: true, type: 'wifi' });
+    await (listener as any)?.({ isConnected: true, type: 'wifi' });
 
     expect(addDebugLogMock).toHaveBeenCalledWith(
       '[NetworkService] Network status changed: online',

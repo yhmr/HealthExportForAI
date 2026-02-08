@@ -149,7 +149,7 @@ export default function HomeScreen() {
         <View style={styles.statusSection}>
           <StatusCard
             lastSyncTime={lastSyncTime}
-            isHealthConnectConnected={isAvailable && hasPermissions}
+            isHealthServiceConnected={isAvailable && hasPermissions}
             isDriveConnected={!!driveConfig && isAuthenticated}
             isSetupCompleted={isSetupCompleted}
             autoSyncEnabled={autoSyncEnabled}

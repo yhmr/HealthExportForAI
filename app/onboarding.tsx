@@ -57,7 +57,7 @@ export default function OnboardingScreen() {
     requestPermissions,
     fetchHealthData,
     isLoading: isSyncing,
-    openHealthConnectSettings,
+    openHealthSettings,
     checkPermissions: checkHcPermissions
   } = useHealthService();
   const { healthData } = useHealthStore();
@@ -241,7 +241,7 @@ export default function OnboardingScreen() {
             hasPermissions={hasPermissions}
             hasAttemptedPermissions={hasAttemptedPermissions}
             onRequestPermissions={handleRequestPermissions}
-            onOpenSettings={openHealthConnectSettings}
+            onOpenSettings={openHealthSettings}
             onNext={handleNext}
           />
         );

@@ -1,6 +1,7 @@
 import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
 import { Result, err, ok } from '../../types/result';
 import { addDebugLog } from '../debugLogService';
+import { HealthServiceError } from './types';
 
 /**
  * HealthKitのエラー型
@@ -82,12 +83,48 @@ export const initializeHealthKit = async (): Promise<Result<boolean, HealthKitEr
         resolve();
       });
     });
-
     await addDebugLog('[HealthKit] Initialization successful', 'info');
     return ok(true);
   } catch (error) {
-    await addDebugLog(`[HealthKit] Initialization failed: ${error}`, 'error');
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    await addDebugLog(`[HealthKit] Initialization failed: ${errorMsg}`, 'error');
     return err('init_failed');
+  }
+};
+
+/**
+ * バックグラウンド配信を有効化する (iOS)
+ * 指定された権限（現状は全read権限を想定）に対して監視を有効にする
+ */
+export const enableBackgroundDelivery = async (): Promise<Result<boolean, HealthServiceError>> => {
+  try {
+    const read = permissions.permissions.read;
+    if (read.length > 0) {
+      for (const permission of read) {
+        // すべての読み取り権限に対してバックグラウンド配信を有効化
+        // react-native-healthの型定義不足のためanyキャストを使用
+        (AppleHealthKit as any).enableBackgroundDelivery(
+          {
+            type: permission,
+            frequency: 'hourly' // 'hourly', 'immediate', 'daily', etc.
+          },
+          (error: string) => {
+            if (error) {
+              addDebugLog(
+                `[HealthKit] Failed to enable background delivery for ${permission}: ${error}`,
+                'warn'
+              );
+            }
+          }
+        );
+      }
+      await addDebugLog('[HealthKit] Background delivery enabled', 'info');
+      return ok(true);
+    }
+    return ok(false); // 対象なし
+  } catch (bgError) {
+    await addDebugLog(`[HealthKit] Background delivery setup error: ${bgError}`, 'warn');
+    return err('not_available'); // 厳密なエラー定義がないので仮置き
   }
 };
 

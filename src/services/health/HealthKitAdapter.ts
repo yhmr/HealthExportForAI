@@ -114,8 +114,8 @@ export class HealthKitAdapter implements IHealthService {
   }
 
   async requestBackgroundPermission(): Promise<Result<boolean, HealthServiceError>> {
-    // iOSではバックグラウンド権限はInfo.plistとCapabilitiesで静的に決まるため、常に成功扱い
-    return ok(true);
+    // iOSでは HealthKit.enableBackgroundDelivery を呼び出してバックグラウンド更新を有効化する
+    return HealthKit.enableBackgroundDelivery();
   }
 
   async hasPermissions(): Promise<Result<boolean, HealthServiceError>> {

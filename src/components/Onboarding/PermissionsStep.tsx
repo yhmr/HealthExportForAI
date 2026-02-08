@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackHandler, Text, View } from 'react-native';
+import { BackHandler, Platform, Text, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getHealthServiceName } from '../../utils/healthServiceName';
 import { SyncButton } from '../SyncButton';
@@ -56,7 +56,11 @@ export const PermissionsStep: React.FC<PermissionsStepProps> = ({
             isLoading={false}
             label={
               hasAttemptedPermissions && onOpenSettings
-                ? t('settings', 'openHealthConnect')
+                ? Platform.OS === 'ios'
+                  ? language === 'ja'
+                    ? '設定を開く'
+                    : 'Open Settings'
+                  : t('settings', 'openHealthConnect')
                 : t('onboarding', 'grantPermissions')
             }
             icon={hasAttemptedPermissions && onOpenSettings ? '⚙️' : '🛡️'}

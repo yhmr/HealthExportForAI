@@ -123,20 +123,22 @@ export function useSettings() {
   // アクション: 自動同期トグル
   const toggleAutoSync = async (enabled: boolean) => {
     try {
-      if (enabled && Platform.OS === 'android') {
+      if (enabled) {
         // 1. Google認証チェック
         if (!isAuthenticated || !currentUser) {
           Alert.alert(t('common', 'error'), t('settings', 'authRequired'), [{ text: 'OK' }]);
           return;
         }
 
-        // 2. Health Connect権限チェック (Foreground)
-        // UI上ではすでにチェックされているはずだが、念のため
+        // 2. ヘルスケア権限チェック
         const hasPermissions = await healthService.hasPermissions();
         if (!hasPermissions.unwrapOr(false)) {
           Alert.alert(t('settings', 'permissionRequired'), t('onboarding', 'permissionRequired'), [
             {
-              text: t('settings', 'openHealthConnect'),
+              text:
+                Platform.OS === 'ios' && language === 'ja'
+                  ? '設定を開く'
+                  : t('settings', 'openHealthConnect'),
               onPress: () => healthService.openDataManagement()
             },
             { text: 'OK', style: 'cancel' }
@@ -152,7 +154,10 @@ export function useSettings() {
             t('settings', 'notificationPermissionDesc'),
             [
               {
-                text: t('settings', 'openHealthConnect'), // "設定画面を開く"を再利用
+                text:
+                  Platform.OS === 'ios' && language === 'ja'
+                    ? '設定を開く'
+                    : t('settings', 'openHealthConnect'),
                 onPress: () => Linking.openSettings()
               },
               { text: 'Cancel', style: 'cancel' }
@@ -161,17 +166,28 @@ export function useSettings() {
           return; // 通知権限がない場合はONにしない
         }
 
+        // 4. バックグラウンド権限 (Android) / 配信登録 (iOS)
         const bgResult = await healthService.requestBackgroundPermission();
         const bgGranted = bgResult.unwrapOr(false);
         if (!bgGranted) {
+          const messageJa =
+            Platform.OS === 'ios'
+              ? '自動同期を使用するには、ヘルスケアデータのバックグラウンド更新を有効にする必要があります。'
+              : '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。';
+          const messageEn =
+            Platform.OS === 'ios'
+              ? 'Background delivery must be enabled for auto sync.'
+              : 'Background data read permission is required to use auto sync.';
+
           Alert.alert(
             t('settings', 'permissionRequired'),
-            language === 'ja'
-              ? '自動同期を使用するには、バックグラウンドでのデータ読み取り権限が必要です。'
-              : 'Background data read permission is required to use auto sync.',
+            language === 'ja' ? messageJa : messageEn,
             [
               {
-                text: t('settings', 'openHealthConnect'),
+                text:
+                  Platform.OS === 'ios' && language === 'ja'
+                    ? '設定を開く'
+                    : t('settings', 'openHealthConnect'),
                 onPress: () => healthService.openDataManagement()
               },
               { text: 'Cancel', style: 'cancel' }
