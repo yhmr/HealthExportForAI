@@ -13,6 +13,7 @@ import { backgroundSyncConfigService } from '../config/BackgroundSyncConfigServi
 import { addDebugLog } from '../debugLogService';
 import { keyValueStorage } from '../infrastructure/keyValueStorage';
 import { executeSyncLogic } from './backgroundTask';
+import { resolveBackgroundFetchIntervalMinutes } from './intervalPolicy';
 
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';
@@ -178,8 +179,16 @@ export async function registerBackgroundSync(
   intervalMinutes: number,
   retryCount = 0
 ): Promise<void> {
+  const effectiveIntervalMinutes = resolveBackgroundFetchIntervalMinutes(
+    Platform.OS,
+    intervalMinutes
+  );
+
   if (retryCount === 0) {
-    await addDebugLog(`[Scheduler] Registering task (interval: ${intervalMinutes}min)`, 'info');
+    await addDebugLog(
+      `[Scheduler] Registering task (requested: ${intervalMinutes}min, effective: ${effectiveIntervalMinutes}min)`,
+      'info'
+    );
   } else {
     console.warn(`[Scheduler] Retry registering task (${retryCount}/${MAX_RETRIES})...`);
   }
@@ -199,7 +208,7 @@ export async function registerBackgroundSync(
     }
 
     await BackgroundFetch.registerTaskAsync(BACKGROUND_SYNC_TASK, {
-      minimumInterval: intervalMinutes * 60 // 秒に変換
+      minimumInterval: effectiveIntervalMinutes * 60 // 秒に変換
     });
     await addDebugLog('[Scheduler] Task registered successfully', 'success');
   } catch (error) {

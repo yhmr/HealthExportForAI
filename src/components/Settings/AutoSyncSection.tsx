@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import {
@@ -31,6 +31,7 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
   const { t, language } = useLanguage();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const isIOS = Platform.OS === 'ios';
 
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
 
@@ -64,38 +65,42 @@ export const AutoSyncSection: React.FC<AutoSyncSectionProps> = ({
 
       {config.enabled && (
         <>
-          <SettingsItem
-            label={t('autoSync', 'interval')}
-            value={getSyncIntervalLabel(config.intervalMinutes)[language]}
-            icon="⏱️"
-            onPress={() => setShowIntervalPicker(!showIntervalPicker)}
-          />
+          {!isIOS && (
+            <>
+              <SettingsItem
+                label={t('autoSync', 'interval')}
+                value={getSyncIntervalLabel(config.intervalMinutes)[language]}
+                icon="⏱️"
+                onPress={() => setShowIntervalPicker(!showIntervalPicker)}
+              />
 
-          {showIntervalPicker && (
-            <View style={styles.intervalContainer}>
-              {visibleIntervals.map((interval) => (
-                <TouchableOpacity
-                  key={interval}
-                  style={[
-                    styles.intervalOption,
-                    config.intervalMinutes === interval && styles.intervalOptionActive
-                  ]}
-                  onPress={() => {
-                    onChangeInterval(interval);
-                    setShowIntervalPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.intervalText,
-                      config.intervalMinutes === interval && styles.intervalTextActive
-                    ]}
-                  >
-                    {getSyncIntervalLabel(interval)[language]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              {showIntervalPicker && (
+                <View style={styles.intervalContainer}>
+                  {visibleIntervals.map((interval) => (
+                    <TouchableOpacity
+                      key={interval}
+                      style={[
+                        styles.intervalOption,
+                        config.intervalMinutes === interval && styles.intervalOptionActive
+                      ]}
+                      onPress={() => {
+                        onChangeInterval(interval);
+                        setShowIntervalPicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.intervalText,
+                          config.intervalMinutes === interval && styles.intervalTextActive
+                        ]}
+                      >
+                        {getSyncIntervalLabel(interval)[language]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
           )}
 
           <SettingsItem

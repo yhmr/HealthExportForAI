@@ -134,7 +134,9 @@ export const translations = {
       lastSync: '最終バックグラウンド同期',
       never: '未実行',
       nextSync: '次回同期予定',
-      note: '※OSの制限により、正確な間隔での実行は保証されません。充電中やWi-Fi接続時に実行される傾向があります。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。'
+      note: '※OSの制限により、正確な間隔での実行は保証されません。充電中やWi-Fi接続時に実行される傾向があります。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。',
+      note_ios:
+        '※iOSではバックグラウンド実行タイミングはOSが決定するため、同期間隔は変更できません。\n※出力はGoogle Sheetsのみ対応です。また、バックグラウンド処理は不安定なため失敗することもあります。'
     },
     // 通知
     notification: {
@@ -312,7 +314,9 @@ export const translations = {
       lastSync: 'Last Background Sync',
       never: 'Never',
       nextSync: 'Next Sync',
-      note: '*Execution at exact intervals is not guaranteed due to OS restrictions. It tends to run when charging or on Wi-Fi.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.'
+      note: '*Execution at exact intervals is not guaranteed due to OS restrictions. It tends to run when charging or on Wi-Fi.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.',
+      note_ios:
+        '*On iOS, background run timing is controlled by the system, so sync interval cannot be changed.\n*Output is limited to Google Sheets. Background processing may be unstable and fail.'
     },
     // Notifications
     notification: {

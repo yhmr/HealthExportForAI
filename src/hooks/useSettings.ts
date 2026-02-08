@@ -1,6 +1,6 @@
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import { type ExportFormat } from '../config/driveConfig';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
@@ -23,6 +23,7 @@ export function useSettings() {
     resolveAndSaveFolder
   } = useGoogleDrive();
   const { t, language, setLanguage } = useLanguage();
+  const isIOS = Platform.OS === 'ios';
 
   const [isLoading, setIsLoading] = useState(true);
   const [folderId, setFolderId] = useState('');
@@ -192,6 +193,9 @@ export function useSettings() {
 
   // アクション: 同期間隔変更
   const changeSyncInterval = async (interval: SyncInterval) => {
+    // iOS はOS主導で実行タイミングが決まるため、アプリ側の間隔変更は受け付けない
+    if (isIOS) return;
+
     const newConfig = { ...autoSyncConfig, intervalMinutes: interval };
     setAutoSyncConfigState(newConfig);
     await backgroundSyncConfigService.saveBackgroundSyncConfig(newConfig);
