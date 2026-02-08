@@ -84,4 +84,13 @@ describe('CSV Export Service', () => {
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toContain('アップロードに失敗');
   });
+
+  it('should fail when finding existing CSV file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(err(new StorageError('Find failed')));
+
+    const result = await exportToCSV(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('CSVファイルの検索に失敗しました');
+  });
 });

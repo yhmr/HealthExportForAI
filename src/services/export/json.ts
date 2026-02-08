@@ -138,7 +138,10 @@ export async function exportToJSON(
 
       // 既存ファイルを検索
       const findResult = await fileOps.findFile(fileName, 'application/json', folderId);
-      const existingFile = findResult.isOk() ? findResult.unwrap() : null;
+      if (findResult.isErr()) {
+        return err(`JSONファイルの検索に失敗しました: ${findResult.unwrapErr().message}`);
+      }
+      const existingFile = findResult.unwrap();
       let existingRecordsMap = new Map<string, DailyRecord>();
 
       if (existingFile) {

@@ -62,7 +62,12 @@ export async function exportToSpreadsheet(
       const fileName = getExportFileName(year);
       // ファイル名を渡す
       const findResult = await spreadsheetAdapter.findSpreadsheet(fileName, folderId);
-      let spreadsheetId = findResult.isOk() ? findResult.unwrap() : null;
+      if (findResult.isErr()) {
+        return err(
+          `${year}年のスプレッドシート検索に失敗しました: ${findResult.unwrapErr().message}`
+        );
+      }
+      let spreadsheetId = findResult.unwrap();
       let existingHeaders: string[] = [];
       let existingRows: string[][] = [];
 

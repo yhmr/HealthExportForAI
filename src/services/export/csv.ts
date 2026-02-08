@@ -83,7 +83,10 @@ export async function exportToCSV(
 
       // 既存ファイルを検索
       const findResult = await fileOps.findFile(fileName, 'text/csv', folderId);
-      const existingFile = findResult.isOk() ? findResult.unwrap() : null;
+      if (findResult.isErr()) {
+        return err(`CSVファイルの検索に失敗しました: ${findResult.unwrapErr().message}`);
+      }
+      const existingFile = findResult.unwrap();
       let existingRowMap = new Map<string, string[]>();
 
       if (existingFile) {

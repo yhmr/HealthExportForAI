@@ -153,6 +153,15 @@ describe('JSON Export Service', () => {
     expect(result.unwrapErr()).toContain('Upload failed');
   });
 
+  it('should fail when finding existing JSON file fails', async () => {
+    (mockFileOps.findFile as any).mockResolvedValue(err(new Error('Find failed')));
+
+    const result = await exportToJSON(mockHealthData, 'folder-123', mockFileOps);
+
+    expect(result.isErr()).toBe(true);
+    expect(result.unwrapErr()).toContain('JSONファイルの検索に失敗しました');
+  });
+
   it('should return failure on unexpected exception', async () => {
     (mockFileOps.findFile as any).mockRejectedValue(new Error('Unexpected error'));
 
