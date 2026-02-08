@@ -6,6 +6,7 @@ import notifee, { AndroidImportance } from '@notifee/react-native';
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { Platform } from 'react-native';
+import { STORAGE_KEYS } from '../../config/storageKeys';
 import { Language, translations } from '../../i18n/translations';
 import { AutoSyncConfig } from '../../types/export';
 import { backgroundSyncConfigService } from '../config/BackgroundSyncConfigService';
@@ -16,7 +17,7 @@ import { executeSyncLogic } from './backgroundTask';
 /** バックグラウンド同期タスク名 */
 export const BACKGROUND_SYNC_TASK = 'HEALTH_EXPORT_BACKGROUND_SYNC';
 const NOTIFICATION_CHANNEL_ID = 'background-sync';
-const LANGUAGE_KEY = 'app_language';
+const LANGUAGE_KEY = STORAGE_KEYS.APP_LANGUAGE;
 
 addDebugLog('[Scheduler] Module loaded', 'info').catch(() => {});
 
