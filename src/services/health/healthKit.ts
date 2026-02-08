@@ -1,6 +1,7 @@
 import AppleHealthKit, { HealthKitPermissions } from 'react-native-health';
 import { NutritionData } from '../../types/health';
 import { Result, err, ok } from '../../types/result';
+import { aggregateByLatestPerDay, reduceByDate, sortByDate } from '../../utils/healthAggregation';
 import { addDebugLog } from '../debugLogService';
 import { HealthServiceError } from './types';
 
@@ -212,10 +213,7 @@ export const fetchStepsData = async (
         count: item.value
       }));
 
-      // 日付でソート
-      stepsData.sort((a, b) => a.date.localeCompare(b.date));
-
-      resolve(ok(stepsData));
+      resolve(ok(sortByDate(stepsData)));
     });
   });
 };
@@ -242,30 +240,16 @@ export const fetchWeightData = async (
         return;
       }
 
-      // 日付ごとに最新のデータを抽出（HealthConnectの実装に合わせる）
-      const dailyMap = new Map<string, { value: number; time: string; timestamp: number }>();
-
-      results.forEach((item) => {
-        const date = item.startDate.substring(0, 10);
-        const timestamp = new Date(item.startDate).getTime();
-
-        if (!dailyMap.has(date) || timestamp > dailyMap.get(date)!.timestamp) {
-          dailyMap.set(date, {
-            value: item.value,
-            time: new Date(item.startDate).toISOString(), // timeフィールドを追加
-            timestamp
-          });
-        }
-      });
-
-      const weightData = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
+      const weightData = aggregateByLatestPerDay(
+        results,
+        (item) => String(item.startDate),
+        (item, date) => ({
           date,
-          value: data.value,
+          value: item.value,
           unit: 'kg' as const,
-          time: data.time
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+          time: new Date(item.startDate).toISOString()
+        })
+      );
 
       resolve(ok(weightData));
     });
@@ -293,30 +277,16 @@ export const fetchBodyFatData = async (
         return;
       }
 
-      const dailyMap = new Map<string, { value: number; time: string; timestamp: number }>();
-
-      results.forEach((item) => {
-        const date = item.startDate.substring(0, 10);
-        const timestamp = new Date(item.startDate).getTime();
-
-        if (!dailyMap.has(date) || timestamp > dailyMap.get(date)!.timestamp) {
-          dailyMap.set(date, {
-            // HealthKitのBodyFatPercentageは0.0〜1.0の範囲で返される (e.g., 0.20 = 20%)
-            // 表示用に100倍してパーセント値に変換
-            value: item.value * 100,
-            time: new Date(item.startDate).toISOString(),
-            timestamp
-          });
-        }
-      });
-
-      const bodyFatData = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
+      const bodyFatData = aggregateByLatestPerDay(
+        results,
+        (item) => String(item.startDate),
+        (item, date) => ({
           date,
-          percentage: data.value,
-          time: data.time
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+          // HealthKitのBodyFatPercentageは0.0〜1.0の範囲で返るため100倍する
+          percentage: item.value * 100,
+          time: new Date(item.startDate).toISOString()
+        })
+      );
 
       resolve(ok(bodyFatData));
     });
@@ -346,21 +316,21 @@ export const fetchTotalCaloriesData = async (
         return;
       }
 
-      const dailyMap = new Map<string, number>();
-
-      results.forEach((item) => {
-        const date = item.startDate.substring(0, 10);
-        const current = dailyMap.get(date) || 0;
-        dailyMap.set(date, current + item.value);
-      });
-
-      const caloriesData = Array.from(dailyMap.entries())
-        .map(([date, value]) => ({
+      const caloriesData = reduceByDate(
+        results,
+        (item) => String(item.startDate),
+        (date) => ({
           date,
-          value: Number(value.toFixed(2)),
+          value: 0,
           unit: 'kcal' as const
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+        }),
+        (current, item) => {
+          current.value += Number(item.value) || 0;
+        }
+      ).map((item) => ({
+        ...item,
+        value: Number(item.value.toFixed(2))
+      }));
 
       resolve(ok(caloriesData));
     });
@@ -391,32 +361,16 @@ export const fetchBasalMetabolicRateData = async (
         return;
       }
 
-      // BMRも日次で集計する必要があるが、最新の値を取るか合計するか
-      // HealthConnect実装では「最新の値」を採用している
-      const dailyMap = new Map<string, { value: number; time: string; timestamp: number }>();
-
-      results.forEach((item) => {
-        const date = item.startDate.substring(0, 10);
-        const timestamp = new Date(item.startDate).getTime();
-
-        // 最新の値を採用
-        if (!dailyMap.has(date) || timestamp > dailyMap.get(date)!.timestamp) {
-          dailyMap.set(date, {
-            value: item.value,
-            time: new Date(item.startDate).toISOString(),
-            timestamp
-          });
-        }
-      });
-
-      const bmrData = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
+      const bmrData = aggregateByLatestPerDay(
+        results,
+        (item) => String(item.startDate),
+        (item, date) => ({
           date,
-          value: data.value,
+          value: item.value,
           unit: 'kcal/day' as const,
-          time: data.time
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+          time: new Date(item.startDate).toISOString()
+        })
+      );
 
       resolve(ok(bmrData));
     });
@@ -445,50 +399,43 @@ export const fetchSleepData = async (
         return;
       }
 
-      // 日付ごとの集計
-      const dailyMap = new Map<string, { totalMinutes: number; deepMinutes: number }>();
-
-      results.forEach((item) => {
-        const date = item.startDate.substring(0, 10);
-        // value: 'INBED', 'ASLEEP', 'AWAKE' など (ライブラリのバージョンによる)
-        // 通常は value が 'ASLEEP' または 'CORE' などをカウント
-        const durationMsg =
-          (new Date(item.endDate).getTime() - new Date(item.startDate).getTime()) / (1000 * 60);
-
-        if (!dailyMap.has(date)) {
-          dailyMap.set(date, { totalMinutes: 0, deepMinutes: 0 });
-        }
-        const data = dailyMap.get(date)!;
-
-        // ASLEEPの判定 (文字列または定数)
-        // HealthKitでは 'ASLEEP' が一般的な睡眠
-        if (
-          item.value === 'ASLEEP' ||
-          item.value === 'CORE' ||
-          item.value === 'REM' ||
-          item.value === 'DEEP'
-        ) {
-          data.totalMinutes += durationMsg;
-        }
-
-        if (item.value === 'DEEP') {
-          data.deepMinutes += durationMsg;
-        }
-      });
-
-      const sleepData = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
+      const sleepData = reduceByDate(
+        results,
+        (item) => String(item.startDate),
+        (date) => ({
           date,
-          durationMinutes: Math.round(data.totalMinutes),
+          totalMinutes: 0,
+          deepMinutes: 0
+        }),
+        (current, item) => {
+          const durationMinutes =
+            (new Date(item.endDate).getTime() - new Date(item.startDate).getTime()) / (1000 * 60);
+
+          const isAsleepStage =
+            item.value === 'ASLEEP' ||
+            item.value === 'CORE' ||
+            item.value === 'REM' ||
+            item.value === 'DEEP';
+
+          if (isAsleepStage) {
+            current.totalMinutes += durationMinutes;
+          }
+          if (item.value === 'DEEP') {
+            current.deepMinutes += durationMinutes;
+          }
+        }
+      )
+        .map((item) => ({
+          date: item.date,
+          durationMinutes: Math.round(item.totalMinutes),
           deepSleepPercentage:
-            data.totalMinutes > 0
-              ? Number(((data.deepMinutes / data.totalMinutes) * 100).toFixed(1))
+            item.totalMinutes > 0
+              ? Number(((item.deepMinutes / item.totalMinutes) * 100).toFixed(1))
               : 0
         }))
-        .filter((d) => d.durationMinutes > 0)
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .filter((d) => d.durationMinutes > 0);
 
-      resolve(ok(sleepData));
+      resolve(ok(sortByDate(sleepData)));
     });
   });
 };
@@ -545,17 +492,13 @@ export const fetchExerciseData = async (
           durationMinutes
         });
       });
-      // 日付順
-      exerciseList.sort((a, b) => a.date.localeCompare(b.date));
-      resolve(ok(exerciseList));
+      resolve(ok(sortByDate(exerciseList)));
     });
   });
 };
 
 /**
- * 栄養データを取得
- * TODO: HealthKitの栄養データ (DietaryEnergyConsumed, DietaryProtein等) の取得を実装
- * 現時点ではデータ構造の複雑さから未実装
+ * 栄養データを取得（日次合計）
  */
 export const fetchNutritionData = async (
   startTime: Date,
@@ -683,6 +626,6 @@ export const fetchNutritionData = async (
   aggregate(fiberResult.samples, 'dietaryFiber');
   aggregate(saturatedFatResult.samples, 'saturatedFat');
 
-  const data = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  const data = sortByDate(Array.from(dailyMap.values()));
   return ok(data);
 };

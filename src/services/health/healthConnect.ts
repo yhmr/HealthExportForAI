@@ -26,7 +26,7 @@ import { err, ok, Result } from '../../types/result';
 import { formatDate } from '../../utils/formatters';
 import { addDebugLog } from '../debugLogService';
 
-import { aggregateByLatestPerDay } from '../../utils/healthAggregation';
+import { aggregateByLatestPerDay, reduceByDate, sortByDate } from '../../utils/healthAggregation';
 
 // 必要な権限のリスト
 const REQUIRED_PERMISSIONS = [
@@ -175,11 +175,6 @@ export async function requestBackgroundHealthPermission(): Promise<
 }
 
 /**
- * データ集計用の型定義
- */
-type DailyAggregation<T> = { [date: string]: T };
-
-/**
  * ExerciseType IDを名前に変換するマッピング
  */
 const exerciseTypeIdToName: { [key: number]: string } = Object.entries(ExerciseType).reduce(
@@ -231,7 +226,7 @@ export async function fetchStepsData(
       count: item.result.COUNT_TOTAL ?? 0
     }));
 
-    return ok(stepsData.sort((a, b) => a.date.localeCompare(b.date)));
+    return ok(sortByDate(stepsData));
   } catch (error) {
     const msg = `Fetch Steps Error: ${error}`;
     await addDebugLog(`[HealthConnect] ${msg}`, 'error');
@@ -345,7 +340,7 @@ export async function fetchTotalCaloriesData(
       unit: 'kcal' as const
     }));
 
-    return ok(caloriesData.sort((a, b) => a.date.localeCompare(b.date)));
+    return ok(sortByDate(caloriesData));
   } catch (error) {
     const msg = `Fetch Calories Error: ${error}`;
     await addDebugLog(`[HealthConnect] ${msg}`, 'error');
@@ -410,55 +405,43 @@ export async function fetchSleepData(
       }
     });
 
-    // 集計用の一時型
     type SleepAggregation = SleepData & { totalDeepSleepMinutes: number };
-    const aggregation: DailyAggregation<SleepAggregation> = {};
+    const aggregated = reduceByDate(
+      result.records,
+      (record) => record.endTime,
+      (date): SleepAggregation => ({
+        date,
+        durationMinutes: 0,
+        totalDeepSleepMinutes: 0
+      }),
+      (current, record) => {
+        const start = new Date(record.startTime);
+        const end = new Date(record.endTime);
+        current.durationMinutes += Math.round((end.getTime() - start.getTime()) / 60000);
 
-    for (const record of result.records) {
-      // 睡眠の終了日を基準にする（「昨晩の睡眠」＝「今日の朝起きた睡眠」として扱うのが一般的）
-      const date = formatDate(record.endTime);
-      const start = new Date(record.startTime);
-      const end = new Date(record.endTime);
-      const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
-
-      // 深い眠りの時間を計算
-      let deepSleepMinutes = 0;
-      if (record.stages) {
+        if (!record.stages) return;
         for (const stage of record.stages) {
-          const sType = stage.stage as any;
-          if (sType === 5 || sType === 'DEEP') {
-            const sStart = new Date(stage.startTime);
-            const sEnd = new Date(stage.endTime);
-            deepSleepMinutes += (sEnd.getTime() - sStart.getTime()) / 60000;
-          }
+          const stageType = stage.stage as any;
+          if (stageType !== 5 && stageType !== 'DEEP') continue;
+
+          const sStart = new Date(stage.startTime);
+          const sEnd = new Date(stage.endTime);
+          current.totalDeepSleepMinutes += (sEnd.getTime() - sStart.getTime()) / 60000;
         }
       }
+    );
 
-      if (!aggregation[date]) {
-        aggregation[date] = {
-          date,
-          durationMinutes: 0,
-          totalDeepSleepMinutes: 0
-        };
-      }
-
-      aggregation[date].durationMinutes += durationMinutes;
-      aggregation[date].totalDeepSleepMinutes += deepSleepMinutes;
-    }
-
-    const data = Object.values(aggregation)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((item) => {
-        const { totalDeepSleepMinutes, ...rest } = item;
-        const percentage =
-          item.durationMinutes > 0
-            ? Math.round((item.totalDeepSleepMinutes / item.durationMinutes) * 100)
-            : 0;
-        return {
-          ...rest,
-          deepSleepPercentage: percentage
-        };
-      });
+    const data = aggregated.map((item) => {
+      const { totalDeepSleepMinutes, ...rest } = item;
+      const percentage =
+        item.durationMinutes > 0
+          ? Math.round((item.totalDeepSleepMinutes / item.durationMinutes) * 100)
+          : 0;
+      return {
+        ...rest,
+        deepSleepPercentage: percentage
+      };
+    });
 
     return ok(data);
   } catch (error) {
@@ -511,7 +494,7 @@ export async function fetchExerciseData(
       aggregation[key].durationMinutes += durationMinutes;
     }
 
-    const data = Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
+    const data = sortByDate(Object.values(aggregation));
     return ok(data);
   } catch (error) {
     const msg = `Fetch Exercise Error: ${error}`;
@@ -546,45 +529,34 @@ export async function fetchNutritionData(
       }
     });
 
-    const aggregation: DailyAggregation<NutritionData> = {};
+    const add = (current: number | undefined, value: number | undefined | null) =>
+      (current || 0) + (value || 0);
 
-    for (const record of result.records) {
-      const date = formatDate(record.startTime);
-
-      if (!aggregation[date]) {
-        aggregation[date] = {
-          date,
-          calories: 0,
-          protein: 0,
-          totalFat: 0,
-          totalCarbohydrate: 0,
-          dietaryFiber: 0,
-          saturatedFat: 0
-        };
+    const data = reduceByDate(
+      result.records,
+      (record) => record.startTime,
+      (date): NutritionData => ({
+        date,
+        calories: 0,
+        protein: 0,
+        totalFat: 0,
+        totalCarbohydrate: 0,
+        dietaryFiber: 0,
+        saturatedFat: 0
+      }),
+      (current, record) => {
+        current.calories = add(current.calories, record.energy?.inKilocalories);
+        current.protein = add(current.protein, record.protein?.inGrams);
+        current.totalFat = add(current.totalFat, record.totalFat?.inGrams);
+        current.totalCarbohydrate = add(
+          current.totalCarbohydrate,
+          record.totalCarbohydrate?.inGrams
+        );
+        current.dietaryFiber = add(current.dietaryFiber, record.dietaryFiber?.inGrams);
+        current.saturatedFat = add(current.saturatedFat, record.saturatedFat?.inGrams);
       }
+    );
 
-      // 安全に加算するためにヘルパー関数を利用（undefined/nullなら0扱い）
-      const add = (current: number | undefined, value: number | undefined | null) =>
-        (current || 0) + (value || 0);
-
-      aggregation[date].calories = add(aggregation[date].calories, record.energy?.inKilocalories);
-      aggregation[date].protein = add(aggregation[date].protein, record.protein?.inGrams);
-      aggregation[date].totalFat = add(aggregation[date].totalFat, record.totalFat?.inGrams);
-      aggregation[date].totalCarbohydrate = add(
-        aggregation[date].totalCarbohydrate,
-        record.totalCarbohydrate?.inGrams
-      );
-      aggregation[date].dietaryFiber = add(
-        aggregation[date].dietaryFiber,
-        record.dietaryFiber?.inGrams
-      );
-      aggregation[date].saturatedFat = add(
-        aggregation[date].saturatedFat,
-        record.saturatedFat?.inGrams
-      );
-    }
-
-    const data = Object.values(aggregation).sort((a, b) => a.date.localeCompare(b.date));
     return ok(data);
   } catch (error) {
     const msg = `Fetch Nutrition Error: ${error}`;
