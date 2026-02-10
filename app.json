@@ -1,7 +1,6 @@
 {
   "expo": {
     "name": "Health Export For AI",
-
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
