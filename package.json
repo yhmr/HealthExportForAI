@@ -1,6 +1,6 @@
 {
   "name": "health-export-for-ai",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": "yhmr",
   "main": "index.js",
   "scripts": {
