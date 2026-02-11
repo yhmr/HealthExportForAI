@@ -3,7 +3,7 @@
  * ウィジェット/バックグラウンドタスク用の共通初期化処理を提供
  */
 
-import { WEB_CLIENT_ID } from '../config/driveConfig';
+import { IOS_CLIENT_ID, WEB_CLIENT_ID } from '../config/driveConfig';
 import { addDebugLog } from './debugLogService';
 import { healthService } from './health/healthAdapterFactory';
 import { googleAuthService } from './infrastructure/GoogleAuthService';
@@ -34,7 +34,7 @@ export interface InitializationResult {
 export async function initializeForSync(): Promise<InitializationResult> {
   // 1. Google認証設定
   try {
-    googleAuthService.configure(WEB_CLIENT_ID);
+    googleAuthService.configure(WEB_CLIENT_ID, IOS_CLIENT_ID);
   } catch (e) {
     await addDebugLog(`[SyncInitializer] Auth config error: ${e}`, 'warn');
   }

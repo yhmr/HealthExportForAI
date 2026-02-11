@@ -9,7 +9,7 @@ import { Result } from '../../types/result';
  * 認証サービスのインターフェース
  */
 export interface IAuthService {
-  configure(webClientId: string): void;
+  configure(webClientId: string, iosClientId?: string): void;
   isSignedIn(): Promise<boolean>;
   getCurrentUser(): Promise<User | null>;
   signIn(): Promise<Result<User, AuthError>>;
