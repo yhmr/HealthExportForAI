@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "pages:dev": "hugo server -s pages -D",
-    "build:android:debug": "node scripts/build-android.js debug"
+    "build:android:debug": "node scripts/build-android.js debug",
+    "postinstall": "node scripts/patch-widget-exported.js"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
