@@ -16,6 +16,9 @@ export const DRIVE_CONFIG_FILE_NAME = 'drive-config.json';
 // Web Client ID（環境変数から取得）
 export const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_WEB_CLIENT_ID || '';
 
+// iOS Client ID（環境変数から取得）
+export const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_IOS_CLIENT_ID || '';
+
 // デフォルトのエクスポート形式
 export const DEFAULT_EXPORT_FORMATS: ExportFormat[] = ['googleSheets'];
 

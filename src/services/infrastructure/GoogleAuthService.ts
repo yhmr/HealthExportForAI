@@ -14,10 +14,11 @@ export class GoogleAuthService implements IAuthService {
   /** トークン取得のPromiseを保持（重複実行防止用） */
   private tokenRefreshPromise: Promise<Result<string, AuthError>> | null = null;
 
-  configure(webClientId: string): void {
+  configure(webClientId: string, iosClientId?: string): void {
     GoogleSignin.configure({
       scopes: SCOPES,
       webClientId,
+      iosClientId,
       offlineAccess: true
     });
   }

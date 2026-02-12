@@ -1,7 +1,7 @@
 // Google Drive/Sheets カスタムフック（認証統合版）
 
 import { useCallback, useState } from 'react';
-import { WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
+import { IOS_CLIENT_ID, WEB_CLIENT_ID, type DriveConfig } from '../config/driveConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { driveConfigService } from '../services/config/DriveConfigService';
 import { addDebugLog } from '../services/debugLogService';
@@ -30,7 +30,7 @@ export function useGoogleDrive() {
       const config = await driveConfigService.loadDriveConfig();
       setDriveConfigState(config);
       // Google Sign-Inを設定（埋め込みIDを使用）
-      googleAuthService.configure(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID, IOS_CLIENT_ID);
       return config;
     } finally {
       setIsConfigLoaded(true);

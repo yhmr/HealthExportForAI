@@ -9,7 +9,7 @@ import React, {
   useState,
   type ReactNode
 } from 'react';
-import { WEB_CLIENT_ID } from '../config/driveConfig';
+import { IOS_CLIENT_ID, WEB_CLIENT_ID } from '../config/driveConfig';
 import { googleAuthService } from '../services/infrastructure/GoogleAuthService';
 
 interface AuthContextType {
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkAuthStatus = useCallback(async () => {
     try {
       // Google Sign-Inを設定
-      googleAuthService.configure(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID, IOS_CLIENT_ID);
 
       // 認証状態をチェック
       const signedIn = await googleAuthService.isSignedIn();
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthError(null);
 
     try {
-      googleAuthService.configure(WEB_CLIENT_ID);
+      googleAuthService.configure(WEB_CLIENT_ID, IOS_CLIENT_ID);
       const result = await googleAuthService.signIn();
 
       if (result.isOk()) {

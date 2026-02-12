@@ -27,7 +27,8 @@ vi.mock('../../src/services/infrastructure/GoogleAuthService', () => ({
 }));
 
 vi.mock('../../src/config/driveConfig', () => ({
-  WEB_CLIENT_ID: 'test-web-client-id'
+  WEB_CLIENT_ID: 'test-web-client-id',
+  IOS_CLIENT_ID: 'test-ios-client-id'
 }));
 
 describe('syncInitializer', () => {
